@@ -1,0 +1,111 @@
+﻿                  <meta charset="utf-8">
+                  **Report: Final**
+            Ben Drews (bfd@williams.edu)
+            Diego Gonzalez (drg4@williams.edu)
+            Lylia Li (ll5@williams.edu)
+            Youle Chen (yc2@williams.edu)
+
+![Image that sells our project](evocativescene.png)
+
+
+Introduction 
+==================================
+Introduction here
+
+Specification
+==================================
+**Features of the program:**
+
+1. User is able to place and destroy a variety of different voxel types in real time
+    - Models are edited without writing to disk
+    - Option to save your model is available
+
+2. Program is compatible with virtual reality headsets and controllers, and the user can move around in 3D space
+
+3. User is able to apply interesting transforms to the voxels in the scene, for example:
+    - Making a crater in the world
+    - Raising mountains
+    - Digging caves
+    - Ideally these wouldn't happen instantaneously (we want to see the mountain being raised)
+    - Button user interface (on game controls) that determine what operation we are performing on the scene
+
+4. User is able to change how the world is scaled
+
+5. Voxel painting
+    - Existing set of voxels with different colors and textures to choose from when adding to scene
+    - User can change the color/texture of any voxel that has already been placed in the scene
+
+**Stretch goals:**
+
+1. Implement marching cubes algorithm to make smooth surfaces
+
+2. Add visual user interface in VR
+
+3. Add physics simulation so we can throw voxels around
+
+4. Make data structures more efficient
+
+
+**Program evaluation metric:**
+
+Evaluation here
+
+Topic Overview 
+==================================
+Topic info
+
+
+**Works Cited**
+
+1. “L-system,” *Wikipedia*, accessed 19 Oct 2016. https://en.wikipedia.org/wiki/L-system
+
+2. Adam Runions, Brendan Lane, and Przemyslaw Prusinkiewicz, “Modeling Trees with a Space Colonization Algorithm,” Eurographics Workshop on Natural Phenomena (2007). http://algorithmicbotany.org/papers/colonization.egwnp2007.pdf
+
+Design
+==================================
+
+![Call diagram](calldiagram.jpg)
+
+**Major functions**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ makeLTree            | Creates Meshes for a tree and the leaves of the tree, constructs an LGenerator to create the skeleton of the tree and write the skeleton to an OBJ file, handles logic of passing the right phenotype and branch callback function based on chosen parameters in GUI
+ generateOrchard      | Generates and displays a Scene.Any file of multiple fruit trees based on the parameters in GUI
+ customOrchard        | Generates the orchard used for our quality image
+ generateForest       | Generates the forest used for our quality image
+
+
+Justification of design
+
+
+Correctness Results
+==================================
+Correctness results here
+
+
+Quality Results
+==================================
+![Quality results](branchesofacurvedtree.png)
+
+
+
+Evocative Result
+==================================
+![Evocative result.](evocativescene.png)
+
+
+Schedule
+==================================
+
+Task                  | Description                                                |Date           | 
+ ---------------------|------------------------------------------------------------|--------------:|
+blah blah blah        | blah                                                       | blah!         |
+
+   
+Change Log
+==================================
+1. :-)
+
+
+<!-- Markdeep: -->
+<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace;}</style><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
