@@ -26,12 +26,6 @@
   <ItemGroup>
     <None Include="journal\journal.md.html" />
     <None Include="doc-files\report.md.html" />
-    <None Include="data-files\shader\raymarcher.pix">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="data-files\shader\raymarcher-correctness.pix">
-      <Filter>Shader Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h">
