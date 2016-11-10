@@ -161,8 +161,6 @@
     <ClCompile Include="source\App.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="data-files\shader\raymarcher-correctness.pix" />
-    <None Include="data-files\shader\raymarcher.pix" />
     <None Include="doc-files\report.md.html" />
     <None Include="journal\journal.md.html" />
   </ItemGroup>

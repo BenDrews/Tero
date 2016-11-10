@@ -9,5 +9,4 @@ public:
 
     virtual void onInit() override;
 
-    virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfaceArray) override;
 };
