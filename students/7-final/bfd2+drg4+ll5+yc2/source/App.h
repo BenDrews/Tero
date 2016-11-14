@@ -20,4 +20,5 @@ protected:
 public:
     App(const GApp::Settings& settings = GApp::Settings());
     virtual void onInit() override;
+	virtual void onAfterLoadScene() override;
 };
