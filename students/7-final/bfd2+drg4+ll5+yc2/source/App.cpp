@@ -48,74 +48,98 @@ void App::onInit() {
 
     loadScene("G3D Triangle");
 
-	shared_ptr<ArticulatedModel> model = ArticulatedModel::createEmpty("voxels");
-	ArticulatedModel::Part*     part      = model->addPart("vox");
-	ArticulatedModel::Geometry* geometry  = model->addGeometry("geom");
-	ArticulatedModel::Mesh*     mesh      = model->addMesh("mesh", part, geometry);
-	// Create the vertices
-//	for (int i = 0; i < 9; ++i) {
-	    CPUVertexArray::Vertex& v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(0,0,0);													//0
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(10,0,0);												//1
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(10,0,-10);												//2
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(10,10,-10);												//3
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(0,10,-10);												//4
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(0,10,0);												//5
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(10,10,0);												//6
-	    v = geometry->cpuVertexArray.vertex.next();
-	    v.position = Point3(0,0,-10);												//7
-//	}
-	// Create the indices
-//	for (int i = 0; i < 50; ++i) {
-	    mesh->cpuIndexArray.append(0);
-	    mesh->cpuIndexArray.append(1);
-	    mesh->cpuIndexArray.append(6);
-	    mesh->cpuIndexArray.append(5);
+	shared_ptr<Model> voxModel = initializeModel();
+	shared_ptr<Scene> currentScene = scene();
+	currentScene->insert(voxModel);
+	ModelTable modelTable = currentScene->modelTable();
 
-	    mesh->cpuIndexArray.append(1);
-	    mesh->cpuIndexArray.append(2);
-	    mesh->cpuIndexArray.append(3);
-	    mesh->cpuIndexArray.append(6);
 
-	    mesh->cpuIndexArray.append(0);
-	    mesh->cpuIndexArray.append(7);
-	    mesh->cpuIndexArray.append(2);
-	    mesh->cpuIndexArray.append(1);
+	// used this version of create because i didn't know how to make an AnyTableReader
+	const shared_ptr<VisibleEntity>& entity = VisibleEntity::create(
+		"voxelEntity",													// name
+		currentScene.get(),												// scene
+		voxModel,														// model
+		CFrame(),														// frame
+		shared_ptr<Entity::Track>(),									// track
+		true,															// canChange
+		false,															// shouldBeSaved
+		true,															// visible
+		Surface::ExpressiveLightScatteringProperties(),
+		ArticulatedModel::PoseSpline(),
+		ArticulatedModel::Pose()
+	);
 
-	    mesh->cpuIndexArray.append(7);
-	    mesh->cpuIndexArray.append(4);
-	    mesh->cpuIndexArray.append(3);
-	    mesh->cpuIndexArray.append(2);
-
-	    mesh->cpuIndexArray.append(4);
-	    mesh->cpuIndexArray.append(7);
-	    mesh->cpuIndexArray.append(0);
-	    mesh->cpuIndexArray.append(5);
-
-	    mesh->cpuIndexArray.append(3);
-	    mesh->cpuIndexArray.append(4);
-	    mesh->cpuIndexArray.append(5);
-	    mesh->cpuIndexArray.append(6);
-
-		mesh->clearIndexStream();
-//	}
-	// Tell Articulated model to generate normals automatically
-	model->cleanGeometry();
-
-	shared_ptr<Scene> scene = GApp::scene();
-	scene->insert(model);
+    currentScene->insert(entity);
 }
 
 
-void onAfterLoadScene(const Any& any, const String& sceneName) {
-	
+// could be that the model isn't showing up because i did the vertex indexing wrong,
+// or because i assigned the material wrong - i just copied and pasted the material code from
+// G3D10/samples/entity/source/demoScene.cpp
+shared_ptr<Model> App::initializeModel() {
 
+    const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty("voxelModel");
+
+    ArticulatedModel::Part*     part      = model->addPart("root");
+    ArticulatedModel::Geometry* geometry  = model->addGeometry("geom");
+    ArticulatedModel::Mesh*     mesh      = model->addMesh("mesh", part, geometry);
+
+    // Assign a material
+    mesh->material = UniversalMaterial::create(
+        PARSE_ANY(
+        UniversalMaterial::Specification {
+            lambertian = Texture::Specification {
+                filename = "image/checker-32x32-1024x1024.png";
+                // Orange
+                encoding = Color3(1.0, 0.7, 0.15);
+            };
+
+            glossy     = Color4(Color3(0.01), 0.2);
+        }));
+
+	// Fill vertex and index arrays
+	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	Array<int>& indexArray = mesh->cpuIndexArray;
+
+//	for (int i = 0; i < 9; ++i) { 
+		CPUVertexArray::Vertex& v = vertexArray.next();
+	    v.position = Point3(0,0,0);							//0
+	    v = vertexArray.next();
+	    v.position = Point3(10,0,0);						//1
+	    v = vertexArray.next();
+	    v.position = Point3(10,0,-10);						//2
+	    v = vertexArray.next();
+	    v.position = Point3(10,10,-10);						//3
+	    v = vertexArray.next();
+	    v.position = Point3(0,10,-10);						//4
+	    v = vertexArray.next();
+	    v.position = Point3(0,10,0);						//5
+	    v = vertexArray.next();
+	    v.position = Point3(10,10,0);						//6
+	    v = vertexArray.next();
+	    v.position = Point3(0,0,-10);						//7
+//	}
+	// Create the indices
+//	for (int i = 0; i < 50; ++i) {
+	    mesh->cpuIndexArray.append(0, 1, 6, 5);
+
+		mesh->cpuIndexArray.append(1, 2, 3, 6);
+
+	    mesh->cpuIndexArray.append(0, 7, 2, 1);
+
+	    mesh->cpuIndexArray.append(7, 4, 3, 2);
+
+	    mesh->cpuIndexArray.append(4, 7, 0, 5);
+
+	    mesh->cpuIndexArray.append(3, 4, 5, 6);
+//	}
+
+	// Tell model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+    geometrySettings.allowVertexMerging = false;
+    model->cleanGeometry(geometrySettings);
+
+	return model;
 }
 
 

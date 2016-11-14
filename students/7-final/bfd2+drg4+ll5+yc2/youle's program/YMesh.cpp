@@ -1,6 +1,6 @@
 #pragma once
-#include "App.h"
-#include "Mesh.h"
+#include "YApp.h"
+#include "YMesh.h"
 
 /**starter function that takes in a ParseVOX and calls other methods to save it as an OBJ file.*/
 void Mesh::initFromVoxels(const ParseVOX& voxelGrid, String m_outputName){

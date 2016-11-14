@@ -1,6 +1,6 @@
 /** \file App.cpp */
-#include "App.h"
-#include "Mesh.h"
+#include "YApp.h"
+#include "YMesh.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -132,23 +132,12 @@ void App::makeGUI() {
     debugWindow->setVisible(true);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-
-
-
-
-
-
-
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 
     shared_ptr<GuiWindow> window = GuiWindow::create("Controls", debugWindow->theme(), Rect2D::xywh(1025, 175, 0, 0), GuiTheme::TOOL_WINDOW_STYLE);
     GuiPane* pane = window->pane();
     pane->addLabel("Use WASD keys + right mouse to move");
-    //Array<String> resolution;
-    //resolution.append("1x1", "320x200", "640x400");
-    //pane->addDropDownList("resolution", resolution, &m_indexPointer);
-
    
     pane->addTextBox("Output Name", &m_outputName);
     pane->beginRow(); {
@@ -157,7 +146,6 @@ void App::makeGUI() {
             FileDialog::getFilename(m_filesource, "vox", false);
         })->setWidth(30);
     } pane->endRow();
-    //pane->addNumberBox("Rays per pixel", &m_raysPerPixel, "", GuiTheme::LINEAR_SLIDER, 0, 2048, 1);
     pane->addButton("Generate", [this]() {
         try {
             message("loading");

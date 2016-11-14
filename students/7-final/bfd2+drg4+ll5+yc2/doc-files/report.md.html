@@ -5,11 +5,13 @@
             Lylia Li (ll5@williams.edu)
             Youle Chen (yc2@williams.edu)
 
+**DRAFT TO DO: topic overview, call diagram, correctness results? add any changes to design section if I missed anything, and fill in schedule**
+
 ![Image that sells our project](evocativescene.png)
 
 Introduction 
 ==================================
-Our program allows users to edit a scene in real time by adding or removing voxels to the scene. Users can choose from a number of differently colored or textured voxels to add to the scene. Additionally, users can apply interesting transformations to the voxels in the scene, like making craters, raising mountains, and digging caves. 
+Our program allows users to edit a scene in real time by adding or removing voxels to the scene. Users can choose from a number of differently colored or textured voxels to add to the scene. Also, users are able to change the color/textures of existing voxels in the scene. Finally, users can apply interesting transformations to the voxels in the scene, like making craters, raising mountains, and digging caves. The program is compatible with virtual reality headsets and controlers, and the user can move around in the scene they created.
 
 Specification
 ==================================
@@ -65,14 +67,13 @@ Design
 
 ![Call diagram](calldiagram.jpg)
 
-**Major functions**
+**Major functions of App**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- makeLTree            | Creates Meshes for a tree and the leaves of the tree, constructs an LGenerator to create the skeleton of the tree and write the skeleton to an OBJ file, handles logic of passing the right phenotype and branch callback function based on chosen parameters in GUI
- generateOrchard      | Generates and displays a Scene.Any file of multiple fruit trees based on the parameters in GUI
- customOrchard        | Generates the orchard used for our quality image
- generateForest       | Generates the forest used for our quality image
-
+ initializeModel      | Initializes an ArticulatedModel that will be edited at runtime when user input is received
+ addVoxel             | Based on position and type of voxel received from user input, uses m_voxToProp to add a voxel to the scene by modifying the main ArticulatedModel, and updates m_posToVox
+ removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates m_posToVox
+ paintVoxel           | Based on position and type of voxel received from user input, uses m_posToVox to locate an existing voxel in the scene and uses m_voxToProp to change the texture/color of the selected voxel
 
 Justification of design
 
@@ -114,9 +115,10 @@ Evocative Result
 Schedule
 ==================================
 
-Task                  | Description                                                |Date           | 
- ---------------------|------------------------------------------------------------|--------------:|
-blah blah blah        | blah                                                       | blah!         |
+ Task                 | Description                                                | Date          | 
+----------------------|------------------------------------------------------------|--------------:|
+ ArticulatedModel     | Get an ArticulatedModel to show up in the scene, be able to modify it at runtime (Ben, Lylia) | 11/14 |
+ VR Controls          | Learn about how VR controls work and how to get inputs from VR controllers (Diego, Youle) | 11/15 |
 
    
 Change Log
