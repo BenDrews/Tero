@@ -107,15 +107,15 @@ void App::onInit() {
 //	}
 	// Tell Articulated model to generate normals automatically
 	model->cleanGeometry();
+
+	shared_ptr<Scene> scene = GApp::scene();
+	scene->insert(model);
+}
+
+
+void onAfterLoadScene(const Any& any, const String& sceneName) {
 	
 
-
-	shared_ptr<Entity> test = VisibleEntity::create(const String& name,
-												    Scene* scene,
-													AnyTableReader & 	propertyTable,
-													const ModelTable & 	modelTable,
-													const Scene::LoadOptions & 	options 
-	);
 }
 
 
@@ -123,8 +123,8 @@ void App::makeGUI() {
     // Initialize the developer HUD
     createDeveloperHUD();
 
-    debugWindow->setVisible(true);
+//    debugWindow->setVisible(true);
     developerWindow->videoRecordDialog->setEnabled(true);
  
-    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+//    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
