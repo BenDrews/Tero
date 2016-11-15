@@ -47,41 +47,36 @@ void App::onInit() {
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
     loadScene("G3D Whiteroom");
+    
+    addVoxelModelToScene();
 
-	shared_ptr<Model> voxModel = initializeModel();
-	shared_ptr<Scene> currentScene = scene();
-	currentScene->insert(voxModel);
-	ModelTable modelTable = currentScene->modelTable();
-    modelTable.set("voxelModel",voxModel);
-
-
-	// used this version of create because i didn't know how to make an AnyTableReader
-	const shared_ptr<VisibleEntity>& entity = VisibleEntity::create(
-		"voxelEntity",													// name
-		currentScene.get(),												// scene
-		voxModel,														// model
-		CFrame(),														// frame
-		shared_ptr<Entity::Track>(),									// track
-		true,															// canChange
-		true,															// shouldBeSaved
-		true,															// visible
-		Surface::ExpressiveLightScatteringProperties(),
-		ArticulatedModel::PoseSpline(),
-		ArticulatedModel::Pose()
-	);
-
-    currentScene->insert(entity);
 }
 
+void App::initializeScene() {
+    m_posToVox = Table<Point3int32, int>();
+
+    m_voxToProp = Table<int, Any>();
+
+    for(int x = -50; x < 50; ++x) {
+        for(int z = -50; z < 50; ++z) {
+            m_posToVox.set(Point3int32(x, 0, z), 0);
+        }
+    }
+
+    for(int i = 0; i < voxTypeCount; ++i) {
+        m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
+    }
+
+    initializeModel();
+
+}
 
 // Create a cube model. Code pulled from sample/proceduralGeometry
 shared_ptr<Model> App::initializeModel() {
 
-    const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty("voxelModel");
-
-    ArticulatedModel::Part*     part      = model->addPart("root");
-    ArticulatedModel::Geometry* geometry  = model->addGeometry("geom");
-    ArticulatedModel::Mesh*     mesh      = model->addMesh("mesh", part, geometry);
+    ArticulatedModel::Part*     part      = m_model->addPart("root");
+    ArticulatedModel::Geometry* geometry  = m_model->addGeometry("geom");
+    ArticulatedModel::Mesh*     mesh      = m_model->addMesh("mesh", part, geometry);
 
     // Assign a material
     mesh->material = UniversalMaterial::create(
@@ -149,12 +144,12 @@ shared_ptr<Model> App::initializeModel() {
         mesh->cpuIndexArray.append(3, 4, 5, 5, 6, 3);
 //	}
 
-	// Tell model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
+	// Tell m_model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
     geometrySettings.allowVertexMerging = false;
-    model->cleanGeometry(geometrySettings);
+    m_model->cleanGeometry(geometrySettings);
 
-	return model;
+	return m_model;
 }
 
 void App::addVoxelModelToScene() {
