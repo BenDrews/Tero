@@ -73,6 +73,7 @@ void App::initializeScene() {
 
     m_voxToProp = Table<int, Any>();
 
+	// Initialize ground
     for(int x = -50; x < 50; ++x) {
         for(int z = -50; z < 50; ++z) {
             m_posToVox.set(Point3int32(x, 0, z), 0);
@@ -94,13 +95,12 @@ void App::initializeMaterials() {
 	for (int i = 0; i < voxTypeCount; ++i) {
 		Any any = m_voxToProp.get(i);
 
-
 		// ???????????????????????????????????????????????????????????????????
-		m_voxToMat.set(i,UniversalMaterial::create(
+		m_voxToMat.set(i, UniversalMaterial::create(
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
-					filename = format("data-files/texture/%s", any[mat]);
+					filename = format("data-files/texture/%s", any[material]);
 				};
 				}
 			)
@@ -149,7 +149,7 @@ void App::addVoxelModelToScene() {
     voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
 }
 
-// Input = lower left hand, front corner of vox
+// Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
 	m_posToVox.set(input, type);
 	Point3 pos = input * 0.5;
@@ -192,32 +192,29 @@ void App::addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, Arti
 	// Fill vertex and index arrays
 	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
 	Array<int>& indexArray = mesh->cpuIndexArray;
+	int index = vertexArray.size();
 
     CPUVertexArray::Vertex& a = vertexArray.next();
 	a.position = pos + normal * 0.5f + u * 0.5f - v * 0.5f;
-	int indexA = vertexArray.findIndex(a);
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
 	b.position = pos + normal * 0.5f + u * 0.5f + v * 0.5f;
-	int indexB = vertexArray.findIndex(b);
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
 	c.position = pos + normal * 0.5f - u * 0.5f + v * 0.5f;
-	int indexC = vertexArray.findIndex(c);
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
 	d.position = pos + normal * 0.5f - u * 0.5f - v * 0.5f;
-	int indexD = vertexArray.findIndex(d);
 
 	// If positive, add counterclockwise   ??
 	if (sign > 0.0f) {
-		mesh->cpuIndexArray.append(indexA, indexB, indexC);
-		mesh->cpuIndexArray.append(indexA, indexC, indexD);
+		mesh->cpuIndexArray.append(index, index + 1, index + 2);
+		mesh->cpuIndexArray.append(index, index + 2, index + 3);
     }
 	// If negative, add clockwise         ??
 	else {
-		mesh->cpuIndexArray.append(indexA, indexD, indexC);
-		mesh->cpuIndexArray.append(indexA, indexC, indexB);
+		mesh->cpuIndexArray.append(index, index + 3, index + 2);
+		mesh->cpuIndexArray.append(index, index + 3, index + 1);
     }
 
 }
