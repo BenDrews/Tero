@@ -8,8 +8,6 @@
 #include <G3D/G3DAll.h>
 #include <GLG3DVR/VRApp.h>
 
-
-
 typedef 
     //VRApp 
     GApp
@@ -43,5 +41,8 @@ public:
     App(const super::Settings& settings = super::Settings());
     virtual void onInit() override;
 	shared_ptr<Model> initializeModel();
-    void App::addVoxelModelToScene();
+    void addVoxelModelToScene();
+
+	void addVoxel(Point3int32 input, int type);
+	void removeVoxel(Point3int32 input);
 };
