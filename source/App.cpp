@@ -162,42 +162,44 @@ void App::addVoxelModelToScene() {
 // Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
 	m_posToVox.set(input, type);
-	Point3 pos = input * 0.5;
 
     ArticulatedModel::Geometry* geometry  = m_model->addGeometry(format("geom%d,%d,%d", input.x, input.y, input.z));
     ArticulatedModel::Mesh*     mesh      = m_model->addMesh(format("mesh%d,%d,%d", input.x, input.y, input.z), m_model->part("root"), geometry);
 
 	// Check each position adjacent to voxel, and if nothing is there, add a face
     if ( !m_posToVox.containsKey(input + Vector3int32(1,0,0)) ) {
-        addFace(Point3(pos.x + voxelRes, pos.y, pos.z), Vector3int32(1,0,0), Vector3::X_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(1,0,0), Vector3::X_AXIS, type, geometry, mesh);
     }
     if ( !m_posToVox.containsKey(input + Vector3int32(-1,0,0)) ) {
-        addFace(Point3(pos.x, pos.y, pos.z - voxelRes), Vector3int32(-1,0,0), Vector3::X_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(-1,0,0), Vector3::X_AXIS, type, geometry, mesh);
     }
     if ( !m_posToVox.containsKey(input + Vector3int32(0,1,0)) ) {
-        addFace(Point3(pos.x, pos.y + voxelRes, pos.z), Vector3int32(0,1,0), Vector3::Y_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(0,1,0), Vector3::Y_AXIS, type, geometry, mesh);
     }
     if ( !m_posToVox.containsKey(input + Vector3int32(0,-1,0)) ) {
-        addFace(Point3(pos.x, pos.y, pos.z - voxelRes), Vector3int32(0,-1,0), Vector3::Y_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(0,-1,0), Vector3::Y_AXIS, type, geometry, mesh);
     }
     if ( !m_posToVox.containsKey(input + Vector3int32(0,0,1)) ) {
-        addFace(pos, Vector3int32(0,0,1), Vector3::Z_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(0,0,1), Vector3::Z_AXIS, type, geometry, mesh);
     }
     if ( !m_posToVox.containsKey(input + Vector3int32(0,0,-1)) ) {
-        addFace(Point3(pos.x + voxelRes, pos.y, pos.z - voxelRes), Vector3int32(0,0,-1), Vector3::Z_AXIS, type, geometry, mesh);
+        addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type, geometry, mesh);
     }
 
 }
 
-// Pos = lower left hand vertex of the face
-void App::addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh) {
+
+void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh) {
 	mesh->material = m_voxToMat.get(type);
+
+	// Center of face we are adding
+	Point3 center = input + normal * 0.5f;
 
     float sign = normal[axis];
     Vector3 u = Vector3::zero();
     Vector3 v = Vector3::zero();
-    u[(axis + 1) % 3] = voxelRes;
-    v[(axis + 2) % 3] = voxelRes;
+    u[(axis + 1) % 3] = 1;
+    v[(axis + 2) % 3] = 1;
 
 	// Fill vertex and index arrays
 	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
@@ -207,16 +209,16 @@ void App::addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, Arti
 	int index = vertexArray.size();
 
     CPUVertexArray::Vertex& a = vertexArray.next();
-	a.position = pos + normal * 0.5f + u * 0.5f - v * 0.5f;
+	a.position = (center + u * 0.5f - v * 0.5f) * voxelRes;
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
-	b.position = pos + normal * 0.5f + u * 0.5f + v * 0.5f;
+	b.position = (center + u * 0.5f + v * 0.5f) * voxelRes;
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
-	c.position = pos + normal * 0.5f - u * 0.5f + v * 0.5f;
+	c.position = (center - u * 0.5f + v * 0.5f) * voxelRes;
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
-	d.position = pos + normal * 0.5f - u * 0.5f - v * 0.5f;
+	d.position = (center - u * 0.5f - v * 0.5f) * voxelRes;
 
 	// If positive, add counterclockwise   ??
 	if (sign > 0.0f) {
