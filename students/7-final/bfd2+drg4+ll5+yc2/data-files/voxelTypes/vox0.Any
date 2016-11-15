@@ -1,0 +1,5 @@
+{
+    material = "grass.png";
+    rounded = false;
+
+}
