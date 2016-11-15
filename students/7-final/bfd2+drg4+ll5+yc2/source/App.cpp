@@ -44,10 +44,20 @@ void App::makeGUI() {
     // Initialize the developer HUD
     createDeveloperHUD();
 
-//    debugWindow->setVisible(true);
+    debugWindow->setVisible(true);
     developerWindow->videoRecordDialog->setEnabled(true);
  
-//    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+
+    debugPane->beginRow(); {
+        GuiPane* containerPane = debugPane->addPane();
+	    
+        containerPane->addButton("Add voxel", [this](){
+			addVoxel(Point3int32(1,1,1), 0);
+	    });
+		containerPane->pack();
+	}
+
 }
 
 // Called before the application loop begins.  Load data here and
@@ -94,19 +104,19 @@ void App::initializeMaterials() {
 
 	for (int i = 0; i < voxTypeCount; ++i) {
 		Any any = m_voxToProp.get(i);
+		String materialName = any["material"];
 
 		// ???????????????????????????????????????????????????????????????????
 		m_voxToMat.set(i, UniversalMaterial::create(
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
-					filename = format("data-files/texture/%s", any[material]);
+					filename = "data-files/texture/grass.png";
 				};
 				}
 			)
 		));
 	}
-
 }
 
 // Create a cube model. Code pulled from sample/proceduralGeometry
@@ -143,10 +153,10 @@ void App::addVoxelModelToScene() {
             ));
     } else {
         // Change the model on the existing voxel entity
-        dynamic_pointer_cast<VisibleEntity>(voxel)->setModel(voxelModel);
+        dynamic_pointer_cast<VisibleEntity>(voxel)->setModel(m_model);
     }
 
-    voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
+    //voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
 }
 
 // Input = Center of vox
@@ -191,6 +201,8 @@ void App::addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, Arti
 
 	// Fill vertex and index arrays
 	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	//AttributeArray<Vector3> normalArray = geometry->gpuNormalArray;
+
 	Array<int>& indexArray = mesh->cpuIndexArray;
 	int index = vertexArray.size();
 
@@ -217,6 +229,14 @@ void App::addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, Arti
 		mesh->cpuIndexArray.append(index, index + 3, index + 1);
     }
 
+	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+    geometrySettings.allowVertexMerging = false;
+    m_model->cleanGeometry(geometrySettings);
+
+	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	mesh->clearIndexStream();
+
 }
 
 void App::removeVoxel(Point3int32 input) {
@@ -226,76 +246,7 @@ void App::removeVoxel(Point3int32 input) {
 
 
 shared_ptr<Model> App::initializeModel() {
-
     ArticulatedModel::Part*     part      = m_model->addPart("root");
-    ArticulatedModel::Geometry* geometry  = m_model->addGeometry("geom");
-    ArticulatedModel::Mesh*     mesh      = m_model->addMesh("mesh", part, geometry);
-
-    // Assign a material
-    mesh->material = UniversalMaterial::create(
-        PARSE_ANY(
-        UniversalMaterial::Specification {
-            lambertian = Texture::Specification {
-                filename = "image/checker-32x32-1024x1024.png";
-                // Orange
-                encoding = Color3(1.0, 0.7, 0.15);
-            };
-
-            glossy     = Color4(Color3(0.01), 0.2);
-        }));
-
-	// Fill vertex and index arrays
-	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	Array<int>& indexArray = mesh->cpuIndexArray;
-
-//	for (int i = 0; i < 9; ++i) { 
-        CPUVertexArray::Vertex& a = vertexArray.next();
-	    a.position = Point3(0,0,0);
-
-
-	    CPUVertexArray::Vertex& b = vertexArray.next();
-	    b.position = Point3(10,0,0);						//1
-
-
-	    CPUVertexArray::Vertex& c = vertexArray.next();
-	    c.position = Point3(10,0,-10);						//2
-
-
-	    CPUVertexArray::Vertex& d = vertexArray.next();
-	    d.position = Point3(10,10,-10);						//3
-  
-
-	    CPUVertexArray::Vertex& e = vertexArray.next();
-	    e.position = Point3(0,10,-10);						//4
-
-
-	    CPUVertexArray::Vertex& f = vertexArray.next();
-	    f.position = Point3(0,10,0);						//5
-  
-
-	    CPUVertexArray::Vertex& g = vertexArray.next();
-	    g.position = Point3(10,10,0);						//6
-
-
-	    CPUVertexArray::Vertex& h = vertexArray.next();
-	    h.position = Point3(0,0,-10);						//7
-
-
-//	}
-	// Create the indices
-//	for (int i = 0; i < 50; ++i) {
-	    mesh->cpuIndexArray.append(0, 1, 6, 6, 5, 0);
-
-		mesh->cpuIndexArray.append(1, 2, 3, 3, 6, 1);
-
-	    mesh->cpuIndexArray.append(0, 7, 2, 2, 1, 0);
-
-	    mesh->cpuIndexArray.append(7, 4, 3, 3, 2, 7);
-
-	    mesh->cpuIndexArray.append(4, 7, 0, 0, 5, 4);
-
-        mesh->cpuIndexArray.append(3, 4, 5, 5, 6, 3);
-//	}
 
 	// Tell m_model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
