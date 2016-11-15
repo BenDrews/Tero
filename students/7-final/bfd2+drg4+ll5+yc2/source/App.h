@@ -24,7 +24,7 @@ protected:
 
     void initializeScene();
 
-    const float voxelRes = 0.5f;
+    const float voxelRes = 5.0f;
 
     const int voxTypeCount = 1;
   
