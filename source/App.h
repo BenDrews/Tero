@@ -35,19 +35,20 @@ public:
 	/** Maps type of voxel to Any files containing its specific properties */
 	Table<int, Any> m_voxToProp;
 
-    /** Stores the scene model**/
+	/** Maps type of voxel to Material of that voxel */
+	Table<int, shared_ptr<UniversalMaterial>> m_voxToMat;
+
+    /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");;
 
     App(const super::Settings& settings = super::Settings());
     virtual void onInit() override;
 	shared_ptr<Model> initializeModel();
+	void initializeMaterials();
     void addVoxelModelToScene();
 
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
-    void iterateThroughTable();
-    void addFace(Point3int32 p,Vector3 normal,int type);
-
-
+    void addFace(Point3int32 input, Vector3 normal, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
 
 };
