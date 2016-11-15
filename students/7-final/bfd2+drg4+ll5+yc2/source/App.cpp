@@ -83,12 +83,12 @@ void App::initializeScene() {
 
     m_voxToProp = Table<int, Any>();
 
-	// Initialize ground
-    for(int x = -50; x < 50; ++x) {
-        for(int z = -50; z < 50; ++z) {
-            m_posToVox.set(Point3int32(x, 0, z), 0);
-        }
-    }
+	//// Initialize ground
+ //   for(int x = -50; x < 50; ++x) {
+ //       for(int z = -50; z < 50; ++z) {
+ //           m_posToVox.set(Point3int32(x, 0, z), 0);
+ //       }
+ //   }
 
     for(int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -228,7 +228,7 @@ void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, Ar
 	// If negative, add clockwise         ??
 	else {
 		mesh->cpuIndexArray.append(index, index + 3, index + 2);
-		mesh->cpuIndexArray.append(index, index + 3, index + 1);
+		mesh->cpuIndexArray.append(index, index + 2, index + 1);
     }
 
 	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
