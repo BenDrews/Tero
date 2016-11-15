@@ -5,13 +5,24 @@
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
 
+2016-11-14: Implementing addVoxel (Lylia + Youle)
+=====================================================
+We reused Youle's code for adding voxel faces given the center of a voxel and the normal of the face.
+
+Given the center of a voxel in voxel space (where positions are all integers), addVoxel checks if there is already a voxel adjacent to it in every direction. For each direction, if there is no adjacent voxel, it adds a face in that direction.
+
+![Here, the centers of each face are not being calculated correctly.](firstAddVox.png)
+
+Then we had the addFace method take the center of the voxel and a normal, and using that, calculated where each vertex of the face should be.
+We add those vertices to the CPUVertexArray of our member ArticulatedModel, and then add the indices of those vertices to the CPUIndexArray.
+
+![Now all the faces are in the right place, but the indexing of the vertices of each face is not correct.](betterAddVoxel.png)
+
+![Using his voxel expertise, Youle fixed the indexing and we can successfully add a voxel to our scene!](bestAddVoxel.png)
+
 2016-11-14: Adding ArticulatedModel to scene (Lylia)
 =====================================================
-Worked on creating an ArticulatedModel and adding it to the scene as a VisibleEntity at runtime. I'm having trouble getting the model to actually show up, and I think possible issues could be:
- - The model doesn't have a material so it doesn't show up
- - The vertex indexing is wrong and all the faces are inside out (though I doubt this is the case)
- - Can't index faces as quads, need each face to be a tri in the mesh
-
+Worked on creating an ArticulatedModel and adding it to the scene as a VisibleEntity at runtime. I had trouble getting the model to actually show up, but we realized it was because when I was adding vertices to the CPUVertexArray, I kept rewriting the same single vertex instead of adding new vertices.
                    
 Placeholder Quality Images
 =====================================================

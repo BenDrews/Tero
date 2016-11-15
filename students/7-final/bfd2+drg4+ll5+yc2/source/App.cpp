@@ -220,12 +220,12 @@ void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, Ar
 	CPUVertexArray::Vertex& d = vertexArray.next();
 	d.position = (center - u * 0.5f - v * 0.5f) * voxelRes;
 
-	// If positive, add counterclockwise   ??
+	// If positive, add counterclockwise
 	if (sign > 0.0f) {
 		mesh->cpuIndexArray.append(index, index + 1, index + 2);
 		mesh->cpuIndexArray.append(index, index + 2, index + 3);
     }
-	// If negative, add clockwise         ??
+	// If negative, add clockwise
 	else {
 		mesh->cpuIndexArray.append(index, index + 3, index + 2);
 		mesh->cpuIndexArray.append(index, index + 2, index + 1);
