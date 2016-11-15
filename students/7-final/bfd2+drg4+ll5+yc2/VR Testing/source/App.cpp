@@ -11,11 +11,14 @@ int main(int argc, const char* argv[]) {
         initGLG3D(g3dSpec);
     }
 
-    VRApp::Settings settings(argc, argv);
-    settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-        VRApp::DebugMirrorMode::PRE_DISTORTION;
+    GApp::Settings settings(argc, argv);
 
-    settings.vr.disablePostEffectsIfTooSlow = false;
+    // VR CODE
+    //VRApp::Settings settings(argc, argv);
+    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
+    //
+    //settings.vr.disablePostEffectsIfTooSlow = false;
 
     settings.window.caption             = argv[0];
 
@@ -48,7 +51,7 @@ int main(int argc, const char* argv[]) {
 }
 
 
-App::App(const GApp::Settings& settings) : super(settings) {
+App::App(const super::Settings& settings) : super(settings) {
 }
 
 

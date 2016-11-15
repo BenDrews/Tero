@@ -8,21 +8,23 @@
 
 
 typedef 
-    VRApp 
-    //GApp
+    //VRApp 
+    GApp
     AppBase; 
 
 /** Application framework. */
 class App : public AppBase {
 protected:
-    typedef AppBase super;
+    
 
     /** Called from onInit */
     void makeGUI();
 
 public:
 
-    App(const GApp::Settings& settings = GApp::Settings());
+    typedef AppBase super;
+
+    App(const super::Settings& settings = super::Settings());
 
     virtual void onInit() override;
 
