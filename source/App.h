@@ -49,6 +49,6 @@ public:
 
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
-    void addFace(Point3int32 input, Vector3 normal, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
+    void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
 
 };
