@@ -46,7 +46,7 @@ void App::onInit() {
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
-    loadScene("G3D Triangle");
+    loadScene("G3D Whiteroom");
 
 	shared_ptr<Model> voxModel = initializeModel();
 	shared_ptr<Scene> currentScene = scene();
@@ -74,9 +74,7 @@ void App::onInit() {
 }
 
 
-// could be that the model isn't showing up because i did the vertex indexing wrong,
-// or because i assigned the material wrong - i just copied and pasted the material code from
-// G3D10/samples/entity/source/demoScene.cpp
+// Create a cube model. Code pulled from sample/proceduralGeometry
 shared_ptr<Model> App::initializeModel() {
 
     const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty("voxelModel");
@@ -157,6 +155,45 @@ shared_ptr<Model> App::initializeModel() {
     model->cleanGeometry(geometrySettings);
 
 	return model;
+}
+
+void App::addVoxelModelToScene() {
+    // Replace any existing voxel model. Models don't 
+    // have to be added to the model table to use them 
+    // with a VisibleEntity.
+    const shared_ptr<Model>& voxelModel = initializeModel();
+    if (scene()->modelTable().containsKey(voxelModel->name())) {
+        scene()->removeModel(voxelModel->name());
+    }
+    scene()->insert(voxelModel);
+
+    // Replace any existing voxel entity that has the wrong type
+    shared_ptr<Entity> voxel = scene()->entity("voxel");
+    if (notNull(voxel) && isNull(dynamic_pointer_cast<VisibleEntity>(voxel))) {
+        logPrintf("The scene contained an Entity named 'voxel' that was not a VisibleEntity\n");
+        scene()->remove(voxel);
+        voxel.reset();
+    }
+
+    if (isNull(voxel)) {
+        // There is no voxel entity in this scene, so make one.
+        //
+        // We could either explicitly instantiate a VisibleEntity or simply
+        // allow the Scene parser to construct one. The second approach
+        // has more consise syntax for this case, since we are using all constant
+        // values in the specification.
+        voxel = scene()->createEntity("voxel",
+            PARSE_ANY(
+                VisibleEntity {
+                    model = "voxelModel";
+                };
+            ));
+    } else {
+        // Change the model on the existing voxel entity
+        dynamic_pointer_cast<VisibleEntity>(voxel)->setModel(voxelModel);
+    }
+
+    voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
 }
 
 
