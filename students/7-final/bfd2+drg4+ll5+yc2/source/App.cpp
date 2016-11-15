@@ -74,7 +74,32 @@ void App::initializeScene() {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
-    initializeModel();
+    addVoxelModelToScene();
+
+}
+
+void App::addVoxel(Point3int32 input, int type) {
+	m_posToVox.set(input, type);
+
+	ArticulatedModel::Geometry* geometry  = m_model->addGeometry(format("geom%d,%d,%d", input.x, input.y, input.z));
+	ArticulatedModel::Mesh*     mesh      = m_model->addMesh(format("mesh%d,%d,%d", input.x, input.y, input.z), m_model->part("root"), geometry);
+
+	mesh->material = UniversalMaterial::create(
+		PARSE_ANY(
+			UniversalMaterial::Specification {
+            lambertian = Texture::Specification {
+                filename = "image/checker-32x32-1024x1024.png";
+                // Orange
+                encoding = Color3(1.0, 0.7, 0.15);
+            };
+
+            glossy     = Color4(Color3(0.01), 0.2);
+			}
+		)
+	);
+}
+
+void App::removeVoxel(Point3int32 input) {
 
 }
 
