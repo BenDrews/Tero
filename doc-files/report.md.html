@@ -5,8 +5,6 @@
             Lylia Li (ll5@williams.edu)
             Youle Chen (yc2@williams.edu)
 
-**DRAFT TO DO: topic overview, call diagram, correctness results? add any changes to design section if I missed anything, and fill in schedule**
-
 ![Image that sells our project](evocativescene.png)
 
 Introduction 
@@ -49,23 +47,23 @@ Specification
 
 **Program evaluation metric:**
 
-Evaluation here
+1. What is the maximum amount of voxels in the scene before noticable performance decay?
+
+2. What kinds of transformations can be applied to the scene?
+
+3. Are these transformations easily repeatable? (Are the controls understandable)
 
 Topic Overview 
 ==================================
-Topic info
+
+Voxel world editors have become quite common since the advent of Minecraft. For our project, we want to use this archetype and combine it with the VR experience. Our goal is to give users the impression that they are shaping the world with their motions. 
 
 
-**Works Cited**
-
-1. “L-system,” *Wikipedia*, accessed 19 Oct 2016. https://en.wikipedia.org/wiki/L-system
-
-2. Adam Runions, Brendan Lane, and Przemyslaw Prusinkiewicz, “Modeling Trees with a Space Colonization Algorithm,” Eurographics Workshop on Natural Phenomena (2007). http://algorithmicbotany.org/papers/colonization.egwnp2007.pdf
 
 Design
 ==================================
 
-![Call diagram](calldiagram.jpg)
+Our program will work by having a main controller which creates an ArticulatedModel representing the entire voxel world. We will use a hashmap from integer positions to voxel type ids and color masks to store a compact representation of this world. Along with a hashmap from voxel type ids to voxel properties, these data structures will be used to turn the user's input into the appropriate edits of the main ArticulatedModel.
 
 **Major functions of App**
  Function             | Description                                                
@@ -75,7 +73,6 @@ Design
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates m_posToVox
  paintVoxel           | Based on position and type of voxel received from user input, uses m_posToVox to locate an existing voxel in the scene and uses m_voxToProp to change the texture/color of the selected voxel
 
-Justification of design
 
 
 Correctness Results

@@ -24,4 +24,5 @@ public:
     App(const GApp::Settings& settings = GApp::Settings());
     virtual void onInit() override;
 	shared_ptr<Model> initializeModel();
+    void App::addVoxelModelToScene();
 };
