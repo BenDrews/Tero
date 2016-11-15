@@ -6,20 +6,10 @@
  */
 #pragma once
 #include <G3D/G3DAll.h>
-#include <GLG3DVR/VRApp.h>
-
-
-
-typedef 
-    //VRApp 
-    GApp
-    AppBase; 
 
 /** \brief Application framework. */
-class App : public AppBase {
+class App : public GApp {
 protected:
-
-    typedef AppBase super;
 
     /** Called from onInit */
     void makeGUI();
@@ -40,8 +30,12 @@ public:
     /** Stores the scene model**/
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");;
 
-    App(const super::Settings& settings = super::Settings());
+    App(const GApp::Settings& settings = GApp::Settings());
     virtual void onInit() override;
+
 	shared_ptr<Model> initializeModel();
-    void App::addVoxelModelToScene();
+    void addVoxelModelToScene();
+	void addVoxel(Point3int32 input, int type);
+	void removeVoxel(Point3int32 input);
+
 };
