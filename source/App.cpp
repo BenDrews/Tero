@@ -74,37 +74,35 @@ void App::initializeScene() {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
+	initializeMaterials();
+
     addVoxelModelToScene();
+
+}
+
+void App::initializeMaterials() {
+	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
+
+	for (int i = 0; i < voxTypeCount; ++i) {
+		Any any = m_voxToProp.get(i);
+
+		shared_ptr<UniversalMaterial> mat = UniversalMaterial::create(
+			PARSE_ANY(
+				UniversalMaterial::Specification {
+				lambertian = Texture::Specification {
+					filename = format("data-files/texture/%s", any[mat]);
+				};
+				}
+			)
+		);
+
+		m_voxToMat.set(i, mat);
+	}
 
 }
 
 void App::addVoxel(Point3int32 input, int type) {
 	m_posToVox.set(input, type);
-
-	ArticulatedModel::Geometry* geometry  = m_model->addGeometry(format("geom%d,%d,%d", input.x, input.y, input.z));
-	ArticulatedModel::Mesh*     mesh      = m_model->addMesh(format("mesh%d,%d,%d", input.x, input.y, input.z), m_model->part("root"), geometry);
-
-    Table<Point3int32, int>::Iterator ite = m_posToVox.begin();
-    Point3int32 position = ite.key();
-    int type = ite.value();
-    if(m_posToVox.containsKey(position+Vector3int32(1,0,0))){
-        addFace(position,Vector3int32(1,0,0),type);
-    }
-    if(m_posToVox.containsKey(position+Vector3int32(-1,0,0))){
-        addFace(position,Vector3int32(-1,0,0),type);
-    }
-    if(m_posToVox.containsKey(position+Vector3int32(0,1,0))){
-        addFace(position,Vector3int32(0,1,0),type);
-    }
-    if(m_posToVox.containsKey(position+Vector3int32(0,-1,0))){
-        addFace(position,Vector3int32(0,-1,0),type);
-    }
-    if(m_posToVox.containsKey(position+Vector3int32(0,0,1))){
-        addFace(position,Vector3int32(0,0,1),type);
-    }
-    if(m_posToVox.containsKey(position+Vector3int32(0,0,-1))){
-        addFace(position,Vector3int32(0,0,-1),type);
-    }
 
 }
 
@@ -245,5 +243,6 @@ void App::makeGUI() {
 
 void App::addFace(Point3int32 p,Vector3 normal,int type,ArticulatedModel::Mesh*     mesh){
 
+	mesh->material = m_voxToMat.get(type);
 
 }
