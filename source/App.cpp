@@ -52,6 +52,7 @@ void App::onInit() {
 	shared_ptr<Scene> currentScene = scene();
 	currentScene->insert(voxModel);
 	ModelTable modelTable = currentScene->modelTable();
+    modelTable.set("voxelModel",voxModel);
 
 
 	// used this version of create because i didn't know how to make an AnyTableReader
@@ -62,7 +63,7 @@ void App::onInit() {
 		CFrame(),														// frame
 		shared_ptr<Entity::Track>(),									// track
 		true,															// canChange
-		false,															// shouldBeSaved
+		true,															// shouldBeSaved
 		true,															// visible
 		Surface::ExpressiveLightScatteringProperties(),
 		ArticulatedModel::PoseSpline(),
@@ -102,36 +103,52 @@ shared_ptr<Model> App::initializeModel() {
 	Array<int>& indexArray = mesh->cpuIndexArray;
 
 //	for (int i = 0; i < 9; ++i) { 
-		CPUVertexArray::Vertex& v = vertexArray.next();
-	    v.position = Point3(0,0,0);							//0
-	    v = vertexArray.next();
-	    v.position = Point3(10,0,0);						//1
-	    v = vertexArray.next();
-	    v.position = Point3(10,0,-10);						//2
-	    v = vertexArray.next();
-	    v.position = Point3(10,10,-10);						//3
-	    v = vertexArray.next();
-	    v.position = Point3(0,10,-10);						//4
-	    v = vertexArray.next();
-	    v.position = Point3(0,10,0);						//5
-	    v = vertexArray.next();
-	    v.position = Point3(10,10,0);						//6
-	    v = vertexArray.next();
-	    v.position = Point3(0,0,-10);						//7
+        CPUVertexArray::Vertex& a = vertexArray.next();
+	    a.position = Point3(0,0,0);
+
+
+	    CPUVertexArray::Vertex& b = vertexArray.next();
+	    b.position = Point3(10,0,0);						//1
+
+
+	    CPUVertexArray::Vertex& c = vertexArray.next();
+	    c.position = Point3(10,0,-10);						//2
+
+
+	    CPUVertexArray::Vertex& d = vertexArray.next();
+	    d.position = Point3(10,10,-10);						//3
+  
+
+	    CPUVertexArray::Vertex& e = vertexArray.next();
+	    e.position = Point3(0,10,-10);						//4
+
+
+	    CPUVertexArray::Vertex& f = vertexArray.next();
+	    f.position = Point3(0,10,0);						//5
+  
+
+	    CPUVertexArray::Vertex& g = vertexArray.next();
+	    g.position = Point3(10,10,0);						//6
+
+
+	    CPUVertexArray::Vertex& h = vertexArray.next();
+	    h.position = Point3(0,0,-10);						//7
+
+
 //	}
 	// Create the indices
 //	for (int i = 0; i < 50; ++i) {
-	    mesh->cpuIndexArray.append(0, 1, 6, 5);
+	    mesh->cpuIndexArray.append(0, 1, 6, 6, 5, 0);
 
-		mesh->cpuIndexArray.append(1, 2, 3, 6);
+		mesh->cpuIndexArray.append(1, 2, 3, 3, 6, 1);
 
-	    mesh->cpuIndexArray.append(0, 7, 2, 1);
+	    mesh->cpuIndexArray.append(0, 7, 2, 2, 1, 0);
 
-	    mesh->cpuIndexArray.append(7, 4, 3, 2);
+	    mesh->cpuIndexArray.append(7, 4, 3, 3, 2, 7);
 
-	    mesh->cpuIndexArray.append(4, 7, 0, 5);
+	    mesh->cpuIndexArray.append(4, 7, 0, 0, 5, 4);
 
-	    mesh->cpuIndexArray.append(3, 4, 5, 6);
+        mesh->cpuIndexArray.append(3, 4, 5, 5, 6, 3);
 //	}
 
 	// Tell model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
