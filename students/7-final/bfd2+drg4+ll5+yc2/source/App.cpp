@@ -233,3 +233,40 @@ void App::makeGUI() {
  
 //    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
+
+
+
+
+
+
+void App::iterateThroughTable(){
+    Table<Point3int32, int>::Iterator ite = m_posToVox.begin();
+    Point3int32 position = ite.key();
+    int type = ite.value();
+    if(m_posToVox.containsKey(position+Vector3int32(1,0,0))){
+        addFace(position,Vector3int32(1,0,0),type);
+    }
+    if(m_posToVox.containsKey(position+Vector3int32(-1,0,0))){
+        addFace(position,Vector3int32(-1,0,0),type);
+    }
+    if(m_posToVox.containsKey(position+Vector3int32(0,1,0))){
+        addFace(position,Vector3int32(0,1,0),type);
+    }
+    if(m_posToVox.containsKey(position+Vector3int32(0,-1,0))){
+        addFace(position,Vector3int32(0,-1,0),type);
+    }
+    if(m_posToVox.containsKey(position+Vector3int32(0,0,1))){
+        addFace(position,Vector3int32(0,0,1),type);
+    }
+    if(m_posToVox.containsKey(position+Vector3int32(0,0,-1))){
+        addFace(position,Vector3int32(0,0,-1),type);
+    }
+    
+
+}
+
+
+void App::addFace(Point3int32 p,Vector3 normal,int type){
+
+
+}

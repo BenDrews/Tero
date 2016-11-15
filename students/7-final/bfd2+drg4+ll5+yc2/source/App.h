@@ -45,4 +45,9 @@ public:
 
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
+    void iterateThroughTable();
+    void addFace(Point3int32 p,Vector3 normal,int type);
+
+
+
 };
