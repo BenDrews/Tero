@@ -13,6 +13,13 @@ int main(int argc, const char* argv[]) {
 
     GApp::Settings settings(argc, argv);
 
+    // VR CODE
+    //VRApp::Settings settings(argc, argv);
+    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
+    //
+    //settings.vr.disablePostEffectsIfTooSlow = false;
+
     settings.window.caption             = argv[0];
     settings.window.width               = 1280; settings.window.height       = 720; settings.window.fullScreen          = false;
     settings.window.resizable           = ! settings.window.fullScreen;
@@ -31,14 +38,14 @@ int main(int argc, const char* argv[]) {
 }
 
 
-App::App(const GApp::Settings& settings) : GApp(settings) {
+App::App(const AppBase::Settings& settings) : super(settings) {
 }
 
 // Called before the application loop begins.  Load data here and
 // not in the constructor so that common exceptions will be
 // automatically caught.
 void App::onInit() {
-    GApp::onInit();
+    super::onInit();
     setFrameDuration(1.0f / 120.0f);
 
     showRenderingStats      = false;
