@@ -58,7 +58,7 @@ public:
 	Table<int, shared_ptr<UniversalMaterial>> m_voxToMat;
 
     /** Stores the scene model */
-    const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");;
+    const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
     /** Store the current voxel selection */
     Array<Point3int32> m_selection;
@@ -82,13 +82,11 @@ public:
     bool m_firstPersonMode = true;
     BoxShape crossHair;
 
-	shared_ptr<Model> initializeModel();
+	void initializeModel();
 	void initializeMaterials();
     void addVoxelModelToScene();
 
-	int normalToFace(Vector3 n);
 	void addVoxel(Point3int32 input, int type);
-	void removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
 	void removeVoxel(Point3int32 input);
     void addFace(Point3int32 pos, Vector3 normal, Vector3::Axis axis, int type);
     float maxDistGrid(Point3 pos, Vector3 dir);
@@ -96,5 +94,3 @@ public:
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
 };
-
-
