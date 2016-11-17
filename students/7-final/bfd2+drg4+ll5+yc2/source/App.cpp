@@ -56,7 +56,7 @@ void App::makeGUI() {
         GuiPane* containerPane = debugPane->addPane();
 	    
         containerPane->addButton("Add voxel", [this](){
-			addVoxel(Point3int32(1,1,1), 0);
+			addVoxel(Point3int32(0,0,-5), 0);
 	    });
 		containerPane->pack();
 	}
@@ -95,7 +95,7 @@ void App::initializeScene() {
  //   }
 
     for(int i = 0; i < voxTypeCount; ++i) {
-        m_voxToProp.set(i, Any::fromFile(format("voxelTypes/vox%d.Any", i)));
+        m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
 	initializeMaterials();
@@ -113,14 +113,14 @@ void App::initializeMaterials() {
 
 	for (int i = 0; i < voxTypeCount; ++i) {
 		Any any = m_voxToProp.get(i);
-		String materialName = any["material"];
+		String materialName = format("data-files/texture/", any["material"]);
 
 		// ???????????????????????????????????????????????????????????????????
 		m_voxToMat.set(i, UniversalMaterial::create(
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
-					filename = "texture/grass.png";
+					filename = "data-files/texture/grass.png";
 				};
 				}
 			)
@@ -172,34 +172,106 @@ void App::addVoxelModelToScene() {
 void App::addVoxel(Point3int32 input, int type) {
 	m_posToVox.set(input, type);
 
-    ArticulatedModel::Geometry* geometry  = m_model->addGeometry(format("geom%d,%d,%d", input.x, input.y, input.z));
-    ArticulatedModel::Mesh*     mesh      = m_model->addMesh(format("mesh%d,%d,%d", input.x, input.y, input.z), m_model->part("root"), geometry);
-
 	// Check each position adjacent to voxel, and if nothing is there, add a face
     if ( !m_posToVox.containsKey(input + Vector3int32(1,0,0)) ) {
-        addFace(input, Vector3int32(1,0,0), Vector3::X_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(1,0,0), Vector3::X_AXIS, type);
+    } else {
+		// Get the geometry and mesh of the voxel we want to remove
+		Point3 toRemove = input + Vector3int32(1,0,0);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,0", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,0", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
     if ( !m_posToVox.containsKey(input + Vector3int32(-1,0,0)) ) {
-        addFace(input, Vector3int32(-1,0,0), Vector3::X_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
+    } else {
+		Point3 toRemove = input + Vector3int32(-1,0,0);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,3", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,3", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
     if ( !m_posToVox.containsKey(input + Vector3int32(0,1,0)) ) {
-        addFace(input, Vector3int32(0,1,0), Vector3::Y_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
+    } else {
+		Point3 toRemove = input + Vector3int32(0,1,0);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,1", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,1", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
     if ( !m_posToVox.containsKey(input + Vector3int32(0,-1,0)) ) {
-        addFace(input, Vector3int32(0,-1,0), Vector3::Y_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
+    } else {
+		Point3 toRemove = input + Vector3int32(0,-1,0);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,4", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,4", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
     if ( !m_posToVox.containsKey(input + Vector3int32(0,0,1)) ) {
-        addFace(input, Vector3int32(0,0,1), Vector3::Z_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
+    } else {
+		Point3 toRemove = input + Vector3int32(0,0,1);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,2", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,2", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
     if ( !m_posToVox.containsKey(input + Vector3int32(0,0,-1)) ) {
-        addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type, geometry, mesh);
-    }
+        addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+    } else {
+		Point3 toRemove = input + Vector3int32(0,0,-1);
+		ArticulatedModel::Geometry* g = m_model->geometry(format("geom%d,%d,%d,5", toRemove.x, toRemove.y, toRemove.z));
+		ArticulatedModel::Mesh*     m = m_model->mesh(format("mesh%d,%d,%d,5", toRemove.x, toRemove.y, toRemove.z));
+		//removeFace(g, m);
+	}
 
 }
 
 
+int App::normalToFace(Vector3 n){
 
-void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh) {
+	int result;
+
+	if (n == Vector3(-1,0,0)) {
+		result = 0;
+	}
+	if (n == Vector3(1,0,0)) {
+		result = 3;	
+	}
+	if (n == Vector3(0,-1,0)) {
+		result = 1;	
+	}
+	if (n == Vector3(0,1,0)) {
+		result = 4;	
+	}
+	if (n == Vector3(0,0,-1)) {
+		result = 2;	
+	}
+	if (n == Vector3(0,0,1)) {
+		result = 5;	
+	}
+
+	return result;
+
+}
+
+
+void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type) {
+    ArticulatedModel::Geometry* geometry;
+    ArticulatedModel::Mesh*     mesh;
+
+	int face = normalToFace(normal);
+	String name = format("geom%d,%d,%d,%d", input.x, input.y, input.z, face);
+	
+	// If there is an existing geometry and mesh for this face, retrieve them
+	if ( notNull(m_model->geometry(name)) ) {
+		geometry = m_model->geometry(name);
+		mesh = m_model->mesh(format("mesh%d,%d,%d,%d", input.x, input.y, input.z, face));
+	}
+	// Otherwise add new geometries and meshes for this face to the model
+	else {
+		geometry = m_model->addGeometry(name);
+		mesh = m_model->addMesh(format("mesh%d,%d,%d,%d", input.x, input.y, input.z, face), m_model->part("root"), geometry);
+	}
+
 	mesh->material = m_voxToMat.get(type);
 
 	// Center of face we are adding
@@ -262,15 +334,99 @@ void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, Ar
     geometrySettings.allowVertexMerging = false;
     m_model->cleanGeometry(geometrySettings);
 
+	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	geometry->clearAttributeArrays();
+
 	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
 	mesh->clearIndexStream();
 
 }
 
 void App::removeVoxel(Point3int32 input) {
+	m_posToVox.remove(input);
+
+	ArticulatedModel::Geometry* geometry;
+    ArticulatedModel::Mesh*     mesh;
+
+	// Remove all of the faces of the input voxel
+	for (int i = 0; i < 6; ++i) {
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", input.x, input.y, input.z, i));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", input.x, input.y, input.z, i));
+		removeFace(geometry, mesh);
+	}
+
+	// Check each position adjacent to voxel, and if something is there, add back a face
+    if ( m_posToVox.containsKey(input + Vector3int32(1,0,0)) ) {
+		Point3int32 toAdd = input + Vector3int32(1,0,0);
+		Vector3 n = Vector3(-1,0,0);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::X_AXIS, m_posToVox.get(toAdd));
+    }
+	if ( m_posToVox.containsKey(input + Vector3int32(-1,0,0)) ) {
+		Point3int32 toAdd = input + Vector3int32(-1,0,0);
+		Vector3 n = Vector3(1,0,0);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::Y_AXIS, m_posToVox.get(toAdd));
+    }
+    if ( m_posToVox.containsKey(input + Vector3int32(0,1,0)) ) {
+		Point3int32 toAdd = input + Vector3int32(0,1,0);
+		Vector3 n = Vector3(0,-1,0);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::Y_AXIS, m_posToVox.get(toAdd));
+    }
+    if ( m_posToVox.containsKey(input + Vector3int32(0,-1,0)) ) {
+		Point3int32 toAdd = input + Vector3int32(0,-1,0);
+		Vector3 n = Vector3(0,1,0);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::Y_AXIS, m_posToVox.get(toAdd));
+    }
+    if ( m_posToVox.containsKey(input + Vector3int32(0,0,1)) ) {
+		Point3int32 toAdd = input + Vector3int32(0,0,1);
+		Vector3 n = Vector3(0,0,-1);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::Z_AXIS, m_posToVox.get(toAdd));
+    }
+    if ( m_posToVox.containsKey(input + Vector3int32(0,0,-1)) ) {
+		Point3int32 toAdd = input + Vector3int32(0,0,-1);
+		Vector3 n = Vector3(0,0,1);
+		int index = normalToFace(n);
+		geometry  = m_model->geometry(format("geom%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+		mesh      = m_model->mesh(format("mesh%d,%d,%d,%d", toAdd.x, toAdd.y, toAdd.z, index));
+        addFace(toAdd, n, Vector3::Z_AXIS, m_posToVox.get(toAdd));
+    }
 
 }
 
+void App::removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh) {
+	// Clear index array
+	Array<int>& indexArray = mesh->cpuIndexArray;
+	indexArray.fastClear();
+
+	// Clear vertex array
+	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	vertexArray.fastClear();
+
+	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+    geometrySettings.allowVertexMerging = false;
+    m_model->cleanGeometry(geometrySettings);
+
+	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	geometry->clearAttributeArrays();
+
+	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	mesh->clearIndexStream();
+}
 
 
 shared_ptr<Model> App::initializeModel() {
@@ -317,7 +473,7 @@ void App::movePlayer(SimTime deltaTime){
     player.headTilt = clamp(player.headTilt + player.desiredPitch, -80 * units::degrees(), 80 * units::degrees());
 }
 
-Point3int32 App::cameraIntersectVoxel(){
+Point3int32 App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ //make this work
     Point2 center = UserInput(this->window()).mouseXY();
     Ray cameraRay = activeCamera()->worldRay(center.x, center.y, renderDevice->viewport());
     
@@ -361,7 +517,14 @@ bool App::onEvent(const GEvent& event) {
         if( voxelHit != nothing){
             addVoxel( voxelHit, 0);
         }
+    }
+	else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r'))){ //R FOR REMOVE
+        Point3int32 voxelHit = cameraIntersectVoxel();
+        Point3int32 nothing;
+        if( voxelHit != nothing && 	m_posToVox.containsKey(voxelHit) ){
+            removeVoxel(voxelHit);
         }
+    }
 
 
 

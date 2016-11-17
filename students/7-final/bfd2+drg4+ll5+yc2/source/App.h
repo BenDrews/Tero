@@ -42,7 +42,7 @@ protected:
 
     void initializeScene();
 
-    const float voxelRes = 5.0f;
+    const float voxelRes = 0.5f;
 
     const int voxTypeCount = 1;
 
@@ -67,7 +67,7 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
-    Point3int32 cameraIntersectVoxel();
+    Point3int32 cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
 
 
     PlayerCamera player;
@@ -80,10 +80,11 @@ public:
 	void initializeMaterials();
     void addVoxelModelToScene();
 
+	int normalToFace(Vector3 n);
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
-    void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
-
+    void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type);
+	void removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
 };
 
 
