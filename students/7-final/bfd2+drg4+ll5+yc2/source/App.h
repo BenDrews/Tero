@@ -60,6 +60,12 @@ public:
     /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");;
 
+    /** Store the current voxel selection */
+    Array<Point3int32> m_selection;
+
+    /** Store marked position when mid transform */
+    Point3int32 m_currentMark;
+
     App(const super::Settings& settings = super::Settings());
     virtual void onInit() override;
     virtual bool onEvent(const GEvent& event) override;
@@ -67,7 +73,7 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
-    Point3int32 cameraIntersectVoxel();
+    void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
 
 
     PlayerCamera player;
@@ -82,10 +88,13 @@ public:
 
 	int normalToFace(Vector3 n);
 	void addVoxel(Point3int32 input, int type);
-	void removeVoxel(Point3int32 input);
-    void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type);
 	void removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
+	void removeVoxel(Point3int32 input);
+    void addFace(Point3int32 pos, Vector3 normal, Vector3::Axis axis, int type);
     float maxDistGrid(Point3 pos, Vector3 dir);
+
+    void selectCircle(Point3int32 center, int radius);
+    void App::elevateSelection(int delta);
 };
 
 
