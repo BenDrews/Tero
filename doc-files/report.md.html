@@ -1,6 +1,6 @@
 ﻿                  <meta charset="utf-8">
                   **Report: Final**
-            Ben Drews (bfd@williams.edu)
+            Ben Drews (bfd2@williams.edu)
             Diego Gonzalez (drg4@williams.edu)
             Lylia Li (ll5@williams.edu)
             Youle Chen (yc2@williams.edu)
@@ -16,6 +16,8 @@ Specification
 **Features of the program:**
 
 1. User is able to place and destroy a variety of different voxel types in real time
+    - Voxels are 0.5 x 0.5 x 0.5 m
+    - Voxels can be added to an unlimited space, but the number of voxels that can be added is capped at 10,000.
     - Models are edited without writing to disk
     - Option to save your model is available
 
@@ -31,8 +33,24 @@ Specification
 4. User is able to change how the world is scaled
 
 5. Voxel painting
-    - Existing set of voxels with different colors and textures to choose from when adding to scene
+    - Existing set of voxels with 16 different textures to choose from when adding to scene
+    - Textures can be mildly transparent
     - User can change the color/texture of any voxel that has already been placed in the scene
+
+6. Virtual Reality User Interface
+    - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
+
+7. Non-VR User Interface
+    - Use G3D debug camera for head position
+    - User navigates the world by moving the mouse (the camera movements are controlled by the mouse)
+    - User places or destroys voxels by left clicking the mouse
+    - When you press 'p', a control panel with all of the voxel types pops up in the scene that the user can interact with using the mouse
+
+8. Rendering
+    - Use G3D built-in renderer: There will be shadows but no indirect lighting
+
+9. Audio
+    - Sound effects for placing voxels and destroying voxels
 
 **Stretch goals:**
 
@@ -42,12 +60,14 @@ Specification
 
 3. Add physics simulation so we can throw voxels around
 
-4. Make data structures more efficient
+4. Import MagicaVoxel objects as templates
+
+5. Make data structures more efficient
 
 
 **Program evaluation metric:**
 
-1. What is the maximum amount of voxels in the scene before noticable performance decay?
+1. What is the maximum amount of voxels in the scene before noticeable performance decay?
 
 2. What kinds of transformations can be applied to the scene?
 
@@ -59,25 +79,39 @@ Topic Overview
 Voxel world editors have become quite common since the advent of Minecraft. For our project, we want to use this archetype and combine it with the VR experience. Our goal is to give users the impression that they are shaping the world with their motions. 
 
 
-
 Design
 ==================================
 
-Our program will work by having a main controller which creates an ArticulatedModel representing the entire voxel world. We will use a hashmap from integer positions to voxel type ids and color masks to store a compact representation of this world. Along with a hashmap from voxel type ids to voxel properties, these data structures will be used to turn the user's input into the appropriate edits of the main ArticulatedModel.
+Our program will work by having a main controller which creates an ArticulatedModel representing the entire voxel world. We will use a hashmap from integer positions to voxel type IDs and color masks to store a compact representation of this world. Along with a hashmap from voxel type ids to voxel properties, these data structures will be used to turn the user's input into the appropriate edits of the main ArticulatedModel.
 
-**Major functions of App**
+**Major functions of App: Voxel geometry**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
  initializeModel      | Initializes an ArticulatedModel that will be edited at runtime when user input is received
+ initializeMaterials  | ---
+ addVoxelModelToScene | ---
  addVoxel             | Based on position and type of voxel received from user input, uses m_voxToProp to add a voxel to the scene by modifying the main ArticulatedModel, and updates m_posToVox
+ addFace              | ---
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates m_posToVox
+ removeFace           | ---
  paintVoxel           | Based on position and type of voxel received from user input, uses m_posToVox to locate an existing voxel in the scene and uses m_voxToProp to change the texture/color of the selected voxel
 
+**Major functions of App: User interface**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ initializePlayer     | ---
+ movePlayer           | ---
 
 
 Correctness Results
-==================================
-Correctness results here
+=====================================================
+Debugging images we will need:
+
+- Empty scene with each of the different voxel types
+
+- Empty scene with non-VR user interface
+
+- Empty scene with VR user interface
 
 
 Placeholder Quality Images
