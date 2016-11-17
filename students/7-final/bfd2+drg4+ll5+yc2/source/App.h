@@ -44,7 +44,7 @@ protected:
 
     const float voxelRes = 0.5f;
 
-    const int voxTypeCount = 1;
+    const int voxTypeCount = 2;
 
   
 public:

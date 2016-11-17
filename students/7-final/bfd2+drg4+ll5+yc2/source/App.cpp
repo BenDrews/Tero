@@ -56,7 +56,7 @@ void App::makeGUI() {
         GuiPane* containerPane = debugPane->addPane();
 	    
         containerPane->addButton("Add voxel", [this](){
-			addVoxel(Point3int32(0,0,-5), 0);
+			addVoxel(Point3int32(0,0,-5), 1);
 	    });
 		containerPane->pack();
 	}
@@ -87,7 +87,6 @@ void App::initializeScene() {
     m_voxToProp = Table<int, Any>();
 
 	
-
     for(int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
@@ -113,18 +112,27 @@ void App::initializeMaterials() {
 
 	for (int i = 0; i < voxTypeCount; ++i) {
 		Any any = m_voxToProp.get(i);
-		String materialName = format("data-files/texture/", any["material"]);
+		String textureName = any["material"];
+		String fileName = "data-files/texture/";
+		fileName += textureName;
+
+		String stuff = "UniversalMaterial::Specification { lambertian = Texture::Specification { filename = ";
+		stuff += fileName;
+		stuff += "; }; }";
+		Any specification = Any::parse(stuff);
 
 		// ???????????????????????????????????????????????????????????????????
-		m_voxToMat.set(i, UniversalMaterial::create(
-			PARSE_ANY(
-				UniversalMaterial::Specification {
-				lambertian = Texture::Specification {
-					filename = "data-files/texture/grass.png";
-				};
-				}
-			)
-		));
+		shared_ptr<UniversalMaterial> mat = UniversalMaterial::create(
+			//PARSE_ANY(
+			//	UniversalMaterial::Specification {
+			//	lambertian = Texture::Specification {
+			//		filename = ;
+			//	};
+			//	}
+			//)
+			specification
+		);
+		m_voxToMat.set(i, mat);
 	}
 }
 
@@ -436,7 +444,7 @@ void App::removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mes
 
 
 shared_ptr<Model> App::initializeModel() {
-    ArticulatedModel::Part*     part      = m_model->addPart("root");
+    ArticulatedModel::Part* part = m_model->addPart("root");
 
 	// Tell m_model to generate bounding boxes, GPU vertex arrays, normals, and tangents automatically
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
@@ -610,9 +618,9 @@ bool App::onEvent(const GEvent& event) {
 void App::selectCircle(Point3int32 center, int radius) {
     m_selection.clear();
     
-    for(int y = center.y-5; y <= center.y + 5; ++y) {
-        for(int x = center.x-radius; x <= center.x + radius; ++x) {
-            for(int z = center.z-radius; z <= center.z + radius; ++z) {
+    for (int y = center.y - 5; y <= center.y + 5; ++y) {
+        for (int x = center.x - radius; x <= center.x + radius; ++x) {
+            for (int z = center.z-radius; z <= center.z + radius; ++z) {
                 Point3int32 pos = Point3int32(x,y,z);
                 if(sqrt((x- center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && m_posToVox.containsKey(pos)) {
                     m_selection.append(Point3int32(x,y,z));
@@ -623,7 +631,7 @@ void App::selectCircle(Point3int32 center, int radius) {
 }
 
 void App::elevateSelection(int delta) {
-    for(int i = 0; i < m_selection.size(); ++i) {
+    for (int i = 0; i < m_selection.size(); ++i) {
         addVoxel(m_selection[i] + Point3int32(0, delta, 0), m_posToVox[m_selection[i]]);
     }
 }
