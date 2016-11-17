@@ -37,7 +37,10 @@ int main(int argc, const char* argv[]) {
     return App(settings).run();
 }
 
-App::App(const AppBase::Settings& settings) : super(settings) {
+PlayerCamera::PlayerCamera() : position(CFrame(Point3(0,0,0))), speed(0), headTilt(0), heading(0), desiredYaw(0), desiredPitch(0), desiredOS(Vector3(0,0,0)){}
+
+
+App::App(const AppBase::Settings& settings) : super(settings), crossHair(BoxShape(0.1,0.1,0.1)) {
 }
 
 void App::makeGUI() {
@@ -72,9 +75,10 @@ void App::onInit() {
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
-    loadScene("G3D Whiteroom");
+    loadScene("G3D Cornell Box");
 
 	initializeScene();
+    addVoxel(Point3int32(1,1,1), 0);
 }
 
 
@@ -91,12 +95,17 @@ void App::initializeScene() {
  //   }
 
     for(int i = 0; i < voxTypeCount; ++i) {
-        m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
+        m_voxToProp.set(i, Any::fromFile(format("voxelTypes/vox%d.Any", i)));
     }
 
 	initializeMaterials();
 
     addVoxelModelToScene();
+
+    initializePlayer();
+}
+
+void App::initializePlayer(){
 }
 
 void App::initializeMaterials() {
@@ -111,7 +120,7 @@ void App::initializeMaterials() {
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
-					filename = "data-files/texture/grass.png";
+					filename = "texture/grass.png";
 				};
 				}
 			)
@@ -256,4 +265,148 @@ shared_ptr<Model> App::initializeModel() {
     m_model->cleanGeometry(geometrySettings);
 
 	return m_model;
+}
+
+void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
+     GApp::onSimulation(rdt, sdt, idt);
+
+
+     //if(m_firstPersonMode){
+     //   CFrame c = player.position;
+     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
+     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
+     //   activeCamera()->setFrame(c);
+     //
+     //   movePlayer(sdt);
+     //}
+
+
+    
+
+
+    // Example GUI dynamic layout code.  Resize the debugWindow to fill
+    // the screen horizontally.
+    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+}
+
+
+void App::movePlayer(SimTime deltaTime){
+    Vector3 velocity = player.position.vectorToWorldSpace(player.desiredOS);
+    player.position.translation += velocity * (float)deltaTime;
+
+    player.heading += player.desiredYaw * (float)deltaTime;
+    player.position.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), player.heading);
+
+    player.headTilt = clamp(player.headTilt + player.desiredPitch, -80 * units::degrees(), 80 * units::degrees());
+}
+
+Point3int32 App::cameraIntersectVoxel(){
+    Point2 center = renderDevice->viewport().center();
+    Ray cameraRay = activeCamera()->worldRay(center.x, center.y, renderDevice->viewport());
+    
+    int maxSteps = 30;
+    float stepDistance = (0.5f * voxelRes);
+    bool intersect = false;
+    Point3 lastOpen = (cameraRay.origin() / voxelRes);
+    Point3 testPos = (cameraRay.origin());
+    Vector3 direction = cameraRay.direction();
+
+    for(int i = 0; i < maxSteps && !intersect; ++i){
+       testPos = testPos + direction*stepDistance;
+       Point3 voxelTest = testPos / voxelRes;
+       if(m_posToVox.containsKey( (Point3int32)(voxelTest)  )){
+            intersect = true;
+       }else{
+        lastOpen = voxelTest;
+       }
+    }
+
+    if(intersect && !m_posToVox.containsKey((Point3int32)lastOpen)){
+        return (Point3int32)lastOpen;
+    }else{
+        Point3int32 nothing;
+        return nothing;
+    }
+
+
+
+
+}
+
+bool App::onEvent(const GEvent& event) {
+    // Handle super-class events
+    if (GApp::onEvent(event)) { return true; }
+
+
+    if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
+        Point3int32 voxelHit = cameraIntersectVoxel();
+        Point3int32 nothing;
+        if( voxelHit != nothing){
+            addVoxel( voxelHit, 0);
+        }
+        }
+
+
+
+    //if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+    //    m_firstPersonMode = ! m_firstPersonMode;
+    //    const shared_ptr<Camera>& camera = m_firstPersonMode ? scene()->defaultCamera() : debugCamera();
+    //    setActiveCamera(camera);
+    //}
+    //
+    //if (event.key.keysym.sym == GKey('w')){
+    //    if((event.type == GEventType::KEY_DOWN)){
+    //        player.desiredOS = Vector3(player.speed, 0, 0);
+    //    }else{
+    //        player.desiredOS = Vector3(0,0,0);
+    //    }
+    //}
+
+    return false;
+}
+
+void App::onUserInput(UserInput* ui) {
+    
+    super::onUserInput(ui);
+    //ui->setPureDeltaMouse(m_firstPersonMode);
+    //
+    //if(m_firstPersonMode){
+    //    const float   pixelsPerRevolution = 30;
+    //    const float   turnRatePerPixel  = -pixelsPerRevolution * units::degrees() / (units::seconds()); 
+    //    const float   tiltRatePerPixel  = -0.2f * units::degrees() / (units::seconds()); 
+    //
+    //    const Vector3& forward = -Vector3::unitZ();
+    //    const Vector3& right   =  Vector3::unitX();
+    //
+    //    Vector3 linear  = Vector3::zero();
+    //    float   yaw = 0.0f;
+    //    float   pitch = 0.0f;
+    //    linear += forward * ui->getY() * player.speed;
+    //    linear += right   * ui->getX() * player.speed;
+    //    
+    //    yaw     = ui->mouseDX() * turnRatePerPixel;
+    //    pitch   = ui->mouseDY() * tiltRatePerPixel;
+    //
+    //    static const Vector3 jumpVelocity(0, 40 * units::meters() / units::seconds(), 0);
+    //
+    //
+    //    linear += player.desiredOS;
+    //    
+    //    
+    //    player.desiredOS= linear;
+    //    player.desiredYaw = yaw;
+    //    player.desiredPitch = pitch;
+    //}
+    
+}
+
+void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
+    super::onGraphics(rd, surface, surface2D);
+
+    // For debugging purposes
+    //CFrame frame = activeCamera()->frame();
+    //Point2 center = rd->viewport().center();
+    //Ray cameraRay = activeCamera()->worldRay(center.x, center.y, rd->viewport());
+    //frame.translation = cameraRay.origin() + cameraRay.direction()*5.0f;
+    //crossHair.render(rd, frame);
 }
