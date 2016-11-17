@@ -88,7 +88,7 @@ void App::initializeScene() {
 
 	
     for(int i = 0; i < voxTypeCount; ++i) {
-        m_voxToProp.set(i, Any::fromFile(format("voxelTypes/vox%d.Any", i)));
+        m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
 	initializeMaterials();
@@ -128,7 +128,7 @@ void App::initializeMaterials() {
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
-					filename = "texture/grass.png";
+					filename = "data-files/texture/grass.png";
 				};
 				}
 			)
