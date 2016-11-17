@@ -301,11 +301,11 @@ void App::movePlayer(SimTime deltaTime){
 }
 
 Point3int32 App::cameraIntersectVoxel(){
-    Point2 center = renderDevice->viewport().center();
+    Point2 center = UserInput(this->window()).mouseXY();
     Ray cameraRay = activeCamera()->worldRay(center.x, center.y, renderDevice->viewport());
     
-    int maxSteps = 30;
-    float stepDistance = (0.5f * voxelRes);
+    int maxSteps = 100;
+    float stepDistance = (0.1f * voxelRes);
     bool intersect = false;
     Point3 lastOpen = (cameraRay.origin() / voxelRes);
     Point3 testPos = (cameraRay.origin());
@@ -403,10 +403,4 @@ void App::onUserInput(UserInput* ui) {
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
     super::onGraphics(rd, surface, surface2D);
 
-    // For debugging purposes
-    //CFrame frame = activeCamera()->frame();
-    //Point2 center = rd->viewport().center();
-    //Ray cameraRay = activeCamera()->worldRay(center.x, center.y, rd->viewport());
-    //frame.translation = cameraRay.origin() + cameraRay.direction()*5.0f;
-    //crossHair.render(rd, frame);
 }
