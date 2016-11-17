@@ -151,10 +151,35 @@ Schedule
  ArticulatedModel     | Get an ArticulatedModel to show up in the scene, be able to modify it at runtime (Ben, Lylia) | 11/14 |
  VR Controls          | Learn about how VR controls work and how to get inputs from VR controllers (Diego, Youle) | 11/15 |
 
+**TO DO:**
+
+- Add materials with G3D materials (Lylia)
+    - Method to paint voxels (change the texture of a voxel)
+    - One articulated model per material
+- Swap to ray-grid intersect (Youle)
+
+- Use firstPersonManipulator for camera instead of debug camera (Diego)
+
+*UI*
+- Switch between materials (Lylia)
+    - Panel with small voxels of differnt textures protruding from it
+    - Use scene intersect to interact with the "buttons"
+    - Highlight the one that's currently selected
+- Visualize selections (Ben)
+    - selection entity moves with controller in VR
+    - selection entity moves with mouse in non VR
+    - Array of current selections is highlighted/glows
+    - ** STRETCH GOAL: ** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
+
+**Speed up**
+- Make add voxel method for large sections 
+- Remove voxel 
+
    
 Change Log
 ==================================
-1. :-)
+1. May have to reconsider max number of voxels in the scene depending on how much optimization we can do
+2. May also have to reduce number of materials to choose from depending again on how much faster we can get our program to run
 
 
 <!-- Markdeep: -->
