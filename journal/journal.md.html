@@ -5,6 +5,12 @@
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
 
+
+2016-11-17: How to use an ArticulatedModel
+====================================================
+After conferring with our fearless instructor Morgan McGuire, we were told that it's really really slow to have each voxel have its own geometry and mesh, so we restructured our program so that all of the vertices of all the voxels in the scene are added to the same geometry. However, adding many voxels at one time is still extremely slow. For example, it takes a very long time to initialize the ground or copy large sections of existing voxels.
+
+
 2016-11-17: Material initialization
 ====================================================
 To have voxels of different textures, we want to have a set of existing materials to map voxel types to. To do this we have to initialize all the materials at the start of the program. We are currently trying to create a UniversalMaterial from an Any, but we can't use PARSE_ANY because the file name for the texture of each material will be different, so we can't just type it in, we need to generate a new String for each material. We tried creating an Any from a string, but the UniversalMaterial::create method is currently reading that Any just as a String and not as an Any, so it thinks that the filename is the whole Any.
