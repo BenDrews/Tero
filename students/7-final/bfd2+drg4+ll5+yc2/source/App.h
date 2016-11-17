@@ -8,6 +8,24 @@
 #include <G3D/G3DAll.h>
 #include <GLG3DVR/VRApp.h>
 
+
+
+
+class PlayerCamera {
+    public:
+    CFrame& position;
+    float speed;
+    float headTilt; //Radians
+    float heading;
+    float desiredYaw;
+    float desiredPitch;
+    Vector3 desiredOS;
+
+    PlayerCamera();
+};
+
+
+
 typedef 
     //VRApp 
     GApp
@@ -27,6 +45,7 @@ protected:
     const float voxelRes = 5.0f;
 
     const int voxTypeCount = 1;
+
   
 public:
 	/** Maps 3D positions to ints that denote the type of voxel */
@@ -43,6 +62,20 @@ public:
 
     App(const super::Settings& settings = super::Settings());
     virtual void onInit() override;
+    virtual bool onEvent(const GEvent& event) override;
+    virtual void onUserInput(UserInput* ui) override;
+    virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
+    virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
+
+    Point3int32 cameraIntersectVoxel();
+
+
+    PlayerCamera player;
+    void initializePlayer();
+    void movePlayer(SimTime deltaTime);
+    bool m_firstPersonMode = true;
+    BoxShape crossHair;
+
 	shared_ptr<Model> initializeModel();
 	void initializeMaterials();
     void addVoxelModelToScene();
@@ -52,3 +85,5 @@ public:
     void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
 
 };
+
+
