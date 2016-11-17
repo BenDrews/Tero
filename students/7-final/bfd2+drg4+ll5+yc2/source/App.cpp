@@ -473,24 +473,67 @@ void App::movePlayer(SimTime deltaTime){
     player.headTilt = clamp(player.headTilt + player.desiredPitch, -80 * units::degrees(), 80 * units::degrees());
 }
 
-Point3int32 App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ //make this work
+//helper function for cameraIntersectVoxel
+float App::maxDistGrid(Point3 pos, Vector3 dir){
+    pos.x;
+    dir.x;
+    float a;
+    float b;
+    float c;
+    float temp;
+    
+    temp=pos.x/voxelRes;
+
+    if(dir.x>=0){
+        a=ceil(temp)-temp; 
+    } else {
+        a=floor(temp)-temp;
+    }
+    temp=pos.y/voxelRes;
+
+    if(dir.y>=0){
+        
+        b=ceil(temp)-temp; 
+    } else {
+        b=floor(temp)-temp;
+    }
+    
+    temp=pos.z/voxelRes;
+
+    if(dir.z>=0){
+        
+        c=ceil(temp)-temp; 
+    } else {
+        c=floor(temp)-temp;
+    }
+    return max(a,b,c)*voxelRes;
+    
+
+}
+
+
+
+Point3int32 App::cameraIntersectVoxel(){ //make this work
     Point2 center = UserInput(this->window()).mouseXY();
     Ray cameraRay = activeCamera()->worldRay(center.x, center.y, renderDevice->viewport());
     
-    int maxSteps = 100;
-    float stepDistance = (0.1f * voxelRes);
+    const float shortDist = 1e-1;
+    const int maxSteps = 2000;
     bool intersect = false;
-    Point3 lastOpen = (cameraRay.origin() / voxelRes);
+    Point3int32 lastOpen = Point3int32(cameraRay.origin() / voxelRes);
     Point3 testPos = (cameraRay.origin());
     Vector3 direction = cameraRay.direction();
+    
 
     for(int i = 0; i < maxSteps && !intersect; ++i){
+       float stepDistance = max(shortDist,maxDistGrid(testPos,direction));
        testPos = testPos + direction*stepDistance;
-       Point3 voxelTest = testPos / voxelRes;
-       if(m_posToVox.containsKey( (Point3int32)(voxelTest)  )){
+       Point3int32 voxelTest = Point3int32(testPos / voxelRes);
+       if(m_posToVox.containsKey( voxelTest  )){
             intersect = true;
-       }else{
-        lastOpen = voxelTest;
+       }else if(lastOpen!=voxelTest){
+            lastOpen = voxelTest;
+            i = 0;
        }
     }
 

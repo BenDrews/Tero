@@ -67,7 +67,7 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
-    Point3int32 cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
+    Point3int32 cameraIntersectVoxel();
 
 
     PlayerCamera player;
@@ -85,6 +85,7 @@ public:
 	void removeVoxel(Point3int32 input);
     void addFace(Point3 pos, Vector3 normal, Vector3::Axis axis, int type);
 	void removeFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh);
+    float maxDistGrid(Point3 pos, Vector3 dir);
 };
 
 
