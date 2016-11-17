@@ -495,6 +495,7 @@ float App::maxDistGrid(Point3 pos, Vector3 dir){
     } else {
         a=floor(temp)-temp;
     }
+    
     temp=pos.y/voxelRes;
 
     if(dir.y>=0){
@@ -512,6 +513,9 @@ float App::maxDistGrid(Point3 pos, Vector3 dir){
     } else {
         c=floor(temp)-temp;
     }
+    a = abs(a);
+    b = abs(b);
+    c = abs(c);
     return max(a,b,c)*voxelRes;
     
 
