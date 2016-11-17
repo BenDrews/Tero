@@ -25,11 +25,12 @@ Initially we tried to only have visible voxel faces represented in the geometry.
 
 Additionally the 'raymarch' is giving us problems, in that voxels are often placed in areas where the mouse is not. I tried dividing the mouseXY positions by the window dimensions and then multiplying by the renderDevice dimensions, but that did not seem to help at all. Likely there is some mismatch of window dimensions and renderDevice dimensions leading to a misguided ray. Perhaps we should just intersect the scene with the built in g3d method.
 
-2016-11-16: Adding GUI
+2016-11-16: Adding GUI and Texture
 =====================================================
 Raymarching from the debug camera position, and see if it hits a voxel. Pressing the space key adds a voxel at the position. 
 
-Trying to implement cross hair. Added in Textcoord0. 
+Trying to implement cross hair.
+Added in Textcoord0 for texture. Basically each point on the face of the voxel is assigned a Point2 value with x and y being either 0 or 1.
 
 2016-11-14: Implementing addVoxel (Lylia + Youle)
 =====================================================
