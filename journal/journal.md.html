@@ -25,6 +25,15 @@ Initially we tried to only have visible voxel faces represented in the geometry.
 
 Additionally the 'raymarch' is giving us problems, in that voxels are often placed in areas where the mouse is not. I tried dividing the mouseXY positions by the window dimensions and then multiplying by the renderDevice dimensions, but that did not seem to help at all. Likely there is some mismatch of window dimensions and renderDevice dimensions leading to a misguided ray. Perhaps we should just intersect the scene with the built in g3d method.
 
+
+2016-11-16: Adding user input (Diego)
+=====================================================
+At first I tried to make a player entity that set the camera and moved around, but I realized that this infrastructure would have to work with the vr side of this all, so I decided to postpone that until we knew how the vr would work and simply use the debug camera.
+
+I added user input so that whenever the user presses space, a voxel is placed next to an existing voxel. This intersection was done using ray marching and it works fairly well. There are some innaccuracies however, so perhaps another intersection method should be implemented in the future. Ben had an idea for an analytical intersection but we still need to hash out that idea a bit more.
+
+At first, the intersect ray that we were casting was through the center of the screen, but without a crosshair, this was difficult to aim. Now the intersect ray is dependent on the mouse position. This still has issues but is more accurate.
+
 2016-11-16: Adding GUI and Texture
 =====================================================
 Raymarching from the debug camera position, and see if it hits a voxel. Pressing the space key adds a voxel at the position. 
