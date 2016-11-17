@@ -75,7 +75,7 @@ void App::onInit() {
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
-    loadScene("G3D Cornell Box");
+    loadScene("G3D Triangle");
 
 	initializeScene();
     addVoxel(Point3int32(1,1,1), 0);
