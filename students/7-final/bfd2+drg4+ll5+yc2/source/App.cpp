@@ -198,6 +198,7 @@ void App::addVoxel(Point3int32 input, int type) {
 }
 
 
+
 void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh) {
 	mesh->material = m_voxToMat.get(type);
 
@@ -219,15 +220,31 @@ void App::addFace(Point3 input, Vector3 normal, Vector3::Axis axis, int type, Ar
 
     CPUVertexArray::Vertex& a = vertexArray.next();
 	a.position = (center + u * 0.5f - v * 0.5f) * voxelRes;
+    //a.texCoord0=Point2(getTexCoord(a.position,axis));
+    a.texCoord0=Point2(1,0);
+    a.normal  = Vector3::nan();
+    a.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
 	b.position = (center + u * 0.5f + v * 0.5f) * voxelRes;
+    //b.texCoord0=Point2(getTexCoord(b.position,axis));
+    b.texCoord0=Point2(1,1);
+    b.normal  = Vector3::nan();
+    b.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
 	c.position = (center - u * 0.5f + v * 0.5f) * voxelRes;
+    //c.texCoord0=Point2(getTexCoord(c.position,axis));
+    c.texCoord0=Point2(0,1);
+    c.normal  = Vector3::nan();
+    c.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
 	d.position = (center - u * 0.5f - v * 0.5f) * voxelRes;
+    //d.texCoord0=Point2(getTexCoord(d.position,axis));
+    d.texCoord0=Point2(0,0);
+    d.normal  = Vector3::nan();
+    d.tangent = Vector4::nan();
 
 	// If positive, add counterclockwise
 	if (sign > 0.0f) {
