@@ -4,6 +4,27 @@
                    Diego Gonzalez (drg4@williams.edu)
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
+2016-11-17: Circle Selection
+====================================================
+Added hooks for selecting a cyclindric section of voxels with the 'l' key press. You can then elevate a selection by holding down 'u' and dragging the mouse. The copying done by the elevateSection method takes a concerningly long time.
+
+![Circle Selection](CircleSelection.jpg)
+
+
+2016-11-16: Ground
+=====================================================
+Added in initial ground:
+
+![Ground](Ground.jpg)
+
+Something concerning here is that with 400 voxels, there is slight but noticable lag when moving about the scene. When a 10,000 voxel scene was attempted, by the time the 500th voxel was being added, addVoxel was taking a nontrivial amount of time. If we want to have 10,000 voxels possible, there needs to be some multithreading/optimizations. 
+
+2016-11-16: Removing Voxels
+=====================================================
+Initially we tried to only have visible voxel faces represented in the geometry. Errors were encountered with removing certain faces. We then discovered that there was a mistake in how the voxel geometries were being names by addVoxel. Currently we are trying to work out a bug with removeFace, where the code is not even being compiled, in spite of the breakpoint set at the line calling removeFace being hit. 
+
+Additionally the 'raymarch' is giving us problems, in that voxels are often placed in areas where the mouse is not. I tried dividing the mouseXY positions by the window dimensions and then multiplying by the renderDevice dimensions, but that did not seem to help at all. Likely there is some mismatch of window dimensions and renderDevice dimensions leading to a misguided ray. Perhaps we should just intersect the scene with the built in g3d method.
+
 2016-11-16: Adding GUI
 =====================================================
 Raymarching from the debug camera position, and see if it hits a voxel. Pressing the space key adds a voxel at the position. 
