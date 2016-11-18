@@ -89,8 +89,8 @@ void App::updateSelect(){
         //insert magic vr code here
         //Only magic code will be accepted
     }else{
-        Point2 center = UserInput(this->window()).mouseXY();
-        Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
+        Point2 center = Point2(UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height());
+        Ray cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
         select.lookDirection = cameraRay.direction();
         select.position = cameraRay.origin() + 1*select.lookDirection.direction();
     }
@@ -144,6 +144,7 @@ void App::initializeScene() {
         }
     }
 }
+
 
 void App::initializeMaterials() {
 	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
@@ -217,6 +218,10 @@ void App::addVoxelModelToScene() {
     }
 
     //voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
+}
+
+Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
+    return Point3(voxelPos) + Point3(0.5, 0.5f, 0.5f);
 }
 
 // Input = Center of vox

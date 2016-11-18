@@ -71,7 +71,8 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
-    void cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos);
+    Point3 voxelToWorldSpace(Point3int32 voxelPos);
+    void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void makeFP();
     void updateSelect();
     void drawSelection();
