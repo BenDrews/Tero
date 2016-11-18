@@ -14,33 +14,32 @@ int main(int argc, const char* argv[]) {
     GApp::Settings settings(argc, argv);
 
     // VR CODE
-    //VRApp::Settings settings(argc, argv);
-    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
-    //
-    //settings.vr.disablePostEffectsIfTooSlow = false;
-
+   //VRApp::Settings settings(argc, argv);
+   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+   //    VRApp::DebugMirrorMode::PRE_DISTORTION;
+   //
+   //settings.vr.disablePostEffectsIfTooSlow = true;
+    
     settings.window.caption             = argv[0];
     settings.window.width               = 1280; settings.window.height       = 720; settings.window.fullScreen          = false;
     settings.window.resizable           = ! settings.window.fullScreen;
     settings.window.framed              = ! settings.window.fullScreen;
     settings.window.asynchronous        = false;
-
+    
     settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
     settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
     settings.dataDir                    = FileSystem::currentDirectory();
     settings.screenshotDirectory        = "../journal/";
-
+    
     settings.renderer.deferredShading = true;
     settings.renderer.orderIndependentTransparency = false;
 
     return App(settings).run();
 }
 
-PlayerCamera::PlayerCamera() : position(CFrame(Point3(0,0,0))), speed(0), headTilt(0), heading(0), desiredYaw(0), desiredPitch(0), desiredOS(Vector3(0,0,0)){}
 
 
-App::App(const AppBase::Settings& settings) : super(settings), crossHair(BoxShape(0.1,0.1,0.1)) {
+App::App(const AppBase::Settings& settings) : super(settings) {
 }
 
 void App::makeGUI() {
@@ -78,8 +77,51 @@ void App::onInit() {
     loadScene("G3D Whiteroom");
 
 	initializeScene();
+
+    makeFP();
+
+    updateSelect();
+
 }
 
+void App::updateSelect(){
+    if(vrEnabled){
+        //insert magic vr code here
+        //Only magic code will be accepted
+    }else{
+        Point2 center = UserInput(this->window()).mouseXY();
+        Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
+        select.lookDirection = cameraRay.direction();
+        select.position = cameraRay.origin() + 1*select.lookDirection.direction();
+    }
+
+    drawSelection();
+}
+
+void App::drawSelection(){
+    Point3int32 lastOpen;
+    Point3int32 voxelTest;
+    cameraIntersectVoxel(lastOpen, voxelTest);
+    Point3 voxelHit = ((Point3)voxelTest * voxelRes);
+    Point3 sideHit = ((Point3)lastOpen * voxelRes);
+    Vector3 side = sideHit - voxelHit;
+    sideHit = voxelHit + side*0.3;
+    debugDraw(Sphere(voxelHit, 0.3));
+    debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+}
+
+void App::makeFP(){
+    shared_ptr<FirstPersonManipulator> manip = FirstPersonManipulator::create(userInput);
+    manip->onUserInput(userInput);
+    manip->setMoveRate(10);
+    manip->setPosition(Vector3(0, 0, 4));
+    manip->lookAt(Vector3::zero());
+    manip->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+    manip->setEnabled(true);
+    activeCamera()->setPosition(manip->translation());
+    activeCamera()->lookAt(Vector3::zero());
+    m_cameraManipulator = manip;
+}
 
 void App::initializeScene() {
     m_posToVox = Table<Point3int32, int>();
@@ -95,16 +137,12 @@ void App::initializeScene() {
 
     addVoxelModelToScene();
 
-    initializePlayer();
     // Initialize ground
     for(int x = -5; x < 5; ++x) {
         for(int z = -5; z < 5; ++z) {
             addVoxel(Point3int32(x,0,z), 0);
         }
     }
-}
-
-void App::initializePlayer(){
 }
 
 void App::initializeMaterials() {
@@ -330,16 +368,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 }
 
 
-void App::movePlayer(SimTime deltaTime){
-    Vector3 velocity = player.position.vectorToWorldSpace(player.desiredOS);
-    player.position.translation += velocity * (float)deltaTime;
-
-    player.heading += player.desiredYaw * (float)deltaTime;
-    player.position.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), player.heading);
-
-    player.headTilt = clamp(player.headTilt + player.desiredPitch, -80 * units::degrees(), 80 * units::degrees());
-}
-
 //helper function for cameraIntersectVoxel
 float App::maxDistGrid(Point3 pos, Vector3 dir){
     pos.x;
@@ -385,19 +413,18 @@ float App::maxDistGrid(Point3 pos, Vector3 dir){
 
 
 void App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ //make this work
-    Point2 center = UserInput(this->window()).mouseXY();
-    Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
+    
     
     const float shortDist = 1e-1;
     const int maxSteps = 20;
     const float maxDist = 10.0f;
     float totalDist = 0.0f;
     bool intersect = false;
-    lastOpen = Point3int32(cameraRay.origin() / voxelRes);
-    Point3 testPos = (cameraRay.origin());
-    Vector3 direction = cameraRay.direction();
+    lastOpen = Point3int32(select.position / voxelRes);
+    Point3 testPos = (select.position);
+    Vector3 direction = select.lookDirection;
     
-
+    
     for(int i = 0; i < maxSteps && !intersect; ++i){
         if(totalDist > maxDist) {
             break;
@@ -416,21 +443,27 @@ void App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ /
 }
 
 bool App::onEvent(const GEvent& event) {
-    // Handle super-class events
-    if (GApp::onEvent(event)) { return true; }
 
 
-    if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
-        Point3int32 hitPos;
-        Point3int32 lastPos;
-        cameraIntersectVoxel(lastPos, hitPos);
-        addVoxel( lastPos, 0);
-   
-    } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r'))){ 
-        Point3int32 hitPos;
-        Point3int32 lastPos;
-        cameraIntersectVoxel(lastPos, hitPos);
-        removeVoxel( hitPos);
+
+    //if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
+      if(event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK){
+
+          //Left mouse
+          if(event.button.button == (uint8)0){
+            Point3int32 hitPos;
+            Point3int32 lastPos;
+            cameraIntersectVoxel(lastPos, hitPos);
+            addVoxel( lastPos, 0);
+          
+          //Middle mouse
+          }else if(event.button.button == (uint8)1){
+            Point3int32 hitPos;
+            Point3int32 lastPos;
+            cameraIntersectVoxel(lastPos, hitPos);
+            removeVoxel( hitPos);
+          }
+           
     } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('l'))){ 
         Point3int32 hitPos;
         Point3int32 lastPos;
@@ -465,6 +498,9 @@ bool App::onEvent(const GEvent& event) {
     //    }
     //}
 
+        // Handle super-class events
+    if (GApp::onEvent(event)) { return true; }
+
     return false;
 }
 
@@ -492,6 +528,14 @@ void App::elevateSelection(int delta) {
 void App::onUserInput(UserInput* ui) {
     
     super::onUserInput(ui);
+
+    if(!vrEnabled){
+        updateSelect();
+        
+    
+    }
+
+
     //ui->setPureDeltaMouse(m_firstPersonMode);
     //
     //if(m_firstPersonMode){
@@ -526,5 +570,4 @@ void App::onUserInput(UserInput* ui) {
 
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
     super::onGraphics(rd, surface, surface2D);
-
 }
