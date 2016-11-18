@@ -412,7 +412,7 @@ float App::maxDistGrid(Point3 pos, Vector3 dir){
 
 
 
-void App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ //make this work
+void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
     
     
     const float shortDist = 1e-1;
@@ -420,26 +420,28 @@ void App::cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest){ /
     const float maxDist = 10.0f;
     float totalDist = 0.0f;
     bool intersect = false;
-    lastOpen = Point3int32(select.position / voxelRes);
+    lastPos = Point3int32(select.position / voxelRes);
     Point3 testPos = (select.position);
     Vector3 direction = select.lookDirection;
     
-    
-    for(int i = 0; i < maxSteps && !intersect; ++i){
-        if(totalDist > maxDist) {
+    Ray cameraRay (select.position,select.lookDirection);
+
+    //Point2 center = UserInput(this->window()).mouseXY();
+    //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
+    hitPos = Point3int32((testPos + direction*maxDist)/voxelRes);
+    lastPos = hitPos;
+    for (RayGridIterator it(cameraRay,Vector3int32(2^32,2^32,2^32) ,Vector3(voxelRes,voxelRes,voxelRes),Point3((-2^16)*voxelRes,(-2^16)*voxelRes,(-2^16)*voxelRes),Point3int32(-2^16,-2^16,-2^16));it.insideGrid(); ++it) {
+    // Search for an intersection within this grid cell
+        if(m_posToVox.containsKey(it.index())){
+            hitPos = it.index();
+            lastPos = it.index()+it.enterNormal();
             break;
         }
-       float stepDistance = max(shortDist,maxDistGrid(testPos,direction));
-       totalDist += stepDistance;
-       testPos = testPos + direction*stepDistance;
-       voxelTest = Point3int32(testPos / voxelRes + (voxelRes * Point3(0.5f,0.5f,0.5f)));
-       if(m_posToVox.containsKey( voxelTest  )){
-            intersect = true;
-       }else if(lastOpen!=voxelTest){
-            lastOpen = voxelTest;
-            i = 0;
-       }
+        
+      
     }
+    
+    
 }
 
 bool App::onEvent(const GEvent& event) {
