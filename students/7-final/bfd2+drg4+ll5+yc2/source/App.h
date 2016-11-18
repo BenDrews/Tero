@@ -9,20 +9,12 @@
 #include <GLG3DVR/VRApp.h>
 
 
-
-
-class PlayerCamera {
-    public:
-    CFrame& position;
-    float speed;
-    float headTilt; //Radians
-    float heading;
-    float desiredYaw;
-    float desiredPitch;
-    Vector3 desiredOS;
-
-    PlayerCamera();
+class SelectionObject{
+public:
+    Vector3 lookDirection;
+    Point3 position;
 };
+
 
 
 
@@ -48,6 +40,12 @@ protected:
 
   
 public:
+    /** VR Toggle**/
+    bool vrEnabled = false;
+
+    /** Camera manipulator*/
+    shared_ptr<FirstPersonManipulator> m_cameraManipulator;
+
 	/** Maps 3D positions to ints that denote the type of voxel */
 	Table<Point3int32, int> m_posToVox;
         
@@ -74,13 +72,10 @@ public:
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
-
-
-    PlayerCamera player;
-    void initializePlayer();
-    void movePlayer(SimTime deltaTime);
-    bool m_firstPersonMode = true;
-    BoxShape crossHair;
+    void makeFP();
+    void updateSelect();
+    void drawSelection();
+    SelectionObject select;
 
 	void initializeModel();
 	void initializeMaterials();

@@ -6,6 +6,17 @@
                    Youle Chen (yc2@williams.edu)
 
 
+
+2016-11-17: Adding Selection object and selection Preview
+==================================================
+
+
+In order to make the transition to vr easier, we added a selection object. This object will store what direction we are looking in for the ray marching and what position our selection "object" is. In the non vr mode, this is simply driven by the mouse and the camera, but in vr we will tie these to one of the vive controllers.
+
+Once we had that, I made it so debug spheres were drawn on the voxel we had selected and its adjacent face. This is temporary, until we come up with a better way of drawing these objects, but it will help us until make a selection entity.
+
+![](selectionPreview.mp4)
+
 2016-11-17: How to use an ArticulatedModel
 ====================================================
 After conferring with our fearless instructor Morgan McGuire, we were told that it's really really slow to have each voxel have its own geometry and mesh, so we restructured our program so that all of the vertices of all the voxels in the scene are added to the same geometry. However, adding many voxels at one time is still extremely slow. For example, it takes a very long time to initialize the ground or copy large sections of existing voxels.
@@ -46,7 +57,7 @@ We discovered that there was a mistake in how the voxel geometries were being na
 Additionally the 'raymarch' is giving us problems, in that voxels are often placed in areas where the mouse is not. We tried dividing the mouseXY positions by the window dimensions and then multiplying by the renderDevice dimensions, but that did not seem to help at all. Likely there is some mismatch of window dimensions and renderDevice dimensions leading to a misguided ray. Perhaps we should just intersect the scene with the built in G3d method.
 
 
-2016-11-16: Adding user input (Diego)
+2016-11-16: Adding user input
 =====================================================
 At first I tried to make a player entity that set the camera and moved around, but I realized that this infrastructure would have to work with the vr side of this all, so I decided to postpone that until we knew how the vr would work and simply use the debug camera.
 
@@ -79,7 +90,12 @@ We add those vertices to the CPUVertexArray of our member ArticulatedModel, and 
 2016-11-14: Adding ArticulatedModel to scene
 =====================================================
 Worked on creating an ArticulatedModel and adding it to the scene as a VisibleEntity at runtime. We had trouble getting the model to actually show up, but we realized it was because when we were adding vertices to the CPUVertexArray, we kept rewriting the same single vertex instead of adding new vertices.
-                   
+
+2016-11-12: Asking for permission to use the vive
+======================================================
+Today I asked for permission from Jonathan Leamon to boot from an external hard drive onto the vive computer. I got the go ahead, but the boot menu seemed to be locked with a bios password. I emailed Mr. Leamon to let him know about this. Hopefully we will be able to get access to this in the future.
+
+
 Placeholder Quality Images
 =====================================================
 **Aesthetic goals**
