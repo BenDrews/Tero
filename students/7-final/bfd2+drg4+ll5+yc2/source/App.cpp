@@ -221,7 +221,7 @@ void App::addVoxelModelToScene() {
 }
 
 Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
-    return Point3(voxelPos) + Point3(0.5, 0.5f, 0.5f);
+    return Point3(voxelPos) * voxelRes + Point3(0.5, 0.5f, 0.5f);
 }
 
 // Input = Center of vox
