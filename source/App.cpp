@@ -58,7 +58,7 @@ void App::makeGUI() {
         containerPane->addButton("Add voxel", [this](){
 			addVoxel(Point3int32(0,0,-5), 1);
 	    });
-        containerPane ->addNumberBox("Voxel Type", &m_voxelType,"",GuiTheme::LINEAR_SLIDER, 0,1,1);
+        containerPane->addNumberBox("Voxel Type", &m_voxelType,"",GuiTheme::LINEAR_SLIDER, 0,1,1);
 
 		containerPane->pack();
 	}
@@ -258,10 +258,10 @@ void App::addVoxel(Point3int32 input, int type) {
 		m_posToVox.set(input, type);
 	}
 
-	if ( isNull(m_model->geometry(format("geom %d",m_voxelType ) ))) {
-		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d",m_voxelType ));
-		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d",m_voxelType ), m_model->part("root"), geometry);
-		mesh->material = m_voxToMat[m_voxelType];
+	if ( isNull(m_model->geometry(format("geom %d", type ) ))) {
+		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d", type ));
+		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d", type ), m_model->part("root"), geometry);
+		mesh->material = m_voxToMat[type];
 	}
 
 	// Check each position adjacent to voxel, and if nothing is there, add a face
@@ -287,8 +287,8 @@ void App::addVoxel(Point3int32 input, int type) {
 }
 
 void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
-    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d",m_voxelType ));
-    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d",m_voxelType ));
+    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d", type ));
+    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d", type ));
 
 	// Center of face we are adding
 	Point3 center = Point3(input) + normal * 0.5f;
@@ -376,8 +376,8 @@ void App::removeVoxel(Point3int32 input) {
     }
     Array<Point3int32> voxArray = m_posToVox.getKeys();
 	for (int i = 0; i < voxArray.size(); ++i) {
-        m_voxelType=0;
-		addVoxel( voxArray[i], m_voxelType );
+        Point3int32 pos = voxArray[i];
+		addVoxel( pos, m_posToVox[pos]);
 	}
 }
 
@@ -493,7 +493,7 @@ bool App::onEvent(const GEvent& event) {
             Point3int32 hitPos;
             Point3int32 lastPos;
             cameraIntersectVoxel(lastPos, hitPos);
-            addVoxel( lastPos, 0);
+            addVoxel( lastPos, m_voxelType);
           
           //Middle mouse
           }else if(event.button.button == (uint8)1){
