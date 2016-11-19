@@ -371,10 +371,7 @@ void App::removeVoxel(Point3int32 input) {
 
 	    vertexArray.fastClear();
 	    indexArray.fastClear();
-        geometry->clearAttributeArrays();
-
-	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-	    mesh->clearIndexStream();
+       
         }
     }
     Array<Point3int32> voxArray = m_posToVox.getKeys();
