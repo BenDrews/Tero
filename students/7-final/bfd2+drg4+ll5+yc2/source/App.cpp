@@ -1,6 +1,7 @@
 /** \file App.cpp */
 #include "App.h"
 
+
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();
 
@@ -57,6 +58,8 @@ void App::makeGUI() {
         containerPane->addButton("Add voxel", [this](){
 			addVoxel(Point3int32(0,0,-5), 1);
 	    });
+        containerPane ->addNumberBox("Voxel Type", &m_voxelType,"",GuiTheme::LINEAR_SLIDER, 0,1,1);
+
 		containerPane->pack();
 	}
 
@@ -149,21 +152,36 @@ void App::initializeScene() {
 void App::initializeMaterials() {
 	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
 
-	for (int i = 0; i < voxTypeCount; ++i) {
-		Any any = m_voxToProp.get(i);
-
-		// ???????????????????????????????????????????????????????????????????
-//		shared_ptr<UniversalMaterial> mat = UniversalMaterial::create(
+//	for (int i = 0; i < voxTypeCount; ++i) {
+//		Any any = m_voxToProp.get(i);
+//
+//		// ???????????????????????????????????????????????????????????????????
+////		shared_ptr<UniversalMaterial> mat = UniversalMaterial::create(
+////			PARSE_ANY(
+////				UniversalMaterial::Specification {
+////				lambertian = Texture::Specification {
+////					filename = "data-files/texture/grass";
+////				};
+////				}
+////			)
+////			//specification
+////		);
+//		m_voxToMat.set(i, UniversalMaterial::create(
 //			PARSE_ANY(
 //				UniversalMaterial::Specification {
 //				lambertian = Texture::Specification {
-//					filename = "data-files/texture/grass";
+//					filename = "data-files/texture/grass.png";
 //				};
 //				}
 //			)
-//			//specification
-//		);
-		m_voxToMat.set(i, UniversalMaterial::create(
+//		));
+//	}
+
+
+
+    //DELETE THESE AND UNCOMMENT THE STUFFS BEFORE
+    Any any = m_voxToProp.get(0);
+    		m_voxToMat.set(0, UniversalMaterial::create(
 			PARSE_ANY(
 				UniversalMaterial::Specification {
 				lambertian = Texture::Specification {
@@ -172,7 +190,17 @@ void App::initializeMaterials() {
 				}
 			)
 		));
-	}
+    //Any any = m_voxToProp.get(1);
+    		m_voxToMat.set(1, UniversalMaterial::create(
+			PARSE_ANY(
+				UniversalMaterial::Specification {
+				lambertian = Texture::Specification {
+					filename = "data-files/texture/wood.jpg";
+				};
+				}
+			)
+		));
+
 }
 
 void App::initializeModel() {
@@ -230,10 +258,10 @@ void App::addVoxel(Point3int32 input, int type) {
 		m_posToVox.set(input, type);
 	}
 
-	if ( isNull(m_model->geometry("geom")) ) {
-		ArticulatedModel::Geometry* geometry = m_model->addGeometry("geom");
-		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh("mesh", m_model->part("root"), geometry);
-		mesh->material = m_voxToMat[0];
+	if ( isNull(m_model->geometry(format("geom %d",m_voxelType ) ))) {
+		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d",m_voxelType ));
+		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d",m_voxelType ), m_model->part("root"), geometry);
+		mesh->material = m_voxToMat[m_voxelType];
 	}
 
 	// Check each position adjacent to voxel, and if nothing is there, add a face
@@ -259,8 +287,8 @@ void App::addVoxel(Point3int32 input, int type) {
 }
 
 void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
-    ArticulatedModel::Geometry* geometry = m_model->geometry("geom");
-    ArticulatedModel::Mesh*     mesh	 = m_model->mesh("mesh");
+    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d",m_voxelType ));
+    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d",m_voxelType ));
 
 	// Center of face we are adding
 	Point3 center = Point3(input) + normal * 0.5f;
@@ -332,20 +360,27 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 
 void App::removeVoxel(Point3int32 input) {
 	m_posToVox.remove(input);
+    for (int i=0; i<voxTypeCount;i++){
+	    if(notNull(m_model->geometry(format("geom %d",i )))){
+        ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d",i ));
+        ArticulatedModel::Mesh*     mesh = m_model->mesh(format("mesh %d",i ));
 
-	ArticulatedModel::Geometry* geometry = m_model->geometry("geom");
-    ArticulatedModel::Mesh*     mesh = m_model->mesh("mesh");
+	    // Remake the entire CPU vertex and CPU index arrays
+	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
 
-	// Remake the entire CPU vertex and CPU index arrays
-	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	Array<int>&					   indexArray  = mesh->cpuIndexArray;
+	    vertexArray.fastClear();
+	    indexArray.fastClear();
+        geometry->clearAttributeArrays();
 
-	vertexArray.fastClear();
-	indexArray.fastClear();
-
-	Array<Point3int32> voxArray = m_posToVox.getKeys();
+	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	    mesh->clearIndexStream();
+        }
+    }
+    Array<Point3int32> voxArray = m_posToVox.getKeys();
 	for (int i = 0; i < voxArray.size(); ++i) {
-		addVoxel( voxArray[i], m_posToVox.get(voxArray[i]) );
+        m_voxelType=0;
+		addVoxel( voxArray[i], m_voxelType );
 	}
 }
 
