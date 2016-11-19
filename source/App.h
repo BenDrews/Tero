@@ -40,6 +40,8 @@ protected:
 
   
 public:
+
+    int m_voxelType = 0;
     /** VR Toggle**/
     bool vrEnabled = false;
 
