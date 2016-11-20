@@ -6,6 +6,12 @@
                    Youle Chen (yc2@williams.edu)
 
 
+2016-11-19: Adding vr controller support
+===================================================
+I was able to add it so that when the game is hooked up to the vive, the controller positions are shown and the selection object is based off of one of the controllers.
+
+There seemed to be a weird offset between the HMD and the controllers in the scene. I fixed this by applying an offset of 0.05,0,4 to the vive controllers, but I emailed Morgan so maybe I'll find a better solution to this in the future.
+
 2016-11-19: Tried to implement materials
 ===================================================
 I tried to change the materials, but apparently removing the voxel is very difficult. Commited it anyways, since it doesn't affect the orginal program withought changing the slider. 

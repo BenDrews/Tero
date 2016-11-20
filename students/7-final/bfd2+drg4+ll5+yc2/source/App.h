@@ -91,4 +91,7 @@ public:
 
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
+
+    Vector3 m_offset = Vector3(0.05,0,4);
+
 };

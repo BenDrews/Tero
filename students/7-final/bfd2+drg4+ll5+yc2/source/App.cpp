@@ -12,15 +12,19 @@ int main(int argc, const char* argv[]) {
         initGLG3D(g3dSpec);
     }
 
+   // NON-VR CODE //////////////////////
     GApp::Settings settings(argc, argv);
+    //////////////////////////////
 
-    // VR CODE
+   // VR CODE////////////////
    //VRApp::Settings settings(argc, argv);
    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
    //
    //settings.vr.disablePostEffectsIfTooSlow = true;
-    
+   /////////////////////////////
+
+
     settings.window.caption             = argv[0];
     settings.window.width               = 1280; settings.window.height       = 720; settings.window.fullScreen          = false;
     settings.window.resizable           = ! settings.window.fullScreen;
@@ -85,20 +89,32 @@ void App::onInit() {
 
     updateSelect();
 
+
+
 }
 
 void App::updateSelect(){
+    Ray cameraRay;
+    Ray empty;
     if(vrEnabled){
-        //insert magic vr code here
-        //Only magic code will be accepted
+    //    if(m_vrControllerArray.size() > 0){
+    //        cameraRay = m_vrControllerArray[0]->frame().lookRay();
+    //        cameraRay = Ray(cameraRay.origin() + m_offset, cameraRay.direction());
+    //    }
+    //
+    //    
     }else{
         Point2 center = Point2(UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height());
-        Ray cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
+        cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
+       
+    }
+    if(cameraRay.origin() != empty.origin()){
         select.lookDirection = cameraRay.direction();
         select.position = cameraRay.origin() + 1*select.lookDirection.direction();
+        drawSelection();
     }
 
-    drawSelection();
+
 }
 
 void App::drawSelection(){
@@ -111,6 +127,8 @@ void App::drawSelection(){
     sideHit = voxelHit + side*0.3;
     debugDraw(Sphere(voxelHit, 0.3));
     debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+    
+    
 }
 
 void App::makeFP(){
@@ -608,5 +626,37 @@ void App::onUserInput(UserInput* ui) {
 }
 
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
+
+    if(vrEnabled){
+        //updateSelect();
+        //Point3 head;
+        //Point3 hand1;
+        //Point3 hand2;
+        //if(m_vrControllerArray.size() > 0){
+        //    hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
+        //    hand1 += m_offset;
+        //    debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
+        //}
+        //if(m_vrControllerArray.size() > 1){
+        //    hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
+        //    hand2 += m_offset;
+        //    debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
+        //}
+        //
+        //if(m_vrHead){
+        //    head = m_vrHead->frame().pointToWorldSpace(Point3(0,0,0));    
+        //    //debugDraw(Sphere(head, 0.3), 0.0f, Color3::black());
+        //}
+        //
+        //
+        //
+        //
+
+
+    }
+
+
     super::onGraphics(rd, surface, surface2D);
+
+
 }
