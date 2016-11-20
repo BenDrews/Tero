@@ -36,6 +36,8 @@ protected:
 
     const float voxelRes = 0.5f;
 
+    const int chunkSize = 8;
+
     const int voxTypeCount = 2;
 
   
@@ -48,8 +50,11 @@ public:
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
-	/** Maps 3D positions to ints that denote the type of voxel */
-	Table<Point3int32, int> m_posToVox;
+    /** Maps 3D chunk positions to the Tables representing each individual chunk */
+    Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk; 
+
+    /** Contains the chunk positions of the chunks that need to be updated */
+    Array<Point2int32> m_chunksToUpdate;
         
 	/** Maps type of voxel to Any files containing its specific properties */
 	Table<int, Any> m_voxToProp;
@@ -84,10 +89,20 @@ public:
 	void initializeMaterials();
     void addVoxelModelToScene();
 
+    Point2int32 getChunkCoords(Point3int32 pos);
+    shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
+    void setVoxel(Point3int32 pos, int type);
+    void unsetVoxel(Point3int32 pos);
+    void drawVoxel(Point3int32 input);
+    void redrawChunk(Point2int32 chunkPos);
+    void updateChunks();
+    void redrawWorld();
+
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
     void addFace(Point3int32 pos, Vector3 normal, Vector3::Axis axis, int type);
     float maxDistGrid(Point3 pos, Vector3 dir);
+    int posToVox(Point3int32 pos);
 
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
