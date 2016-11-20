@@ -90,6 +90,7 @@ public:
     void addVoxelModelToScene();
 
     Point2int32 getChunkCoords(Point3int32 pos);
+    bool voxIsSet(Point3int32 pos);
     shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
     void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
