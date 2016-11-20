@@ -4,7 +4,15 @@
                    Diego Gonzalez (drg4@williams.edu)
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
+2016-11-20: Chunking
+===================================================
+In an effort to improve performance, the main data structure used was changed to a chunk system. The chunks work as an intermediary step so that rather than refreshing the entire world on a block change, we only need to refresh a single chunk. There currently are some inconsistencies around the edges of chunks, since messing with the border means the neighbor needs to change, but isn't being refreshed.
 
+![Chunk Edge Bug](ChunkBug.jpg)
+
+Additionally, the intersect function seems completely thrown off by the change to chunking. Also the performance boost is still not enough. And there is a runtime error when moving a selection that contains voxels from different chunks. However we can generate worlds that are much larger than before.
+
+![Decent Size](DecentSize.jpg)
 
 2016-11-19: Adding vr controller support
 ===================================================
@@ -17,6 +25,8 @@ There seemed to be a weird offset between the HMD and the controllers in the sce
 I tried to change the materials, but apparently removing the voxel is very difficult. Commited it anyways, since it doesn't affect the orginal program withought changing the slider. 
 
 I was thinking, maybe we can not use culling, since it doesn't really reduce that much surface anyways(At most suffering from having the space twice as big.)
+
+*Ben:* No, we need culling. It cuts down the faces by much more than half. 
 
 2016-11-17: Adding Selection object and selection Preview
 ==================================================

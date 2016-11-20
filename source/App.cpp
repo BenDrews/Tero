@@ -110,7 +110,7 @@ void App::updateSelect(){
     }
     if(cameraRay.origin() != empty.origin()){
         select.lookDirection = cameraRay.direction();
-        select.position = cameraRay.origin() + 1*select.lookDirection.direction();
+        select.position = cameraRay.origin();
         drawSelection();
     }
 
@@ -145,10 +145,11 @@ void App::makeFP(){
 }
 
 void App::initializeScene() {
-    m_posToVox = Table<Point3int32, int>();
+    m_posToChunk = Table<Point2int32, shared_ptr<Table<Point3int32, int>>>();
 
     m_voxToProp = Table<int, Any>();
 
+    m_chunksToUpdate = Array<Point2int32>();
 	
     for(int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -159,11 +160,12 @@ void App::initializeScene() {
     addVoxelModelToScene();
 
     // Initialize ground
-    for(int x = -5; x < 5; ++x) {
-        for(int z = -5; z < 5; ++z) {
-            addVoxel(Point3int32(x,0,z), 0);
+    for(int x = -25; x < 25; ++x) {
+        for(int z = -25; z < 25; ++z) {
+            setVoxel(Point3int32(x,0,z), 0);
         }
     }
+    redrawWorld();
 }
 
 
@@ -262,51 +264,132 @@ void App::addVoxelModelToScene() {
         // Change the model on the existing voxel entity
         dynamic_pointer_cast<VisibleEntity>(voxel)->setModel(m_model);
     }
+}
 
-    //voxel->setFrame(CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 45.0f, 45.0f));
+//Returns true if the positions given is occupied.
+bool App::voxIsSet(Point3int32 pos) {
+    return getChunk(pos)->containsKey(pos);
+}
+
+//Returns the chunk coords for a given point.
+Point2int32 App::getChunkCoords(Point3int32 pos) {
+    return Point2int32(pos.x/chunkSize, pos.z/chunkSize);
+}
+
+//Return the chunk a given voxel resides in.
+shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
+    Point2int32 key = getChunkCoords(pos);
+    if(!m_posToChunk.containsKey(key)) {
+        m_posToChunk.set(key, std::make_shared<Table<Point3int32, int>>(Table<Point3int32, int>()));
+    }
+    return m_posToChunk[Point2int32(pos.x/chunkSize, pos.z/chunkSize)];
+}
+
+//Return the voxel type at a given grid position.
+int App::posToVox(Point3int32 pos) {
+    return getChunk(pos)->operator[](pos);
+}
+
+//Set the voxel at a given grid position in the world data structure.
+void App::setVoxel(Point3int32 pos, int type) {
+    shared_ptr<Table<Point3int32, int>> chunk = getChunk(pos);
+	if ( !voxIsSet(pos) ) {
+		chunk->set(pos, type);
+	}
+}
+
+//Unset the voxel at a given grid position in the world data structure.
+void App::unsetVoxel(Point3int32 pos) {
+    shared_ptr<Table<Point3int32, int>> chunk = getChunk(pos);
+	if ( voxIsSet(pos) ) {
+		chunk->remove(pos);
+	}
+}
+
+//Redraw the geometry for a given chunk.
+void App::redrawChunk(Point2int32 chunkPos) {
+    for (int i=0; i<voxTypeCount;i++){
+	    if(notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i )))){
+        ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+        ArticulatedModel::Mesh*     mesh = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+
+	    // Remake the entire CPU vertex and CPU index arrays
+	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
+
+	    vertexArray.fastClear();
+	    indexArray.fastClear();
+       
+        }
+    }
+    Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
+    for(int i = 0; i < voxArray.size(); ++i) {
+        drawVoxel( voxArray[i] );
+    }           
+
+    int index = m_chunksToUpdate.findIndex(chunkPos);
+    if(index > -1) {
+        m_chunksToUpdate.remove(index);
+    }
+}
+
+//Redraw the geometry for the chunks that need to be updated.
+void App::updateChunks() {
+    Thread::runConcurrently(0, m_chunksToUpdate.size(), [&](int i) {
+        redrawChunk(m_chunksToUpdate[i]);});
+}
+
+//Redraw the geometry for the entire voxel world.
+void App::redrawWorld() {
+    Array<Point2int32> chunkArray = m_posToChunk.getKeys();
+    for (int i = 0; i < chunkArray.size(); ++i) {
+        redrawChunk(chunkArray[i]);
+    }
 }
 
 Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
     return Point3(voxelPos) * voxelRes + Point3(0.5, 0.5f, 0.5f);
 }
 
-// Input = Center of vox
-void App::addVoxel(Point3int32 input, int type) {
-	if ( !m_posToVox.containsKey(input) ) {
-		m_posToVox.set(input, type);
-	}
-
-	if ( isNull(m_model->geometry(format("geom %d", type ) ))) {
-		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d", type ));
-		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d", type ), m_model->part("root"), geometry);
-		mesh->material = m_voxToMat[type];
-	}
+void App::drawVoxel(Point3int32 input) {
+    int type = posToVox(input);
 
 	// Check each position adjacent to voxel, and if nothing is there, add a face
-    if ( !m_posToVox.containsKey(input + Vector3int32(1,0,0)) ) {
+    if ( !voxIsSet(input + Vector3int32(1,0,0)) ) {
         addFace(input, Vector3int32(1,0,0), Vector3::X_AXIS, type);
     }
-    if ( !m_posToVox.containsKey(input + Vector3int32(-1,0,0)) ) {
+    if ( !voxIsSet(input + Vector3int32(-1,0,0)) ) {
         addFace(input, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
     }
-    if ( !m_posToVox.containsKey(input + Vector3int32(0,1,0)) ) {
+    if ( !voxIsSet(input + Vector3int32(0,1,0)) ) {
         addFace(input, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
     }
-    if ( !m_posToVox.containsKey(input + Vector3int32(0,-1,0)) ) {
+    if ( !voxIsSet(input + Vector3int32(0,-1,0)) ) {
         addFace(input, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
     }
-    if ( !m_posToVox.containsKey(input + Vector3int32(0,0,1)) ) {
+    if ( !voxIsSet(input + Vector3int32(0,0,1)) ) {
         addFace(input, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
     }
-    if ( !m_posToVox.containsKey(input + Vector3int32(0,0,-1)) ) {
+    if ( !voxIsSet(input + Vector3int32(0,0,-1)) ) {
         addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
     }
+}
 
+// Input = Center of vox
+void App::addVoxel(Point3int32 input, int type) {
+    setVoxel(input, type);
+    drawVoxel(input);
 }
 
 void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
-    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d", type ));
-    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d", type ));
+    Point2int32 chunkCoords = getChunkCoords(input);
+    if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ) ))) {
+		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
+		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type ), m_model->part("root"), geometry);
+		mesh->material = m_voxToMat[type];
+	}
+    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
+    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
 
 	// Center of face we are adding
 	Point3 center = Point3(input) + normal * 0.5f;
@@ -377,26 +460,8 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 }
 
 void App::removeVoxel(Point3int32 input) {
-	m_posToVox.remove(input);
-    for (int i=0; i<voxTypeCount;i++){
-	    if(notNull(m_model->geometry(format("geom %d",i )))){
-        ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d",i ));
-        ArticulatedModel::Mesh*     mesh = m_model->mesh(format("mesh %d",i ));
-
-	    // Remake the entire CPU vertex and CPU index arrays
-	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
-
-	    vertexArray.fastClear();
-	    indexArray.fastClear();
-       
-        }
-    }
-    Array<Point3int32> voxArray = m_posToVox.getKeys();
-	for (int i = 0; i < voxArray.size(); ++i) {
-        Point3int32 pos = voxArray[i];
-		addVoxel( pos, m_posToVox[pos]);
-	}
+	unsetVoxel(input);
+    m_chunksToUpdate.push(getChunkCoords(input));
 }
 
 
@@ -423,7 +488,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 }
 
 
-//helper function for cameraIntersectVoxel
+//helper function for cameraIntersectVoxel, never used
 float App::maxDistGrid(Point3 pos, Vector3 dir){
     pos.x;
     dir.x;
@@ -468,32 +533,23 @@ float App::maxDistGrid(Point3 pos, Vector3 dir){
 
 
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
-    
-    
-    const float shortDist = 1e-1;
-    const int maxSteps = 20;
+   
     const float maxDist = 10.0f;
-    float totalDist = 0.0f;
-    bool intersect = false;
-    lastPos = Point3int32(select.position / voxelRes);
-    Point3 testPos = (select.position);
     Vector3 direction = select.lookDirection;
     
     Ray cameraRay (select.position,select.lookDirection);
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
-    hitPos = Point3int32((testPos + direction*maxDist)/voxelRes);
+    hitPos = Point3int32(select.position);
     lastPos = hitPos;
     for (RayGridIterator it(cameraRay,Vector3int32(2^32,2^32,2^32) ,Vector3(voxelRes,voxelRes,voxelRes),Point3((-2^16)*voxelRes,(-2^16)*voxelRes,(-2^16)*voxelRes),Point3int32(-2^16,-2^16,-2^16));it.insideGrid(); ++it) {
     // Search for an intersection within this grid cell
-        if(m_posToVox.containsKey(it.index())){
+        if(voxIsSet(it.index())){
             hitPos = it.index();
             lastPos = it.index()+it.enterNormal();
             break;
         }
-        
-      
     }
     
     
@@ -568,7 +624,7 @@ void App::selectCircle(Point3int32 center, int radius) {
         for (int x = center.x - radius; x <= center.x + radius; ++x) {
             for (int z = center.z-radius; z <= center.z + radius; ++z) {
                 Point3int32 pos = Point3int32(x,y,z);
-                if(sqrt((x- center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && m_posToVox.containsKey(pos)) {
+                if(sqrt((x- center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
                     m_selection.append(Point3int32(x,y,z));
                 }
             }
@@ -577,8 +633,16 @@ void App::selectCircle(Point3int32 center, int radius) {
 }
 
 void App::elevateSelection(int delta) {
-    for (int i = 0; i < m_selection.size(); ++i) {
-        addVoxel(m_selection[i] + Point3int32(0, delta, 0), m_posToVox[m_selection[i]]);
+    if(delta != 0) {
+        for (int i = 0; i < m_selection.size(); ++i) {
+            Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
+            setVoxel(targetPos, posToVox(m_selection[i]));
+            Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
+            if(!m_chunksToUpdate.contains(chunkCoords)) {
+                m_chunksToUpdate.push(chunkCoords);
+            }
+            unsetVoxel(m_selection[i]);
+        }
     }
 }
 
@@ -627,6 +691,8 @@ void App::onUserInput(UserInput* ui) {
 
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
 
+    updateChunks();
+
     if(vrEnabled){
         //updateSelect();
         //Point3 head;
@@ -654,7 +720,6 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
 
 
     }
-
 
     super::onGraphics(rd, surface, surface2D);
 
