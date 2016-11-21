@@ -7,11 +7,18 @@
 
 2016-11-20: Small tweaks
 ===================================================
-fixed the intersection code, if you would like to change the boundary, just change the voxelBound in cameraIntersectVoxel method. 
+Fixed the intersection code, if you would like to change the boundary, just change the voxelBound in cameraIntersectVoxel method. 
 
-But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at `1<<15`). Also instead of using the `voxelToWorldSpace`, I just timed the position by voxelRes, because it is more accurate that way.
+But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at `1<<15`). Also instead of using the `voxelToWorldSpace` method (which adds `Point3(0.5f,0.5f,0.5f)` to the original conversion), I just timed the position by voxelRes, it made the program more accurate.(not sure why)
                                                                                                                                               
                                                                                                                                               There is still a problem with world ray, the farther we are from the point (0,0,0), the more skewed it is. 
+
+                                                                                                                                              I also changed the getChunkCoords method by adding -1 to any negative x or z values, I'm not sure if that affects the rest of the code (I don't think it does).
+
+                                                                                                                                              Added `checkBoundaryAdd`, which fixes the previous bug by checking whether the voxel is next to another chunk and updating the neighboring chunks if that's the case. I also removed `runConcurrently` in `updateChunks` method, because it didn't work with the new code, and I'm not exactly sure why. 
+                                                                                                                                              
+                                                                                                                                              
+                                                                                   
                                                                                                                                             
 
 

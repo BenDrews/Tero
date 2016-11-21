@@ -98,6 +98,7 @@ public:
     void redrawChunk(Point2int32 chunkPos);
     void updateChunks();
     void redrawWorld();
+    void checkBoundaryAdd(Point3int32 pos);
 
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
