@@ -462,6 +462,10 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
     m_chunksToUpdate.push(getChunkCoords(input));
+
+
+
+
 }
 
 
@@ -488,47 +492,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 }
 
 
-//helper function for cameraIntersectVoxel, never used
-float App::maxDistGrid(Point3 pos, Vector3 dir){
-    pos.x;
-    dir.x;
-    float a;
-    float b;
-    float c;
-    float temp;
-    
-    temp=pos.x/voxelRes;
-
-    if(dir.x>=0){
-        a=ceil(temp)-temp; 
-    } else {
-        a=floor(temp)-temp;
-    }
-    
-    temp=pos.y/voxelRes;
-
-    if(dir.y>=0){
-        
-        b=ceil(temp)-temp; 
-    } else {
-        b=floor(temp)-temp;
-    }
-    
-    temp=pos.z/voxelRes;
-
-    if(dir.z>=0){
-        
-        c=ceil(temp)-temp; 
-    } else {
-        c=floor(temp)-temp;
-    }
-    a = abs(a);
-    b = abs(b);
-    c = abs(c);
-    return max(a,b,c)*voxelRes;
-    
-
-}
 
 
 
@@ -543,7 +506,10 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
     hitPos = Point3int32(select.position);
     lastPos = hitPos;
-    for (RayGridIterator it(cameraRay,Vector3int32(2^32,2^32,2^32) ,Vector3(voxelRes,voxelRes,voxelRes),Point3((-2^16)*voxelRes,(-2^16)*voxelRes,(-2^16)*voxelRes),Point3int32(-2^16,-2^16,-2^16));it.insideGrid(); ++it) {
+    Point3int32 voxelBound = Point3int32(1<<15,1<<15,1<<15);
+    
+    
+    for (RayGridIterator it(cameraRay,voxelBound ,Vector3(voxelRes,voxelRes,voxelRes),voxelToWorldSpace(-voxelBound/2),-voxelBound/2);it.insideGrid(); ++it) {
     // Search for an intersection within this grid cell
         if(voxIsSet(it.index())){
             hitPos = it.index();
