@@ -8,7 +8,11 @@
 2016-11-20: Small tweaks
 ===================================================
 fixed the intersection code, if you would like to change the boundary, just change the voxelBound in cameraIntersectVoxel method. 
-But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at 1<<15).
+
+But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at `1<<15`). Also instead of using the `voxelToWorldSpace`, I just timed the position by voxelRes, because it is more accurate that way.
+                                                                                                                                              
+                                                                                                                                              There is still a problem with world ray, the more away we are from the point (0,0,0), the more skewed it is. 
+                                                                                                                                            
 
 
 
