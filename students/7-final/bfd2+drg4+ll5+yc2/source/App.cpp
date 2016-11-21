@@ -272,9 +272,52 @@ bool App::voxIsSet(Point3int32 pos) {
 }
 
 //Returns the chunk coords for a given point.
+//I changed this I hope it works -Youle
 Point2int32 App::getChunkCoords(Point3int32 pos) {
-    return Point2int32(pos.x/chunkSize, pos.z/chunkSize);
+    
+    int32 addX=0;
+    int32 addZ=0;
+    if(pos.x<0){
+        addX = -1;
+    }
+    if(pos.z<0){
+        addZ = -1;
+    }
+    return Point2int32((pos.x/chunkSize)+addX, (pos.z/chunkSize)+addX);
 }
+
+
+//Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk, if it is, 
+//push the neighboring chunk to the m_chunksToUpdate for later update. 
+//Can add up to 2 more chunks for update
+void App::checkBoundaryAdd(Point3int32 pos){
+    Point2int32 current = getChunkCoords(pos);
+    Point2int32 xPlus = getChunkCoords(pos + Point3int32(1,0,0));
+    Point2int32 xMinus = getChunkCoords(pos + Point3int32(-1,0,0));
+    Point2int32 zPlus = getChunkCoords(pos + Point3int32(0,0,1));
+    Point2int32 zMinus = getChunkCoords(pos + Point3int32(0,0,-1));
+
+    if(xPlus != current){
+        m_chunksToUpdate.push(xPlus);
+    } 
+    if (xMinus != current){
+
+        m_chunksToUpdate.push(xMinus);
+    }
+    if(zPlus != current){
+
+        m_chunksToUpdate.push(zPlus);
+    } 
+    if (zMinus != current){
+               
+
+        m_chunksToUpdate.push(zMinus);
+    }
+
+
+}
+
+
 
 //Return the chunk a given voxel resides in.
 shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
@@ -282,7 +325,7 @@ shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
     if(!m_posToChunk.containsKey(key)) {
         m_posToChunk.set(key, std::make_shared<Table<Point3int32, int>>(Table<Point3int32, int>()));
     }
-    return m_posToChunk[Point2int32(pos.x/chunkSize, pos.z/chunkSize)];
+    return m_posToChunk[key];
 }
 
 //Return the voxel type at a given grid position.
@@ -334,9 +377,14 @@ void App::redrawChunk(Point2int32 chunkPos) {
 }
 
 //Redraw the geometry for the chunks that need to be updated.
+//SCREW RUNCONCURRENTLY AMIRIGHT(sorry Ben)
 void App::updateChunks() {
-    Thread::runConcurrently(0, m_chunksToUpdate.size(), [&](int i) {
-        redrawChunk(m_chunksToUpdate[i]);});
+    /*Thread::runConcurrently(0, m_chunksToUpdate.size(), [&](int i) {
+        redrawChunk(m_chunksToUpdate[i]);});*/
+    for (int i = 0; i<  m_chunksToUpdate.size();++i){
+    
+        redrawChunk(m_chunksToUpdate[i]);
+    }
 }
 
 //Redraw the geometry for the entire voxel world.
@@ -462,6 +510,7 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
     m_chunksToUpdate.push(getChunkCoords(input));
+    checkBoundaryAdd(input);
 
 
 
@@ -506,10 +555,12 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
     hitPos = Point3int32(select.position);
     lastPos = hitPos;
+
+    //the Boundary of the voxels that would intersect
     Point3int32 voxelBound = Point3int32(1<<15,1<<15,1<<15);
     
     
-    for (RayGridIterator it(cameraRay,voxelBound ,Vector3(voxelRes,voxelRes,voxelRes),voxelToWorldSpace(-voxelBound/2),-voxelBound/2);it.insideGrid(); ++it) {
+    for (RayGridIterator it(cameraRay,voxelBound ,Vector3(voxelRes,voxelRes,voxelRes),Point3(-voxelBound/2)*voxelRes,-voxelBound/2);it.insideGrid(); ++it) {
     // Search for an intersection within this grid cell
         if(voxIsSet(it.index())){
             hitPos = it.index();
