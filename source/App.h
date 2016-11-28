@@ -51,7 +51,7 @@ public:
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
     /** Maps 3D chunk positions to the Tables representing each individual chunk */
-    Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk; 
+    Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
 
     /** Contains the chunk positions of the chunks that need to be updated */
     Array<Point2int32> m_chunksToUpdate;

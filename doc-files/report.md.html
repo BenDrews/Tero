@@ -82,6 +82,11 @@ Voxel world editors have become quite common since the advent of Minecraft. For 
 Design
 ==================================
 
+One ArticulatedModel, m_model, to hold all of the voxels.
+m_model has different geometries and meshes for each chunk, and there are different chunks for each type (voxel material).
+
+Why add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
+
 Our program will work by having a main controller which creates an ArticulatedModel representing the entire voxel world. We will use a hashmap from integer positions to voxel type IDs and color masks to store a compact representation of this world. Along with a hashmap from voxel type ids to voxel properties, these data structures will be used to turn the user's input into the appropriate edits of the main ArticulatedModel.
 
 **Major functions of App: Voxel geometry**
@@ -175,7 +180,7 @@ Schedule
 - Make add voxel method for large sections 
 - Remove voxel 
 
-   
+
 Change Log
 ==================================
 1. May have to reconsider max number of voxels in the scene depending on how much optimization we can do
