@@ -553,8 +553,15 @@ bool App::onEvent(const GEvent& event) {
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
-        selectCircle(hitPos, 5);
+		m_currentMark = hitPos;
     }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('l')) ){
+		// determine how big the radius is
+		Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        selectCircle(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+	}
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('u')) ) {
         Point3int32 hitPos;
         Point3int32 lastPos;
