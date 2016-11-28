@@ -1,0 +1,20 @@
+// -*- c++ -*-
+// Load this with the Material::Specification(const Any&) constructor or
+// #include() inside another Any file.
+
+UniversalMaterial::Specification {
+    lambertian   = "rockwall-lambertian.png";
+    glossy       = 
+        Texture::Specification {
+            filename="rockwall-glossy.png";
+            alphaFilename = "rockwall-glossy.png";
+        };
+    bump         = BumpMap::Specification {
+        texture = "rockwall-bump.png";
+        settings = BumpMap::Settings {
+            iterations = 1;
+            bias = 0;
+            scale = 0.07;
+        };
+    };
+}
