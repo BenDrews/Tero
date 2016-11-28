@@ -533,36 +533,37 @@ bool App::onEvent(const GEvent& event) {
 
 
     //if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
-      if(event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK){
-
-          //Left mouse
-          if(event.button.button == (uint8)0){
+    if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
+          // Left mouse
+          if (event.button.button == (uint8)0) {
             Point3int32 hitPos;
             Point3int32 lastPos;
             cameraIntersectVoxel(lastPos, hitPos);
             addVoxel(lastPos, m_voxelType);
           
-          //Middle mouse
-          }else if(event.button.button == (uint8)1){
+          // Middle mouse
+          } else if (event.button.button == (uint8)1) {
             Point3int32 hitPos;
             Point3int32 lastPos;
             cameraIntersectVoxel(lastPos, hitPos);
             removeVoxel(hitPos);
           }
-           
-    } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('l'))){ 
+    }
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('l')) ){ 
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
         selectCircle(hitPos, 5);
-    } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('u'))) {
+    }
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('u')) ) {
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
         m_currentMark = hitPos;
         //Change mode to Elevating.
-    } else if((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('u'))) {
-        //Also check mode to see if it is Eleveating.
+    }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('u')) ) {
+        //Also check mode to see if it is Elevating.
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
@@ -593,11 +594,16 @@ bool App::onEvent(const GEvent& event) {
 void App::selectCircle(Point3int32 center, int radius) {
     m_selection.clear();
     
-    for (int y = center.y - 5; y <= center.y + 5; ++y) {
+	// Ray from camera to center
+	// Ray from camera to radius endpoint
+
+    for (int y = center.y - radius; y <= center.y + radius; ++y) {
         for (int x = center.x - radius; x <= center.x + radius; ++x) {
             for (int z = center.z-radius; z <= center.z + radius; ++z) {
                 Point3int32 pos = Point3int32(x,y,z);
-                if(sqrt((x- center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
+
+				// check if the voxel is in the sphere
+                if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
                     m_selection.append(Point3int32(x,y,z));
                 }
             }
