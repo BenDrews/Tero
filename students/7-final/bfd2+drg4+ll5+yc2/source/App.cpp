@@ -546,14 +546,14 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
    
-    const float maxDist = 10.0f;
+    const float maxDist = 30.0f;
     Vector3 direction = select.lookDirection;
     
     Ray cameraRay (select.position,select.lookDirection);
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
-    hitPos = Point3int32(select.position);
+    hitPos = Point3int32((select.position+select.lookDirection*maxDist)/voxelRes);
     lastPos = hitPos;
 
     //the Boundary of the voxels that would intersect
