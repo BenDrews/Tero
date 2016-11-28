@@ -118,17 +118,20 @@ void App::updateSelect(){
 }
 
 void App::drawSelection(){
-    Point3int32 lastOpen;
-    Point3int32 voxelTest;
-    cameraIntersectVoxel(lastOpen, voxelTest);
-    Point3 voxelHit = ((Point3)voxelTest * voxelRes);
-    Point3 sideHit = ((Point3)lastOpen * voxelRes);
+    Point3int32 lastPos;
+    Point3int32 hitPos;
+    cameraIntersectVoxel(lastPos, hitPos);
+    Point3 voxelHit = ((Point3)hitPos * voxelRes);
+    Point3 sideHit = ((Point3)lastPos * voxelRes);
     Vector3 side = sideHit - voxelHit;
     sideHit = voxelHit + side*0.3;
-    debugDraw(Sphere(voxelHit, 0.3));
-    debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+    //debugDraw(Sphere(voxelHit, 0.3));
+    //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
     
-    
+    debugDraw(Box(voxelHit-Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit+Point3(voxelRes/2,voxelRes/2,voxelRes/2)));
+    if(lastPos != hitPos){
+        debugDraw(Box(sideHit-Point3(voxelRes/2.5,voxelRes/2.5,voxelRes/2.5),sideHit+Point3(voxelRes/2.5,voxelRes/2.5,voxelRes/2.5)),0.0f, Color3(0.1,0.1,0.1));
+    }
 }
 
 void App::makeFP(){
@@ -546,7 +549,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
    
-    const float maxDist = 30.0f;
+    const float maxDist = 10.0f;
     Vector3 direction = select.lookDirection;
     
     Ray cameraRay (select.position,select.lookDirection);
