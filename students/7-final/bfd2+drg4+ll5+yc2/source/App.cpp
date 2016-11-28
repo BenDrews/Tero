@@ -122,7 +122,7 @@ void App::drawSelection(){
     Point3 voxelHit = ((Point3)hitPos * voxelRes);
     Point3 sideHit = ((Point3)lastPos * voxelRes);
     Vector3 side = sideHit - voxelHit;
-    sideHit = voxelHit + side * 0.3;
+    sideHit = voxelHit + side * 0.3f;
     
     debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
     if (lastPos != hitPos) {
@@ -148,7 +148,7 @@ void App::initializeScene() {
 
     m_voxToProp = Table<int, Any>();
 
-    m_chunksToUpdate = Array<Point2int32>();
+    m_chunksToRedraw = Array<Point2int32>();
 	
     for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -249,7 +249,7 @@ Point2int32 App::getChunkCoords(Point3int32 pos) {
 
 
 //Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk, if it is, 
-//push the neighboring chunk to the m_chunksToUpdate for later update. 
+//push the neighboring chunk to the m_chunksToRedraw for later update. 
 //Can add up to 2 more chunks for update
 void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 current = getChunkCoords(pos);
@@ -258,17 +258,17 @@ void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 zPlus   = getChunkCoords(pos + Point3int32(0,0,1));
     Point2int32 zMinus  = getChunkCoords(pos + Point3int32(0,0,-1));
 
-    if (xPlus != current) {
-        m_chunksToUpdate.push(xPlus);
+    if ( (xPlus != current) && (!m_chunksToRedraw.contains(xPlus)) ) {
+        m_chunksToRedraw.push(xPlus);
     } 
-    if (xMinus != current) {
-        m_chunksToUpdate.push(xMinus);
+    if ( (xMinus != current) && (!m_chunksToRedraw.contains(xMinus)) ) {
+        m_chunksToRedraw.push(xMinus);
     }
-    if (zPlus != current) {
-        m_chunksToUpdate.push(zPlus);
+    if ( (zPlus != current) && (!m_chunksToRedraw.contains(zPlus)) ) {
+        m_chunksToRedraw.push(zPlus);
     } 
-    if (zMinus != current) {
-        m_chunksToUpdate.push(zMinus);
+    if ( (zMinus != current) && (!m_chunksToRedraw.contains(zMinus)) ) {
+        m_chunksToRedraw.push(zMinus);
     }
 }
 
@@ -295,7 +295,7 @@ void App::setVoxel(Point3int32 pos, int type) {
 	}
 }
 
-//Unset the voxel at a given grid position in the world data structure.
+// Unset the voxel at a given grid position in the world data structure.
 void App::unsetVoxel(Point3int32 pos) {
     shared_ptr<Table<Point3int32, int>> chunk = getChunk(pos);
 	if ( voxIsSet(pos) ) {
@@ -303,14 +303,14 @@ void App::unsetVoxel(Point3int32 pos) {
 	}
 }
 
-//Redraw the geometry for a given chunk.
+// Redraw the geometry for a given chunk.
 void App::redrawChunk(Point2int32 chunkPos) {
+	// Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; i++) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
         ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
         ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 
-	    // Remake the entire CPU vertex and CPU index arrays
 	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
 	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
 
@@ -325,24 +325,24 @@ void App::redrawChunk(Point2int32 chunkPos) {
 	}
 
 	// I replaced this with above iterator. hope it works - Lylia
-//    Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
-//    for (int i = 0; i < voxArray.size(); ++i) {
-//        drawVoxel( voxArray[i] );
-//    }
+//   Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
+//   for (int i = 0; i < voxArray.size(); ++i) {
+//       drawVoxel( voxArray[i] );
+//   }
 
-    int index = m_chunksToUpdate.findIndex(chunkPos);
+    int index = m_chunksToRedraw.findIndex(chunkPos);
     if (index > -1) {
-        m_chunksToUpdate.remove(index);
+        m_chunksToRedraw.remove(index);
     }
 }
 
 //Redraw the geometry for the chunks that need to be updated.
 //SCREW RUNCONCURRENTLY AMIRIGHT(sorry Ben)
-void App::updateChunks() {
-    /*Thread::runConcurrently(0, m_chunksToUpdate.size(), [&](int i) {
-        redrawChunk(m_chunksToUpdate[i]);});*/
-    for (int i = 0; i < m_chunksToUpdate.size(); ++i) {
-        redrawChunk(m_chunksToUpdate[i]);
+void App::redrawChunks() {
+    /*Thread::runConcurrently(0, m_chunksToRedraw.size(), [&](int i) {
+        redrawChunk(m_chunksToRedraw[i]);});*/
+    for (int i = 0; i < m_chunksToRedraw.size(); ++i) {
+        redrawChunk(m_chunksToRedraw[i]);
     }
 }
 
@@ -416,29 +416,25 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 
     CPUVertexArray::Vertex& a = vertexArray.next();
 	a.position = (center + u * 0.5f - v * 0.5f) * voxelRes;
-    //a.texCoord0=Point2(getTexCoord(a.position,axis));
-    a.texCoord0=Point2(1,0);
+    a.texCoord0=Point2(1, 0);
     a.normal  = Vector3::nan();
     a.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
 	b.position = (center + u * 0.5f + v * 0.5f) * voxelRes;
-    //b.texCoord0=Point2(getTexCoord(b.position,axis));
-    b.texCoord0 = Point2(1,1);
+    b.texCoord0 = Point2(1, 1);
     b.normal  = Vector3::nan();
     b.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
 	c.position = (center - u * 0.5f + v * 0.5f) * voxelRes;
-    //c.texCoord0=Point2(getTexCoord(c.position,axis));
-    c.texCoord0 = Point2(0,1);
+    c.texCoord0 = Point2(0, 1);
     c.normal  = Vector3::nan();
     c.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
 	d.position = (center - u * 0.5f - v * 0.5f) * voxelRes;
-    //d.texCoord0=Point2(getTexCoord(d.position,axis));
-    d.texCoord0=Point2(0,0);
+    d.texCoord0=Point2(0, 0);
     d.normal  = Vector3::nan();
     d.tangent = Vector4::nan();
 
@@ -468,8 +464,15 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
-    m_chunksToUpdate.push(getChunkCoords(input));
+
+	Point2int32 chunkCoords = getChunkCoords(input);
+    if( !m_chunksToRedraw.contains(chunkCoords) ) {
+        m_chunksToRedraw.push(chunkCoords);
+    }
+
     checkBoundaryAdd(input);
+	//redrawChunk(getChunkCoords(input));
+	redrawChunks();
 }
 
 
@@ -537,21 +540,21 @@ bool App::onEvent(const GEvent& event) {
             Point3int32 hitPos;
             Point3int32 lastPos;
             cameraIntersectVoxel(lastPos, hitPos);
-            addVoxel( lastPos, m_voxelType);
+            addVoxel(lastPos, m_voxelType);
           
           //Middle mouse
           }else if(event.button.button == (uint8)1){
             Point3int32 hitPos;
             Point3int32 lastPos;
             cameraIntersectVoxel(lastPos, hitPos);
-            removeVoxel( hitPos);
+            removeVoxel(hitPos);
           }
            
     } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('l'))){ 
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
-        selectCircle( hitPos, 5);
+        selectCircle(hitPos, 5);
     } else if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('u'))) {
         Point3int32 hitPos;
         Point3int32 lastPos;
@@ -581,7 +584,7 @@ bool App::onEvent(const GEvent& event) {
     //    }
     //}
 
-        // Handle super-class events
+    // Handle super-class events
     if (GApp::onEvent(event)) { return true; }
 
     return false;
@@ -608,8 +611,8 @@ void App::elevateSelection(int delta) {
             Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(m_selection[i]));
             Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
-            if(!m_chunksToUpdate.contains(chunkCoords)) {
-                m_chunksToUpdate.push(chunkCoords);
+            if( !m_chunksToRedraw.contains(chunkCoords) ) {
+                m_chunksToRedraw.push(chunkCoords);
             }
             unsetVoxel(m_selection[i]);
         }
@@ -661,7 +664,7 @@ void App::onUserInput(UserInput* ui) {
 
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
 
-    updateChunks();
+    redrawChunks();
 
     if(vrEnabled){
         //updateSelect();
