@@ -12,17 +12,17 @@ int main(int argc, const char* argv[]) {
         initGLG3D(g3dSpec);
     }
 
-   // NON-VR CODE //////////////////////
+    // NON-VR CODE //////////////////////
     GApp::Settings settings(argc, argv);
     //////////////////////////////
-
-   // VR CODE////////////////
-   //VRApp::Settings settings(argc, argv);
-   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-   //    VRApp::DebugMirrorMode::PRE_DISTORTION;
-   //
-   //settings.vr.disablePostEffectsIfTooSlow = true;
-   /////////////////////////////
+    
+    // VR CODE////////////////
+    //VRApp::Settings settings(argc, argv);
+    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
+    //
+    //settings.vr.disablePostEffectsIfTooSlow = true;
+    /////////////////////////////
 
 
     settings.window.caption             = argv[0];
@@ -89,8 +89,6 @@ void App::onInit() {
 
     updateSelect();
 
-
-
 }
 
 void App::updateSelect(){
@@ -124,13 +122,11 @@ void App::drawSelection(){
     Point3 voxelHit = ((Point3)hitPos * voxelRes);
     Point3 sideHit = ((Point3)lastPos * voxelRes);
     Vector3 side = sideHit - voxelHit;
-    sideHit = voxelHit + side*0.3;
-    //debugDraw(Sphere(voxelHit, 0.3));
-    //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+    sideHit = voxelHit + side * 0.3;
     
-    debugDraw(Box(voxelHit-Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit+Point3(voxelRes/2,voxelRes/2,voxelRes/2)));
-    if(lastPos != hitPos){
-        debugDraw(Box(sideHit-Point3(voxelRes/2.5,voxelRes/2.5,voxelRes/2.5),sideHit+Point3(voxelRes/2.5,voxelRes/2.5,voxelRes/2.5)),0.0f, Color3(0.1,0.1,0.1));
+    debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
+    if (lastPos != hitPos) {
+        debugDraw( Box(sideHit-Point3(voxelRes/2.5f,voxelRes/2.5f,voxelRes/2.5f), sideHit+Point3(voxelRes/2.5f,voxelRes/2.5f,voxelRes/2.5f)), 0.0f, Color3(0.1,0.1,0.1) );
     }
 }
 
@@ -154,7 +150,7 @@ void App::initializeScene() {
 
     m_chunksToUpdate = Array<Point2int32>();
 	
-    for(int i = 0; i < voxTypeCount; ++i) {
+    for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
@@ -175,59 +171,21 @@ void App::initializeScene() {
 void App::initializeMaterials() {
 	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
 
+	// using morgan's premade materials. is there a way to access them without moving them to the local data-files directory?
 //	for (int i = 0; i < voxTypeCount; ++i) {
 //		Any any = m_voxToProp.get(i);
-//
-//		// ???????????????????????????????????????????????????????????????????
-////		shared_ptr<UniversalMaterial> mat = UniversalMaterial::create(
-////			PARSE_ANY(
-////				UniversalMaterial::Specification {
-////				lambertian = Texture::Specification {
-////					filename = "data-files/texture/grass";
-////				};
-////				}
-////			)
-////			//specification
-////		);
-//		m_voxToMat.set(i, UniversalMaterial::create(
-//			PARSE_ANY(
-//				UniversalMaterial::Specification {
-//				lambertian = Texture::Specification {
-//					filename = "data-files/texture/grass.png";
-//				};
-//				}
-//			)
-//		));
+//		String materialName = any["material"];
+//		m_voxToMat.set(i, UniversalMaterial::create( Any::fromFile(format("data-files/texture/%s/%s.UniversalMaterial.Any", materialName, materialName)) ));
 //	}
 
-
-
-    //DELETE THESE AND UNCOMMENT THE STUFFS BEFORE
-    Any any = m_voxToProp.get(0);
-    		m_voxToMat.set(0, UniversalMaterial::create(
-			PARSE_ANY(
-				UniversalMaterial::Specification {
-				lambertian = Texture::Specification {
-					filename = "data-files/texture/grass.png";
-				};
-				}
-			)
-		));
-    //Any any = m_voxToProp.get(1);
-    		m_voxToMat.set(1, UniversalMaterial::create(
-			PARSE_ANY(
-				UniversalMaterial::Specification {
-				lambertian = Texture::Specification {
-					filename = "data-files/texture/wood.jpg";
-				};
-				}
-			)
-		));
+	// for now just hard code each individual material?
+	m_voxToMat.set(0, UniversalMaterial::create( Any::fromFile("data-files/texture/greengrass/greengrass.UniversalMaterial.Any") ));
+	m_voxToMat.set(1, UniversalMaterial::create( Any::fromFile("data-files/texture/rockwall/rockwall.UniversalMaterial.Any") ));
 
 }
 
 void App::initializeModel() {
-    ArticulatedModel::Part*		part	 = m_model->addPart("root");
+    ArticulatedModel::Part* part = m_model->addPart("root");
 
 }
 
@@ -277,16 +235,16 @@ bool App::voxIsSet(Point3int32 pos) {
 //Returns the chunk coords for a given point.
 //I changed this I hope it works -Youle
 Point2int32 App::getChunkCoords(Point3int32 pos) {
-    
-    int32 addX=0;
-    int32 addZ=0;
-    if(pos.x<0){
+	// Chunks between -7 and 7 are too big, modify
+    int32 addX = 0;
+    int32 addZ = 0;
+    if (pos.x < 0) {
         addX = -1;
     }
-    if(pos.z<0){
+    if (pos.z < 0) {
         addZ = -1;
     }
-    return Point2int32((pos.x/chunkSize)+addX, (pos.z/chunkSize)+addX);
+    return Point2int32((pos.x / chunkSize) + addX, (pos.z / chunkSize) + addZ);
 }
 
 
@@ -295,38 +253,31 @@ Point2int32 App::getChunkCoords(Point3int32 pos) {
 //Can add up to 2 more chunks for update
 void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 current = getChunkCoords(pos);
-    Point2int32 xPlus = getChunkCoords(pos + Point3int32(1,0,0));
-    Point2int32 xMinus = getChunkCoords(pos + Point3int32(-1,0,0));
-    Point2int32 zPlus = getChunkCoords(pos + Point3int32(0,0,1));
-    Point2int32 zMinus = getChunkCoords(pos + Point3int32(0,0,-1));
+    Point2int32 xPlus   = getChunkCoords(pos + Point3int32(1,0,0));
+    Point2int32 xMinus  = getChunkCoords(pos + Point3int32(-1,0,0));
+    Point2int32 zPlus   = getChunkCoords(pos + Point3int32(0,0,1));
+    Point2int32 zMinus  = getChunkCoords(pos + Point3int32(0,0,-1));
 
-    if(xPlus != current){
+    if (xPlus != current) {
         m_chunksToUpdate.push(xPlus);
     } 
-    if (xMinus != current){
-
+    if (xMinus != current) {
         m_chunksToUpdate.push(xMinus);
     }
-    if(zPlus != current){
-
+    if (zPlus != current) {
         m_chunksToUpdate.push(zPlus);
     } 
-    if (zMinus != current){
-               
-
+    if (zMinus != current) {
         m_chunksToUpdate.push(zMinus);
     }
-
-
 }
-
 
 
 //Return the chunk a given voxel resides in.
 shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
     Point2int32 key = getChunkCoords(pos);
-    if(!m_posToChunk.containsKey(key)) {
-        m_posToChunk.set(key, std::make_shared<Table<Point3int32, int>>(Table<Point3int32, int>()));
+    if (!m_posToChunk.containsKey(key)) {
+        m_posToChunk.set( key, std::make_shared<Table<Point3int32, int>>(Table<Point3int32, int>()) );
     }
     return m_posToChunk[key];
 }
@@ -354,10 +305,10 @@ void App::unsetVoxel(Point3int32 pos) {
 
 //Redraw the geometry for a given chunk.
 void App::redrawChunk(Point2int32 chunkPos) {
-    for (int i=0; i<voxTypeCount;i++){
-	    if(notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i )))){
+    for (int i = 0; i < voxTypeCount; i++) {
+	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
         ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
-        ArticulatedModel::Mesh*     mesh = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+        ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 
 	    // Remake the entire CPU vertex and CPU index arrays
 	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
@@ -365,16 +316,22 @@ void App::redrawChunk(Point2int32 chunkPos) {
 
 	    vertexArray.fastClear();
 	    indexArray.fastClear();
-       
         }
     }
-    Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
-    for(int i = 0; i < voxArray.size(); ++i) {
-        drawVoxel( voxArray[i] );
-    }           
+
+	Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();
+	for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
+		drawVoxel( (*it).key );
+	}
+
+	// I replaced this with above iterator. hope it works - Lylia
+//    Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
+//    for (int i = 0; i < voxArray.size(); ++i) {
+//        drawVoxel( voxArray[i] );
+//    }
 
     int index = m_chunksToUpdate.findIndex(chunkPos);
-    if(index > -1) {
+    if (index > -1) {
         m_chunksToUpdate.remove(index);
     }
 }
@@ -384,8 +341,7 @@ void App::redrawChunk(Point2int32 chunkPos) {
 void App::updateChunks() {
     /*Thread::runConcurrently(0, m_chunksToUpdate.size(), [&](int i) {
         redrawChunk(m_chunksToUpdate[i]);});*/
-    for (int i = 0; i<  m_chunksToUpdate.size();++i){
-    
+    for (int i = 0; i < m_chunksToUpdate.size(); ++i) {
         redrawChunk(m_chunksToUpdate[i]);
     }
 }
@@ -399,7 +355,7 @@ void App::redrawWorld() {
 }
 
 Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
-    return Point3(voxelPos) * voxelRes + Point3(0.5, 0.5f, 0.5f);
+    return Point3(voxelPos) * voxelRes + Point3(0.5f, 0.5f, 0.5f);
 }
 
 void App::drawVoxel(Point3int32 input) {
@@ -434,13 +390,13 @@ void App::addVoxel(Point3int32 input, int type) {
 
 void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
     Point2int32 chunkCoords = getChunkCoords(input);
-    if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ) ))) {
-		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
-		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type ), m_model->part("root"), geometry);
+    if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
+		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type), m_model->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 	}
-    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
-    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type ));
+    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
 
 	// Center of face we are adding
 	Point3 center = Point3(input) + normal * 0.5f;
@@ -468,14 +424,14 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 	CPUVertexArray::Vertex& b = vertexArray.next();
 	b.position = (center + u * 0.5f + v * 0.5f) * voxelRes;
     //b.texCoord0=Point2(getTexCoord(b.position,axis));
-    b.texCoord0=Point2(1,1);
+    b.texCoord0 = Point2(1,1);
     b.normal  = Vector3::nan();
     b.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
 	c.position = (center - u * 0.5f + v * 0.5f) * voxelRes;
     //c.texCoord0=Point2(getTexCoord(c.position,axis));
-    c.texCoord0=Point2(0,1);
+    c.texCoord0 = Point2(0,1);
     c.normal  = Vector3::nan();
     c.tangent = Vector4::nan();
 
@@ -514,10 +470,6 @@ void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
     m_chunksToUpdate.push(getChunkCoords(input));
     checkBoundaryAdd(input);
-
-
-
-
 }
 
 
@@ -552,26 +504,24 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
     const float maxDist = 10.0f;
     Vector3 direction = select.lookDirection;
     
-    Ray cameraRay (select.position,select.lookDirection);
+    Ray cameraRay(select.position, select.lookDirection);
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
-    hitPos = Point3int32((select.position+select.lookDirection*maxDist)/voxelRes);
+    hitPos = Point3int32( (select.position + select.lookDirection * maxDist) / voxelRes );
     lastPos = hitPos;
 
     //the Boundary of the voxels that would intersect
-    Point3int32 voxelBound = Point3int32(1<<15,1<<15,1<<15);
+    Point3int32 voxelBound = Point3int32(1<<15, 1<<15, 1<<15);
     
-    
-    for (RayGridIterator it(cameraRay,voxelBound ,Vector3(voxelRes,voxelRes,voxelRes),Point3(-voxelBound/2)*voxelRes,-voxelBound/2);it.insideGrid(); ++it) {
+    for (RayGridIterator it(cameraRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid(); ++it) {
     // Search for an intersection within this grid cell
-        if(voxIsSet(it.index())){
+        if( voxIsSet(it.index()) ) {
             hitPos = it.index();
-            lastPos = it.index()+it.enterNormal();
+            lastPos = it.index() + it.enterNormal();
             break;
         }
     }
-    
     
 }
 
@@ -653,7 +603,7 @@ void App::selectCircle(Point3int32 center, int radius) {
 }
 
 void App::elevateSelection(int delta) {
-    if(delta != 0) {
+    if (delta != 0) {
         for (int i = 0; i < m_selection.size(); ++i) {
             Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(m_selection[i]));
