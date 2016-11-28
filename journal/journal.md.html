@@ -5,6 +5,12 @@
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
 
+2016-11-28: Redraw lags
+===================================================
+Even when redrawWorld is called every time a voxel is deleted, sometimes voxels don't immediately disappear when deleted. Also, shadows that deleted voxels cast on other voxels don't immediately disappear even if the deleted voxel immediately disappears.
+
+When there is only one type of voxel in the world, everything works fine. But when there is more than one voxel, there is lag when voxels are being removed. Also, when a voxel is placed adjacent to or close to one that has been removed but hasn't disappeared, the display updates.
+
 2016-11-28: After break tweaks
 ===================================================
 fixed a small bug in intersection method. changed the debugdraw shape to a cube. 
@@ -14,20 +20,12 @@ fixed a small bug in intersection method. changed the debugdraw shape to a cube.
 ===================================================
 Fixed the intersection code, if you would like to change the boundary, just change the voxelBound in cameraIntersectVoxel method. 
 
-But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at `1<<15`). Also instead of using the `voxelToWorldSpace` method (which adds `Point3(0.5f,0.5f,0.5f)` to the original conversion), I just timed the position by voxelRes, it made the program more accurate.(not sure why)
-                                                                                                                                              
-                                                                                                                                              There is still a problem with world ray, the farther we are from the point (0,0,0), the more skewed it is. 
+But be aware, if you make it too big, the program will be very slow if you are not directly pointing at a voxel. (currently it's at `1 << 15`). Also instead of using the `voxelToWorldSpace` method (which adds `Point3(0.5f, 0.5f, 0.5f)` to the original conversion), I just timed the position by voxelRes, it made the program more accurate.(not sure why)
+                                                                                                                                        There is still a problem with world ray, the farther we are from the point (0,0,0), the more skewed it is. 
+                                                                                                                                        I also changed the getChunkCoords method by adding -1 to any negative x or z values, I'm not sure if that affects the rest of the code (I don't think it does).
 
-                                                                                                                                              I also changed the getChunkCoords method by adding -1 to any negative x or z values, I'm not sure if that affects the rest of the code (I don't think it does).
-
-                                                                                                                                              Added `checkBoundaryAdd`, which fixes the previous bug by checking whether the voxel is next to another chunk and updating the neighboring chunks if that's the case. I also removed `runConcurrently` in `updateChunks` method, because it didn't work with the new code, and I'm not exactly sure why. 
-                                                                                                                                              
-                                                                                                                                              
-                                                                                   
-                                                                                                                                            
-
-
-
+Added `checkBoundaryAdd`, which fixes the previous bug by checking whether the voxel is next to another chunk and updating the neighboring chunks if that's the case. I also removed `runConcurrently` in `updateChunks` method, because it didn't work with the new code, and I'm not exactly sure why. 
+                                                                                                                                        
 
 2016-11-20: Chunking
 ===================================================
@@ -55,7 +53,6 @@ I was thinking, maybe we can not use culling, since it doesn't really reduce tha
 
 2016-11-17: Adding Selection object and selection Preview
 ==================================================
-
 
 In order to make the transition to vr easier, we added a selection object. This object will store what direction we are looking in for the ray marching and what position our selection "object" is. In the non vr mode, this is simply driven by the mouse and the camera, but in vr we will tie these to one of the vive controllers.
 

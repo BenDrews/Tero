@@ -54,7 +54,7 @@ public:
     Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
 
     /** Contains the chunk positions of the chunks that need to be updated */
-    Array<Point2int32> m_chunksToUpdate;
+    Array<Point2int32> m_chunksToRedraw;
         
 	/** Maps type of voxel to Any files containing its specific properties */
 	Table<int, Any> m_voxToProp;
@@ -96,7 +96,7 @@ public:
     void unsetVoxel(Point3int32 pos);
     void drawVoxel(Point3int32 input);
     void redrawChunk(Point2int32 chunkPos);
-    void updateChunks();
+    void redrawChunks();
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
 
@@ -109,6 +109,6 @@ public:
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
 
-    Vector3 m_offset = Vector3(0.05,0,4);
+    Vector3 m_offset = Vector3(0.05f, 0.0f, 4.0f);
 
 };
