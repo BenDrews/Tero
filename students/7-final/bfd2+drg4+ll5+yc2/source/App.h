@@ -94,7 +94,6 @@ public:
     Point3int32 worldToVoxelSpace(Point3 worldPos);
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
-    void makeFP();
     void updateSelect();
     void drawSelection();
     SelectionObject select;
