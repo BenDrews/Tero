@@ -377,14 +377,48 @@ void App::redrawChunk(Point2int32 chunkPos) {
 
 	    vertexArray.fastClear();
 	    indexArray.fastClear();
+        
+        //hasValue doesn't work so I made this thing from the document:
+       bool terminate = false;
+       for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
+            if ((*it).value == i) {
+                terminate = true;
+            }
+       
+       
+       }
+
+       //A TERRIBLE WORK AROUND
+            if (!terminate){
+                for(int i = 0; i<3;i++){
+                    CPUVertexArray::Vertex& dummy = vertexArray.next();
+	                dummy.position = Point3(0,0,0);
+                    dummy.texCoord0 = Point2(0, 0);
+                    dummy.normal  = Vector3::nan();
+                    dummy.tangent = Vector4::nan();
+                }
+                indexArray.append(0,1,2);
+                	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
+	            ArticulatedModel::CleanGeometrySettings geometrySettings;
+                geometrySettings.allowVertexMerging = false;
+                m_model->cleanGeometry(geometrySettings);
+
+            	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	            geometry->clearAttributeArrays();
+
+	            // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	            mesh->clearIndexStream();
+            }
         }
+       
     }
 
 	Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();
-	for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
-		drawVoxel( (*it).key );
-	}
-
+	
+        for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
+		    drawVoxel( (*it).key );
+	    }
+   
 	// I replaced this with above iterator. hope it works - Lylia
 //   Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
 //   for (int i = 0; i < voxArray.size(); ++i) {
