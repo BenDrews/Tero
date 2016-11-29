@@ -9,12 +9,19 @@
 ===================================================
 Even when redrawWorld is called every time a voxel is deleted, sometimes voxels don't immediately disappear when deleted. Also, shadows that deleted voxels cast on other voxels don't immediately disappear even if the deleted voxel immediately disappears.
 
+
 When there is only one type of voxel in the world, everything works fine. But when there is more than one voxel, there is lag when voxels are being removed. Also, when a voxel is placed adjacent to or close to one that has been removed but hasn't disappeared, the display updates.
 
 2016-11-28: After break tweaks
 ===================================================
 fixed a small bug in intersection method. changed the debugdraw shape to a cube. 
 
+
+2016-11-27: Adding VR User Interface and Fixing VR lag
+========================================================
+We were having some lag on our VR inputs. This was because there was a loop in VRapp that was checking all the vrevents, meaning that they wouldn't be in the queue when we went to look for them. Once that was gone, our vr lag was gone.
+
+Then I added a user interface. This consisted of two debug spheres floating in front of the player. These only show up when the player clicks a certain button on the controller. This activates menu mode. Then the player is able to select a new voxel type using the controller that activated menu mode.
 
 2016-11-20: Small tweaks
 ===================================================
@@ -36,6 +43,7 @@ In an effort to improve performance, the main data structure used was changed to
 Additionally, the intersect function seems completely thrown off by the change to chunking. Also the performance boost is still not enough. And there is a runtime error when moving a selection that contains voxels from different chunks. However we can generate worlds that are much larger than before.
 
 ![Decent Size](DecentSize.jpg)
+
 
 2016-11-19: Adding vr controller support
 ===================================================

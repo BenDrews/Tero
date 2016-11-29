@@ -13,6 +13,10 @@ class SelectionObject{
 public:
     Vector3 lookDirection;
     Point3 position;
+    Ray ray;
+    bool buttonSelected = false;
+    int buttonIndex = 0;
+    int menuControllerIndex = 0;
 };
 
 
@@ -47,6 +51,14 @@ public:
     /** VR Toggle**/
     bool vrEnabled = false;
 
+
+
+    bool menu = false;
+    CFrame menuFrame;
+    Array<Point3> menuButtons;
+    Array<Color3> buttonColors;
+    void initializeMenu();
+
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
@@ -79,6 +91,8 @@ public:
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
     Point3 voxelToWorldSpace(Point3int32 voxelPos);
+    Point3int32 worldToVoxelSpace(Point3 worldPos);
+
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void makeFP();
     void updateSelect();
@@ -88,6 +102,8 @@ public:
 	void initializeModel();
 	void initializeMaterials();
     void addVoxelModelToScene();
+    
+
 
     Point2int32 getChunkCoords(Point3int32 pos);
     bool voxIsSet(Point3int32 pos);
@@ -100,6 +116,7 @@ public:
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
 
+
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
     void addFace(Point3int32 pos, Vector3 normal, Vector3::Axis axis, int type);
@@ -109,6 +126,8 @@ public:
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
 
-    Vector3 m_offset = Vector3(0.05f, 0.0f, 4.0f);
+    Vector3 m_controllerOffset = Vector3(0,0,0);//Vector3(0.05,0,4);
+    Vector3 m_sceneOffset = Vector3(0,0,0);
+
 
 };

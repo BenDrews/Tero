@@ -17,27 +17,32 @@ int main(int argc, const char* argv[]) {
     //////////////////////////////
     
     // VR CODE////////////////
-    //VRApp::Settings settings(argc, argv);
-    //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-    //    VRApp::DebugMirrorMode::PRE_DISTORTION;
-    //
-    //settings.vr.disablePostEffectsIfTooSlow = true;
-    /////////////////////////////
+
+
+   // VR CODE////////////////
+   //VRApp::Settings settings(argc, argv);
+   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+   //    VRApp::DebugMirrorMode::PRE_DISTORTION;
+   //
+   //settings.vr.disablePostEffectsIfTooSlow = true;
+   //    settings.renderer.deferredShading   = true;
+   // settings.renderer.orderIndependentTransparency = true;
+   ///////////////////////////
 
 
     settings.window.caption             = argv[0];
     settings.window.width               = 1280; settings.window.height       = 720; settings.window.fullScreen          = false;
     settings.window.resizable           = ! settings.window.fullScreen;
     settings.window.framed              = ! settings.window.fullScreen;
-    settings.window.asynchronous        = false;
+    settings.window.asynchronous        = true; //false if no vr
     
-    settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
+    settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(0, 0); // 64 64 for non vr
     settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
     settings.dataDir                    = FileSystem::currentDirectory();
     settings.screenshotDirectory        = "../journal/";
     
     settings.renderer.deferredShading = true;
-    settings.renderer.orderIndependentTransparency = false;
+    settings.renderer.orderIndependentTransparency = true; // false if no vr
 
     return App(settings).run();
 }
@@ -85,7 +90,9 @@ void App::onInit() {
 
 	initializeScene();
 
-    makeFP();
+    initializeMenu();
+
+    //makeFP();
 
     updateSelect();
 
@@ -94,53 +101,84 @@ void App::onInit() {
 void App::updateSelect(){
     Ray cameraRay;
     Ray empty;
-    if(vrEnabled){
-    //    if(m_vrControllerArray.size() > 0){
-    //        cameraRay = m_vrControllerArray[0]->frame().lookRay();
-    //        cameraRay = Ray(cameraRay.origin() + m_offset, cameraRay.direction());
-    //    }
-    //
-    //    
+
+    if(menu){
+        if(vrEnabled){
+            //if(m_vrControllerArray.size() > select.menuControllerIndex){
+            //    cameraRay = m_vrControllerArray[select.menuControllerIndex]->frame().lookRay();
+            //    cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
+            //}
+            //
+            //select.buttonSelected = false;
+            //for(int i = 0; i < menuButtons.length() && !select.buttonSelected; ++i){
+            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(menuButtons[i]) ).length() <= 0.2){
+            //        select.buttonSelected = true;
+            //        select.buttonIndex = i;
+            //    }    
+            //}
+            //
+            //if(cameraRay.origin() != empty.origin()){
+            //    select.lookDirection = cameraRay.direction();
+            //    select.position = cameraRay.origin() + 1*select.lookDirection.direction();
+            //    select.ray = cameraRay;
+            //    drawSelection();
+            //}
+        }
+    
     }else{
-        Point2 center = Point2(UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height());
-        cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
-       
+        if(vrEnabled){
+           // if(m_vrControllerArray.size() > 0){
+           //     cameraRay = m_vrControllerArray[0]->frame().lookRay();
+           //     cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
+           // }
+           //
+            
+        }else{
+            Point2 center = Point2(UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height());
+            cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
+           
+        }
+
+        if(cameraRay.origin() != empty.origin()){
+            select.lookDirection = cameraRay.direction();
+            select.position = cameraRay.origin() + 1*select.lookDirection.direction();
+            select.ray = cameraRay;
+            drawSelection();
+        }
+    
     }
-    if(cameraRay.origin() != empty.origin()){
-        select.lookDirection = cameraRay.direction();
-        select.position = cameraRay.origin();
-        drawSelection();
-    }
+
+
+    
 
 
 }
 
 void App::drawSelection(){
-    Point3int32 lastPos;
-    Point3int32 hitPos;
-    cameraIntersectVoxel(lastPos, hitPos);
-    Point3 voxelHit = ((Point3)hitPos * voxelRes);
-    Point3 sideHit = ((Point3)lastPos * voxelRes);
-    Vector3 side = sideHit - voxelHit;
-    sideHit = voxelHit + side * 0.3f;
-    
-    debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
-    if (lastPos != hitPos) {
-        debugDraw( Box(sideHit-Point3(voxelRes/2.5f,voxelRes/2.5f,voxelRes/2.5f), sideHit+Point3(voxelRes/2.5f,voxelRes/2.5f,voxelRes/2.5f)), 0.0f, Color3(0.1,0.1,0.1) );
-    }
-}
 
-void App::makeFP(){
-    shared_ptr<FirstPersonManipulator> manip = FirstPersonManipulator::create(userInput);
-    manip->onUserInput(userInput);
-    manip->setMoveRate(10);
-    manip->setPosition(Vector3(0, 0, 4));
-    manip->lookAt(Vector3::zero());
-    manip->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-    manip->setEnabled(true);
-    activeCamera()->setPosition(manip->translation());
-    activeCamera()->lookAt(Vector3::zero());
-    m_cameraManipulator = manip;
+
+
+    if(menu){
+        if(select.buttonSelected){
+            debugDraw(Sphere(menuFrame.pointToWorldSpace(menuButtons[select.buttonIndex]), 0.3), 0.0f, Color3::white());
+        }
+    }else{
+
+        Point3int32 lastOpen;
+        Point3int32 voxelTest;
+        cameraIntersectVoxel(lastOpen, voxelTest);
+        Point3 voxelHit = voxelToWorldSpace(voxelTest);
+        Point3 sideHit = voxelToWorldSpace(lastOpen);
+        Vector3 side = sideHit - voxelHit;
+        sideHit = voxelHit + side*0.2;
+        //debugDraw(Sphere(voxelHit, 0.3));
+        //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+
+        debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
+        if (lastOpen != voxelTest) {
+            debugDraw( Box(sideHit - Point3(voxelRes/3,voxelRes/3,voxelRes/3),sideHit + Point3(voxelRes/3,voxelRes/3,voxelRes/3)), 0.0f, Color3::blue() );
+        }
+    }
 }
 
 void App::initializeScene() {
@@ -165,6 +203,17 @@ void App::initializeScene() {
         }
     }
     redrawWorld();
+}
+
+
+void App::initializeMenu(){
+    menuButtons.append(Point3(-0.5,0,-0.5));
+    buttonColors.append(Color3::green());
+
+
+    menuButtons.append(Point3(0.5, 0, -0.5));
+    buttonColors.append(Color3::brown());
+
 }
 
 
@@ -232,6 +281,17 @@ bool App::voxIsSet(Point3int32 pos) {
     return getChunk(pos)->containsKey(pos);
 }
 
+
+// Conversions between voxelspace and worldspace, the hard coded point3 is because voxels are drawn in center 
+Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
+    return Point3(voxelPos) * voxelRes + Point3(0.5, 0.5f, 0.5f);
+}
+
+//Ditto
+Point3int32 App::worldToVoxelSpace(Point3 worldPos){
+    return (Point3int32)((worldPos - m_sceneOffset - Point3(0.5, 0.5f, 0.5f)) / voxelRes);
+}
+
 //Returns the chunk coords for a given point.
 //I changed this I hope it works -Youle
 Point2int32 App::getChunkCoords(Point3int32 pos) {
@@ -246,6 +306,7 @@ Point2int32 App::getChunkCoords(Point3int32 pos) {
     }
     return Point2int32((pos.x / chunkSize) + addX, (pos.z / chunkSize) + addZ);
 }
+
 
 
 //Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk, if it is, 
@@ -332,7 +393,7 @@ void App::redrawChunk(Point2int32 chunkPos) {
 
     int index = m_chunksToRedraw.findIndex(chunkPos);
     if (index > -1) {
-        m_chunksToRedraw.remove(index);
+        //m_chunksToRedraw.remove(index);
     }
 }
 
@@ -354,9 +415,7 @@ void App::redrawWorld() {
     }
 }
 
-Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
-    return Point3(voxelPos) * voxelRes + Point3(0.5f, 0.5f, 0.5f);
-}
+
 
 void App::drawVoxel(Point3int32 input) {
     int type = posToVox(input);
@@ -399,7 +458,7 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
     ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
 
 	// Center of face we are adding
-	Point3 center = Point3(input) + normal * 0.5f;
+	Point3 center = voxelToWorldSpace(input) + normal * (0.5f * voxelRes);
 
     float sign = normal[axis];
     Vector3 u = Vector3::zero();
@@ -415,25 +474,25 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 	int index = vertexArray.size();
 
     CPUVertexArray::Vertex& a = vertexArray.next();
-	a.position = (center + u * 0.5f - v * 0.5f) * voxelRes;
+	a.position = center + ((u * 0.5f - v * 0.5f) * voxelRes);
     a.texCoord0=Point2(1, 0);
     a.normal  = Vector3::nan();
     a.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
-	b.position = (center + u * 0.5f + v * 0.5f) * voxelRes;
+	b.position = center + ((u * 0.5f + v * 0.5f) * voxelRes);
     b.texCoord0 = Point2(1, 1);
     b.normal  = Vector3::nan();
     b.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
-	c.position = (center - u * 0.5f + v * 0.5f) * voxelRes;
+	c.position = center + ((-u * 0.5f + v * 0.5f) * voxelRes);
     c.texCoord0 = Point2(0, 1);
     c.normal  = Vector3::nan();
     c.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
-	d.position = (center - u * 0.5f - v * 0.5f) * voxelRes;
+	d.position = center + (( -u * 0.5f - v * 0.5f) * voxelRes);
     d.texCoord0=Point2(0, 0);
     d.normal  = Vector3::nan();
     d.tangent = Vector4::nan();
@@ -480,6 +539,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
 
 
+
+
+
      //if(m_firstPersonMode){
      //   CFrame c = player.position;
      //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
@@ -511,7 +573,9 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
+
     hitPos = Point3int32( (select.position + select.lookDirection * maxDist) / voxelRes );
+
     lastPos = hitPos;
 
     //the Boundary of the voxels that would intersect
@@ -638,9 +702,8 @@ void App::onUserInput(UserInput* ui) {
 
     if(!vrEnabled){
         updateSelect();
-        
-    
     }
+
 
 
     //ui->setPureDeltaMouse(m_firstPersonMode);
@@ -686,23 +749,116 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //Point3 hand2;
         //if(m_vrControllerArray.size() > 0){
         //    hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    hand1 += m_offset;
+        //    hand1 += m_controllerOffset;
         //    debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
         //}
         //if(m_vrControllerArray.size() > 1){
         //    hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    hand2 += m_offset;
+        //    hand2 += m_controllerOffset;
         //    debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
         //}
         //
-        //if(m_vrHead){
-        //    head = m_vrHead->frame().pointToWorldSpace(Point3(0,0,0));    
-        //    //debugDraw(Sphere(head, 0.3), 0.0f, Color3::black());
+        //
+        //
+        //if(menu){
+        //   CFrame frame = menuFrame;
+        //   for(int i = 0; i < menuButtons.length(); ++i){
+        //    debugDraw(Sphere(menuFrame.pointToWorldSpace(menuButtons[i]), 0.2), 0.0f, buttonColors[i]);
+        //   }
         //}
         //
+
+
+        //VR CONTROLLER INPUT
+        //BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
+
+        //vr::VREvent_t vrEvent;
+        //while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
+        //    debugPrintf("Device %d sent button %d press\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
+        //    switch (vrEvent.eventType) {
+        //    // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
+        //    // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
+        //    case vr::VREvent_ButtonPress:
+        //        if(!menu){
+        //            Point3int32 lastPos;
+        //            Point3int32 hitPos;
+        //            switch(vrEvent.data.controller.button){
+        //            
+        //            //trigger
+        //            case 33:
+        //               
+        //                cameraIntersectVoxel(lastPos, hitPos);
+        //                debugPrintf("AddVoxel %d %d %d\n", lastPos.x, lastPos.y, lastPos.z);
         //
+        //                addVoxel(lastPos, m_voxelType);
+        //                break;
+        //            
+        //            //Grip
+        //            case 2:
+        //              
+        //                cameraIntersectVoxel(lastPos, hitPos);
+        //                removeVoxel(hitPos);
+        //                break;
+        //            
+        //            //Touchpad Click
+        //            case 32:
+        //              
+        //                cameraIntersectVoxel(lastPos, hitPos);
+        //                m_debugCamera->setFrame(CFrame(voxelToWorldSpace(lastPos)));
+        //                m_debugController->setFrame(m_debugCamera->frame());
+        //                updateSelect();
+        //                
+        //                break;
+        //            
+        //            default:
+        //                debugPrintf("INPUT NOT RECOGNIZED\n");
+        //                break;
+        //            }
+        //           
+        //  
+        //        }else{
+        //            switch(vrEvent.data.controller.button){
+        //            
+        //            //trigger
+        //            case 33:
+        //                if(select.buttonSelected){
+        //                    m_voxelType = select.buttonIndex;
+        //                
+        //                }
+        //                break;
+        //           
+        //            
+        //            default:
+        //                debugPrintf("INPUT NOT RECOGNIZED\n");
+        //                break;
+        //            }
+        //        }
         //
+        //       if(vrEvent.data.controller.button == 1){
+        //            menu = !menu;
+        //            debugPrintf("MENU %d\n", menu);
+        //            if(menu){
+        //                menuFrame = m_vrHead->frame();
+        //                select.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
+        //            }
+        //       }
         //
+        //       break;
+        //
+        //    case vr::VREvent_ButtonUnpress:
+        //        debugPrintf("Device %d sent button %d unpress\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
+        //        break;
+        //
+        //    default:
+        //        // Ignore event
+        //        ;
+        //    }
+        //}
+
+        //END_PROFILER_EVENT();
+        
+        
+        
 
 
     }
