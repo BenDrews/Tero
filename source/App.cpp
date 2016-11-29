@@ -393,12 +393,13 @@ void App::redrawChunk(Point2int32 chunkPos) {
 
     int index = m_chunksToRedraw.findIndex(chunkPos);
     if (index > -1) {
-        //m_chunksToRedraw.remove(index);
+        m_chunksToRedraw.remove(index);
     }
 }
 
 //Redraw the geometry for the chunks that need to be updated.
 //SCREW RUNCONCURRENTLY AMIRIGHT(sorry Ben)
+
 void App::redrawChunks() {
     /*Thread::runConcurrently(0, m_chunksToRedraw.size(), [&](int i) {
         redrawChunk(m_chunksToRedraw[i]);});*/
@@ -415,7 +416,7 @@ void App::redrawWorld() {
     }
 }
 
-
+ 
 
 void App::drawVoxel(Point3int32 input) {
     int type = posToVox(input);
@@ -530,8 +531,6 @@ void App::removeVoxel(Point3int32 input) {
     }
 
     checkBoundaryAdd(input);
-	//redrawChunk(getChunkCoords(input));
-	redrawChunks();
 }
 
 
