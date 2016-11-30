@@ -207,7 +207,9 @@ void App::initializeScene() {
     // Initialize ground
     for(int x = -25; x < 25; ++x) {
         for(int z = -25; z < 25; ++z) {
-            setVoxel(Point3int32(x,0,z), 0);
+            for(int y = -25; y < 25; ++y) {
+            setVoxel(Point3int32(x,y,z), 0);
+            }
         }
     }
     redrawWorld();
@@ -620,8 +622,8 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 
 
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
-   
-    const float maxDist = 10.0f;
+    
+    const float maxDist = 2.0f+intersectMode*10.0f;
     Vector3 direction = select.lookDirection;
     
     Ray cameraRay(select.position, select.lookDirection);
@@ -632,7 +634,7 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
     hitPos = Point3int32( (select.position + select.lookDirection * maxDist) / voxelRes );
 
     lastPos = hitPos;
-
+    if(!forceIntersect){
     //the Boundary of the voxels that would intersect
     Point3int32 voxelBound = Point3int32(1<<15, 1<<15, 1<<15);
     
@@ -644,12 +646,19 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
             break;
         }
     }
-    
+    }
 }
 
 bool App::onEvent(const GEvent& event) {
-
-
+    //r for change intersect distance (idk)
+    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
+            intersectMode +=1;
+            intersectMode %=3;
+    } 
+    //f for forceIntersect
+    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
+            forceIntersect = !forceIntersect;
+    } 
 
     //if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
     if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
