@@ -59,6 +59,10 @@ public:
     Array<Color3> buttonColors;
     void initializeMenu();
 
+   
+    int intersectMode=0;
+    bool forceIntersect = false;
+
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
