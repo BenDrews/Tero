@@ -90,10 +90,6 @@ void App::onInit() {
 
 	initializeScene();
 
-    initializeMenu();
-
-    //makeFP();
-
     updateSelect();
 
 }
@@ -102,7 +98,7 @@ void App::updateSelect(){
     Ray cameraRay;
     Ray empty;
 
-    if(menu){
+    if(menuMode){
         if(vrEnabled){
             //if(m_vrControllerArray.size() > select.menuControllerIndex){
             //    cameraRay = m_vrControllerArray[select.menuControllerIndex]->frame().lookRay();
@@ -140,9 +136,9 @@ void App::updateSelect(){
         }
 
         if(cameraRay.origin() != empty.origin()){
-            select.lookDirection = cameraRay.direction();
-            select.position = cameraRay.origin() + 1*select.lookDirection.direction();
-            select.ray = cameraRay;
+            crosshair.lookDirection = cameraRay.direction();
+            crosshair.position = cameraRay.origin() + 1*crosshair.lookDirection.direction();
+            crosshair.ray = cameraRay;
             drawSelection();
         }
     
@@ -158,9 +154,9 @@ void App::drawSelection(){
 
     //How does this if statement work?(what is menu?)
 
-    if(menu){
-        if(select.buttonSelected){
-            debugDraw(Sphere(menuFrame.pointToWorldSpace(menuButtons[select.buttonIndex]), 0.3), 0.0f, Color3::white());
+    if(menuMode){
+        if(crosshair.buttonSelected){
+            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtons[crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
         }
     }else{
 
@@ -203,7 +199,9 @@ void App::initializeScene() {
 
 	initializeMaterials();
 
-    addVoxelModelToScene();
+    initializeModel();
+
+    addModelToScene(m_model, "voxel");
 
     // Initialize ground
     for(int x = -25; x < 25; ++x) {
@@ -213,65 +211,69 @@ void App::initializeScene() {
             }
         }
     }
+
+    getMenuPositions();
+    makeMenuModel();
+    addModelToScene(m_menuModel, "menuEntity");
     redrawWorld();
 }
 
 
-void App::initializeMenu(){
-    menuButtons.append(Point3(-0.5,0,-0.5));
-    buttonColors.append(Color3::green());
+void App::getMenuPositions(){
+    m_menuButtons.append(Point3(0.5,0,0.5));
+    m_menuButtons.append(Point3(-0.5,0,0.5));
+    //int rows = 1;
+    //int totalVoxels = m_voxToMat.size();
+    //int blocksPerRow = m_voxToMat.size() / rows;
+    //float rowSeparation = 0.5;
+    //float menuRadius = 1;
+    //float x,y,z;
+    //y = 0.25;
+    //
+    //for(int i = 0; i < totalVoxels; ++i){
+    //
+    //    float j = i % blocksPerRow;
+    //    float a = (float)j*(180.0f/(totalVoxels));
+    //    
+    //    for(int k = 1; k < rows; ++k){
+    //        if( i > k*blocksPerRow ){
+    //            y -= rowSeparation;
+    //        }
+    //    }
+    //    x = menuRadius * cos(a);
+    //    z = menuRadius * sin(a);
+    //    
+    //    m_menuButtons.append(Point3(x,y,z));
+    //    }
+    //
+    }
 
-
-    menuButtons.append(Point3(0.5, 0, -0.5));
-    buttonColors.append(Color3::brown());
-
-}
-
-
-void App::initializeMaterials() {
-	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
-
-	// using morgan's premade materials. is there a way to access them without moving them to the local data-files directory?
-//	for (int i = 0; i < voxTypeCount; ++i) {
-//		Any any = m_voxToProp.get(i);
-//		String materialName = any["material"];
-//		m_voxToMat.set(i, UniversalMaterial::create( Any::fromFile(format("data-files/texture/%s/%s.UniversalMaterial.Any", materialName, materialName)) ));
-//	}
-
-	// for now just hard code each individual material?
-	m_voxToMat.set(0, UniversalMaterial::create( Any::fromFile("data-files/texture/greengrass/greengrass.UniversalMaterial.Any") ));
-	m_voxToMat.set(1, UniversalMaterial::create( Any::fromFile("data-files/texture/rockwall/rockwall.UniversalMaterial.Any") ));
-
-}
-
-void App::initializeModel() {
-    ArticulatedModel::Part* part = m_model->addPart("root");
-}
-
-void App::initializeMenu() {
-    ArticulatedModel::Part* part = m_menu->addPart("root");
+void App::makeMenuModel() {
+    ArticulatedModel::Part* part = m_menuModel->addPart("root");
 
 	for (int type = 0; type < voxTypeCount; ++type) {
-		ArticulatedModel::Geometry* geometry = m_menu->addGeometry(format("geom %d", type));
-		ArticulatedModel::Mesh*		mesh	 = m_menu->addMesh(format("mesh %d", type), m_model->part("root"), geometry);
+		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", type));
+		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", type), m_menuModel->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 
-		for (int i = 0; i < m_menuButtons.size(); ++i) {
-			Point3 current = m_menuButtons[i];
-			addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, type);
-			addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
-			addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
-			addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
-			addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
-			addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
-		}
+
+		Point3 current = m_menuButtons[type];
+		addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, type);
+		addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
+		addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
+		addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
+		addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
+		addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
 	}
 }
 
 void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type) {
-	float menuButtonSize = 0.3f;
-    ArticulatedModel::Geometry* geometry = m_menu->geometry(format("geom %d", type));
-    ArticulatedModel::Mesh*     mesh	 = m_menu->mesh(format("mesh %d", type));
+	float menuButtonSize = 0.5f;
+    ArticulatedModel::Geometry* geometry = m_menuModel->geometry(format("geom %d", type));
+    ArticulatedModel::Mesh*     mesh	 = m_menuModel->mesh(format("mesh %d", type));
+
+    center += normal.direction() * (menuButtonSize / 2.0f);
+
 
     float sign = normal[axis];
     Vector3 u = Vector3::zero();
@@ -324,41 +326,76 @@ void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int typ
 }
 
 
+
+
+
+
+void App::initializeMaterials() {
+	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
+
+	// using morgan's premade materials. is there a way to access them without moving them to the local data-files directory?
+//	for (int i = 0; i < voxTypeCount; ++i) {
+//		Any any = m_voxToProp.get(i);
+//		String materialName = any["material"];
+//		m_voxToMat.set(i, UniversalMaterial::create( Any::fromFile(format("data-files/texture/%s/%s.UniversalMaterial.Any", materialName, materialName)) ));
+//	}
+
+	// for now just hard code each individual material?
+	m_voxToMat.set(0, UniversalMaterial::create( Any::fromFile("data-files/texture/greengrass/greengrass.UniversalMaterial.Any") ));
+	m_voxToMat.set(1, UniversalMaterial::create( Any::fromFile("data-files/texture/rockwall/rockwall.UniversalMaterial.Any") ));
+
+}
+
+void App::initializeModel() {
+    ArticulatedModel::Part* part = m_model->addPart("root");
+}
+
+
+
 // Create a cube model. Code pulled from sample/proceduralGeometry
-void App::addVoxelModelToScene() {
+void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName) {
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
     // with a VisibleEntity.
-    initializeModel();
-    if (scene()->modelTable().containsKey(m_model->name())) {
-        scene()->removeModel(m_model->name());
+    if (scene()->modelTable().containsKey(model->name())) {
+        scene()->removeModel(model->name());
     }
-    scene()->insert(m_model);
+    scene()->insert(model);
 
     // Replace any existing voxel entity that has the wrong type
-    shared_ptr<Entity> voxel = scene()->entity("voxel");
-    if (notNull(voxel) && isNull(dynamic_pointer_cast<VisibleEntity>(voxel))) {
-        logPrintf("The scene contained an Entity named 'voxel' that was not a VisibleEntity\n");
-        scene()->remove(voxel);
-        voxel.reset();
+    shared_ptr<Entity> entity = scene()->entity(entityName);
+    if (notNull(entity) && isNull(dynamic_pointer_cast<VisibleEntity>(entity))) {
+        logPrintf("The scene contained an Entity named %s that was not a VisibleEntity\n", entityName);
+        scene()->remove(entity);
+        entity.reset();
     }
 
-    if (isNull(voxel)) {
+    if (isNull(entity)) {
         // There is no voxel entity in this scene, so make one.
         //
         // We could either explicitly instantiate a VisibleEntity or simply
         // allow the Scene parser to construct one. The second approach
         // has more consise syntax for this case, since we are using all constant
         // values in the specification.
-        voxel = scene()->createEntity("voxel",
+        Any anyFile = 
             PARSE_ANY(
                 VisibleEntity {
-                    model = "voxelModel";
+                    model = "";
                 };
-            ));
+            );
+
+        anyFile["model"] = model->name();
+        entity = scene()->createEntity(entityName, anyFile);
+
+        //SUPER HACKY IM SORRY BEN
+        // TODO: FIX THIS
+        if( entityName == "menuEntity"){
+            m_menu = entity;
+        }
+
     } else {
         // Change the model on the existing voxel entity
-        dynamic_pointer_cast<VisibleEntity>(voxel)->setModel(m_model);
+        dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
 }
 
@@ -455,22 +492,26 @@ void App::redrawChunk(Point2int32 chunkPos) {
 	// Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; i++) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
+
 			ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 			ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 
-			Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-			Array<int>&					   indexArray  = mesh->cpuIndexArray;
+	        Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	        Array<int>&					   indexArray  = mesh->cpuIndexArray;
 
-			vertexArray.fastClear();
-			indexArray.fastClear();
-			
-			//hasValue doesn't work so I made this thing from the document:
-			bool hasSomething = false;
-			for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
-			     if ((*it).value == i) {
-			         hasSomething = true;
-			     }
-			}
+	        vertexArray.fastClear();
+	        indexArray.fastClear();
+        
+            //hasValue doesn't work so I made this thing from the document:
+            bool hasSomething = false;
+            for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
+                 if ((*it).value == i) {
+                     hasSomething = true;
+                 }
+            
+            
+            }
+
 
 			//A TERRIBLE WORK AROUND
 			if (!hasSomething){
@@ -688,14 +729,14 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
     
     const float maxDist = 2.0f+intersectMode*10.0f;
-    Vector3 direction = select.lookDirection;
+    Vector3 direction = crosshair.lookDirection;
     
-    Ray cameraRay(select.position, select.lookDirection);
+    Ray cameraRay(crosshair.position, crosshair.lookDirection);
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
 
-    hitPos = Point3int32( (select.position + select.lookDirection * maxDist) / voxelRes );
+    hitPos = Point3int32( (crosshair.position + crosshair.lookDirection * maxDist) / voxelRes );
 
     lastPos = hitPos;
     if(!forceIntersect){
@@ -724,6 +765,20 @@ bool App::onEvent(const GEvent& event) {
     if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
             forceIntersect = !forceIntersect;
     } 
+
+    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
+            menuMode = !menuMode;
+                
+            if(menuMode){
+                menuFrame = activeCamera()->frame();
+                m_menu->setFrame(menuFrame);
+            }
+
+            //m_menu->setVisible(menuMode);
+
+    } 
+
+      
 
     //if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
     if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
@@ -909,7 +964,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //    // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
         //    // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
         //    case vr::VREvent_ButtonPress:
-        //        if(!menu){
+        //        if(!menuMode){
         //            Point3int32 lastPos;
         //            Point3int32 hitPos;
         //            switch(vrEvent.data.controller.button){
