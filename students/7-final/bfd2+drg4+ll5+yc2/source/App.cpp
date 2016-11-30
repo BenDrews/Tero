@@ -170,6 +170,7 @@ void App::drawSelection(){
         Point3 voxelHit = voxelToWorldSpace(voxelTest);
         Point3 sideHit = voxelToWorldSpace(lastOpen);
         Vector3 side = sideHit - voxelHit;
+
         sideHit = voxelHit + side*0.01;
         //debugDraw(Sphere(voxelHit, 0.3));
         //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
@@ -245,8 +246,83 @@ void App::initializeMaterials() {
 
 void App::initializeModel() {
     ArticulatedModel::Part* part = m_model->addPart("root");
+}
+
+void App::initializeMenu() {
+    ArticulatedModel::Part* part = m_menu->addPart("root");
+
+	for (int type = 0; type < voxTypeCount; ++type) {
+		ArticulatedModel::Geometry* geometry = m_menu->addGeometry(format("geom %d", type));
+		ArticulatedModel::Mesh*		mesh	 = m_menu->addMesh(format("mesh %d", type), m_model->part("root"), geometry);
+		mesh->material = m_voxToMat[type];
+
+		for (int i = 0; i < m_menuButtons.size(); ++i) {
+			Point3 current = m_menuButtons[i];
+			addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, type);
+			addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
+			addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
+			addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
+			addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
+			addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+		}
+	}
+}
+
+void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type) {
+	float menuButtonSize = 0.3f;
+    ArticulatedModel::Geometry* geometry = m_menu->geometry(format("geom %d", type));
+    ArticulatedModel::Mesh*     mesh	 = m_menu->mesh(format("mesh %d", type));
+
+    float sign = normal[axis];
+    Vector3 u = Vector3::zero();
+    Vector3 v = Vector3::zero();
+    u[(axis + 1) % 3] = 1;
+    v[(axis + 2) % 3] = 1;
+
+	// Fill vertex and index arrays
+	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	//AttributeArray<Vector3> normalArray = geometry->gpuNormalArray;
+
+	Array<int>& indexArray = mesh->cpuIndexArray;
+	int index = vertexArray.size();
+
+    CPUVertexArray::Vertex& a = vertexArray.next();
+	a.position = center + ((u * 0.5f - v * 0.5f) * menuButtonSize);
+    a.texCoord0=Point2(1, 0);
+    a.normal  = Vector3::nan();
+    a.tangent = Vector4::nan();
+
+	CPUVertexArray::Vertex& b = vertexArray.next();
+	b.position = center + ((u * 0.5f + v * 0.5f) * menuButtonSize);
+    b.texCoord0 = Point2(1, 1);
+    b.normal  = Vector3::nan();
+    b.tangent = Vector4::nan();
+
+	CPUVertexArray::Vertex& c = vertexArray.next();
+	c.position = center + ((-u * 0.5f + v * 0.5f) * menuButtonSize);
+    c.texCoord0 = Point2(0, 1);
+    c.normal  = Vector3::nan();
+    c.tangent = Vector4::nan();
+
+	CPUVertexArray::Vertex& d = vertexArray.next();
+	d.position = center + (( -u * 0.5f - v * 0.5f) * menuButtonSize);
+    d.texCoord0=Point2(0, 0);
+    d.normal  = Vector3::nan();
+    d.tangent = Vector4::nan();
+
+	// If positive, add counterclockwise
+	if (sign > 0.0f) {
+		mesh->cpuIndexArray.append(index, index + 1, index + 2);
+		mesh->cpuIndexArray.append(index, index + 2, index + 3);
+    }
+	// If negative, add clockwise
+	else {
+		mesh->cpuIndexArray.append(index, index + 3, index + 2);
+		mesh->cpuIndexArray.append(index, index + 2, index + 1);
+    }
 
 }
+
 
 // Create a cube model. Code pulled from sample/proceduralGeometry
 void App::addVoxelModelToScene() {
@@ -379,56 +455,48 @@ void App::redrawChunk(Point2int32 chunkPos) {
 	// Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; i++) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
-        ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
-        ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+			ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+			ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 
-	    Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
+			Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+			Array<int>&					   indexArray  = mesh->cpuIndexArray;
 
-	    vertexArray.fastClear();
-	    indexArray.fastClear();
-        
-        //hasValue doesn't work so I made this thing from the document:
-       bool hasSomething = false;
-       for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
-            if ((*it).value == i) {
-                hasSomething = true;
-            }
-       
-       
-       }
+			vertexArray.fastClear();
+			indexArray.fastClear();
+			
+			//hasValue doesn't work so I made this thing from the document:
+			bool hasSomething = false;
+			for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
+			     if ((*it).value == i) {
+			         hasSomething = true;
+			     }
+			}
 
-       //A TERRIBLE WORK AROUND
-            if (!hasSomething){
-                for(int i = 0; i<3;i++){
-                    CPUVertexArray::Vertex& dummy = vertexArray.next();
-	                dummy.position = Point3(0,0,0);
-                    dummy.texCoord0 = Point2(0, 0);
-                    dummy.normal  = Vector3::nan();
-                    dummy.tangent = Vector4::nan();
-                }
-                indexArray.append(0,1,2);
-                
-            }
-        }
-       
+			//A TERRIBLE WORK AROUND
+			if (!hasSomething){
+			    for(int i = 0; i<3;i++){
+			        CPUVertexArray::Vertex& dummy = vertexArray.next();
+			        dummy.position = Point3(0,0,0);
+			        dummy.texCoord0 = Point2(0, 0);
+			        dummy.normal  = Vector3::nan();
+			        dummy.tangent = Vector4::nan();
+			    }
+			    indexArray.append(0,1,2);
+			    
+			}
+        }  
     }
 
 	Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();
 	
-        for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
-		    drawVoxel( (*it).key );
-	    }
-    //Update the geometry for everytype
+    for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
+	    drawVoxel( (*it).key );
+	}
+    
+	// Update the geometry for every type
     for (int i = 0; i < voxTypeCount; i++) { 
-        updateGeometry(chunkPos,i);
+        updateGeometry(chunkPos, i);
     }
-
-	// I replaced this with above iterator. hope it works - Lylia
-//   Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
-//   for (int i = 0; i < voxArray.size(); ++i) {
-//       drawVoxel( voxArray[i] );
-//   }
 
     int index = m_chunksToRedraw.findIndex(chunkPos);
     if (index > -1) {
@@ -551,14 +619,12 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 		mesh->cpuIndexArray.append(index, index + 2, index + 1);
     }
 
-	
-
 }
 
 
 //Clean/update the geometry for our model. 
 //I put the dirty work here so that it is only called in addVoxel and redrawChunk
-void App::updateGeometry( Point2int32 chunkCoords,int type){
+void App::updateGeometry(Point2int32 chunkCoords, int type) {
     
     if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
 		ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
@@ -575,8 +641,6 @@ void App::updateGeometry( Point2int32 chunkCoords,int type){
     	mesh->clearIndexStream();
 
 	}
-    
-
 
 }
 
@@ -648,6 +712,7 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //mak
     }
     }
 }
+
 
 bool App::onEvent(const GEvent& event) {
     //r for change intersect distance (idk)
@@ -728,9 +793,6 @@ bool App::onEvent(const GEvent& event) {
 
 void App::selectCircle(Point3int32 center, int radius) {
     m_selection.clear();
-    
-	// Ray from camera to center
-	// Ray from camera to radius endpoint
 
     for (int y = center.y - radius; y <= center.y + radius; ++y) {
         for (int x = center.x - radius; x <= center.x + radius; ++x) {

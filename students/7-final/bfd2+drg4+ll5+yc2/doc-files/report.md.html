@@ -5,6 +5,16 @@
             Lylia Li (ll5@williams.edu)
             Youle Chen (yc2@williams.edu)
 
+**TO DO:**
+- Topic overview (Ben)
+
+- Design
+    - Call diagram (Ben)
+
+- Quality images and evocative image (Diego)
+
+
+
 ![Image that sells our project](evocativescene.png)
 
 Introduction 
@@ -32,15 +42,10 @@ Specification
 
 4. User is able to change how the world is scaled
 
-5. Voxel painting
-    - Existing set of voxels with 16 different textures to choose from when adding to scene
-    - Textures can be mildly transparent
-    - User can change the color/texture of any voxel that has already been placed in the scene
-
-6. Virtual Reality User Interface
+5. Virtual Reality User Interface
     - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
 
-7. Non-VR User Interface
+6. Non-VR User Interface
     - Use G3D debug camera for head position
     - User navigates the world by moving the mouse (the camera movements are controlled by the mouse)
     - User places or destroys voxels by left clicking the mouse
@@ -64,6 +69,10 @@ Specification
 
 5. Make data structures more efficient
 
+6. Voxel painting
+    - Existing set of voxels with 16 different textures to choose from when adding to scene
+    - Textures can be mildly transparent
+    - User can change the color/texture of any voxel that has already been placed in the scene
 
 **Program evaluation metric:**
 
@@ -153,39 +162,57 @@ Schedule
 
  Task                 | Description                                                | Date          | 
 ----------------------|------------------------------------------------------------|--------------:|
- ArticulatedModel     | Get an ArticulatedModel to show up in the scene, be able to modify it at runtime (Ben, Lylia) | 11/14 |
- VR Controls          | Learn about how VR controls work and how to get inputs from VR controllers (Diego, Youle) | 11/15 |
+ ArticulatedModel     | Get an ArticulatedModel to show up in the scene, be able to add geometry to it at runtime | 11/14 |
+ VR Controls          | Learn about how VR controls work and how to get inputs from VR controllers | 11/15 |
+ Intersection         | Be able to intersect the scene where the user's mouse is, or where the Virtual Reality controller is | 11/16 |
+ Add user input       | Voxels are added on user input (clicking/pressing controller button) | 11/16 |
+ Implement removeVoxel | Voxels can be removed from the ArticulatedModel in the scene | 11/16 |
+ Basic selection and transform | A cylinder of voxels with set radius can be selected and elevated based on a height determined by user input | 11/17 |
+ Materials            | Be able to add voxels of more than one material            |     11/17     |
+ Rudimentary GUI      | Debug sphere to show where voxels will be added/removed    |     11/18     |
+ Virtual Reality functionality | User input from VR controllers and being able to move around the scene VR | 11/19 |
+ Chunking optimization | Divide groups of voxels into different geometries and meshes to speed up program | 11/20 |
+ Dynamic selection    | Radius of circle selection is determined by user input     |     11/28     |
+ Selection visualization | Current selection is highlighted                        |               |
+ Add sound effects    | Different sounds are heard when voxels are placed, removed, or transforms applied |    |
+ More materials       | Users can add up to 8 different types of voxels            |               |
+ Better VR GUI        | Make Virtual Reality menu look more professional           |               |
 
 **TO DO:**
 
-- Add materials with G3D materials (Lylia)
-    - Method to paint voxels (change the texture of a voxel)
-    - One articulated model per material
-- Swap to ray-grid intersect (Youle)
+- Ghost voxel bug
 
-- Use firstPersonManipulator for camera instead of debug camera (Diego)
+- Fix how selection works (Ben)
+
+- Rename methods (Ben)
+
+- Add sound effects
+
+- Add 8 materials, add more if program doesn't lag, remove some if the program does lag
+
+- Add more fun transforms
+
+- Youle: put in importing worlds feature from midterm project
 
 *UI*
-- Switch between materials (Lylia)
+- Switch between materials (Diego - working on it, get rid of debug spheres in menu)
     - Panel with small voxels of differnt textures protruding from it
     - Use scene intersect to interact with the "buttons"
     - Highlight the one that's currently selected
-- Visualize selections (Ben)
-    - selection entity moves with controller in VR
-    - selection entity moves with mouse in non VR
+- Visualize selections
     - Array of current selections is highlighted/glows
     - ** STRETCH GOAL: ** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
 
 **Speed up**
 - Make add voxel method for large sections 
-- Remove voxel 
+- Remove voxel
 
 
 Change Log
 ==================================
 1. May have to reconsider max number of voxels in the scene depending on how much optimization we can do
 2. May also have to reduce number of materials to choose from depending again on how much faster we can get our program to run
-
+3. Removed "painting voxels" from specification
 
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace;}</style><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

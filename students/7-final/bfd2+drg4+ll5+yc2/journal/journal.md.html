@@ -21,8 +21,11 @@ Press R to change the max intersect distance(which is also used for force inters
 ===================================================
 Even when redrawWorld is called every time a voxel is deleted, sometimes voxels don't immediately disappear when deleted. Also, shadows that deleted voxels cast on other voxels don't immediately disappear even if the deleted voxel immediately disappears.
 
-
 When there is only one type of voxel in the world, everything works fine. But when there is more than one voxel, there is lag when voxels are being removed. Also, when a voxel is placed adjacent to or close to one that has been removed but hasn't disappeared, the display updates.
+
+After placing and deleting countless voxels, in a stroke of genius, Ben determined that it was the last voxel in each chunk that was becoming what we have newly christened "ghost voxels" (voxels that hang around after they're deleted).
+
+Finally, we resolved the bug by realizing that after we cleared the CPU vertex and index arrays in the redrawChunk method, we 
 
 2016-11-28: After break tweaks
 ===================================================
