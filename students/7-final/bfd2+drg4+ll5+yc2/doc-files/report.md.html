@@ -91,30 +91,64 @@ Voxel world editors have become quite common since the advent of Minecraft. For 
 Design
 ==================================
 
-One ArticulatedModel, m_model, to hold all of the voxels.
-m_model has different geometries and meshes for each chunk, and there are different chunks for each type (voxel material).
+**TO DO: INSERT CALL DIAGRAM**
 
 Why add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
 
-Our program will work by having a main controller which creates an ArticulatedModel representing the entire voxel world. We will use a hashmap from integer positions to voxel type IDs and color masks to store a compact representation of this world. Along with a hashmap from voxel type ids to voxel properties, these data structures will be used to turn the user's input into the appropriate edits of the main ArticulatedModel.
 
 **Major functions of App: Voxel geometry**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
  initializeModel      | Initializes an ArticulatedModel that will be edited at runtime when user input is received
- initializeMaterials  | ---
- addVoxelModelToScene | ---
- addVoxel             | Based on position and type of voxel received from user input, uses m_voxToProp to add a voxel to the scene by modifying the main ArticulatedModel, and updates m_posToVox
- addFace              | ---
- removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates m_posToVox
- removeFace           | ---
- paintVoxel           | Based on position and type of voxel received from user input, uses m_posToVox to locate an existing voxel in the scene and uses m_voxToProp to change the texture/color of the selected voxel
+ initializeMaterials  | Initializes all of the materials that will be used for each voxel type
+ addVoxelModelToScene | Adds a VisualEntity to the scene with the voxel ArticulatedModel
+ addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by modifying the main ArticulatedModel, and updates relevant data structures
+ setVoxel             | ---
+ addFace              | Adds one face of a voxel given the center of the voxel and a normal
+ removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates relevant data structures
+ unsetVoxel           | ---
+ voxelToWorldSpace / worldToVoxelSpace | Translates between voxel positions and world space positions
+ getChunkCoords       | ---
+ redrawChunk          | ---
+ redrawChunks         | ---
+ redrawWorld          | ---
+ checkBoundaryAdd     | ---
+
+**Major functions of App: Transforms to voxels**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ cameraIntersectVoxel | ---
+ updateSelect         | ---
+ drawSelection        | ---
+ selectCircle         | ---
+ elevateSelection     | ---
 
 **Major functions of App: User interface**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
  initializePlayer     | ---
  movePlayer           | ---
+
+
+We use one ArticulatedModel, `m_model`, in the scene to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into regions called chunks so that when a voxel is deleted in one chunk, only the voxels in that chunk have to be redrawn instead of all of the voxels in the scene. `m_model` has separate geometries and meshes per chunk and material. So even if a grass voxel and a stone voxel are in the same chunk, their vertex and index arrays are stored in different geometries and meshes because they have different materials.
+
+We maintain several data structures to keep track of the voxels in the scene:
+
+- `m_voxToProp` **TO DO: do we need this?**
+
+- `m_voxToMat` is a Table that maps `int`s that represent each voxel type to different materials.
+
+- `m_posToChunk` is a Table that maps voxel positions of voxels in the scene to the chunks they are contained in.
+
+- The chunks are implemented as Tables that map voxel positions of voxels in the scene to voxel  types.
+
+- `m_chunksToRedraw` is an Array that stores chunk positions of chunks that have been changed and need to be redrawn. **TO DO: should we change the name of this?**
+
+- Finally, `m_selection` stores voxel positions of voxels that have been selected in the event of a transform.
+
+When we add a voxel to the scene, first we get the chunk it should be stored in and add it to the chunk. Next, we fetch the geometry and mesh that correspond to the voxel's chunk and type, and add to the CPU vertex and index arrays of the geometry and mesh. We are careful not to add new faces if the pending voxel is adjacent to an existing voxel in the scene. This drastically reduces the number of faces in the scene and ensures that the program does not waste time drawing faces that aren't visible.
+
+When we remove a voxel to the scene, first we get the chunk it is stored in and remove it from the chunk. Next, we fetch the geometry and mesh that correspond to the voxel's chunk and type, and clear the CPU vertex and index arrays of the geometry and mesh. Then, for each type in a chunk, we use the chunk tables to redraw the geometry in that chunk. This is the simplest way to remove voxels because if we just tried to remove one voxel by manually removing that voxel's vertices from the CPU vertex array, then the indexing for all of the other models would be messed up.
 
 
 Correctness Results
@@ -177,6 +211,7 @@ Schedule
  Add sound effects    | Different sounds are heard when voxels are placed, removed, or transforms applied |    |
  More materials       | Users can add up to 8 different types of voxels            |               |
  Better VR GUI        | Make Virtual Reality menu look more professional           |               |
+ **MAKE POWERPOINT** | **MAKE A POWERPOINT PRESENTATION SO WE ARE NOT EMBARRASSMENTS AT THE FINAL PROJECT PRESENTATIONS** | 12/7 |
 
 **TO DO:**
 
@@ -196,15 +231,23 @@ Schedule
 
 *UI*
 - Switch between materials (Diego - working on it, get rid of debug spheres in menu)
+
     - Panel with small voxels of differnt textures protruding from it
+
     - Use scene intersect to interact with the "buttons"
+
     - Highlight the one that's currently selected
+
 - Visualize selections
+
     - Array of current selections is highlighted/glows
+
     - ** STRETCH GOAL: ** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
 
 **Speed up**
+
 - Make add voxel method for large sections 
+
 - Remove voxel
 
 
