@@ -156,7 +156,7 @@ void App::updateSelect(){
 
 void App::drawSelection(){
 
-
+    //How does this if statement work?(what is menu?)
 
     if(menu){
         if(select.buttonSelected){
@@ -170,14 +170,22 @@ void App::drawSelection(){
         Point3 voxelHit = voxelToWorldSpace(voxelTest);
         Point3 sideHit = voxelToWorldSpace(lastOpen);
         Vector3 side = sideHit - voxelHit;
-        sideHit = voxelHit + side*0.2;
+        sideHit = voxelHit + side*0.01;
         //debugDraw(Sphere(voxelHit, 0.3));
         //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
 
         debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         if (lastOpen != voxelTest) {
-            debugDraw( Box(sideHit - Point3(voxelRes/3,voxelRes/3,voxelRes/3),sideHit + Point3(voxelRes/3,voxelRes/3,voxelRes/3)), 0.0f, Color3::blue() );
+            debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
         }
+        
+        for (int i=0 ; i<m_selection.length() ; i++){
+            Point3int32 pos= m_selection[i];
+            Point3 selection = voxelToWorldSpace(pos);
+            debugDraw( Box(selection - Point3(voxelRes/2,voxelRes/2,voxelRes/2),selection + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
+        }
+         
+        
     }
 }
 
@@ -741,6 +749,10 @@ void App::elevateSelection(int delta) {
             unsetVoxel(m_selection[i]);
         }
     }
+
+
+    m_selection.clear();
+
 }
 
 void App::onUserInput(UserInput* ui) {
