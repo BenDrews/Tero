@@ -9,7 +9,7 @@
 #include <GLG3DVR/VRApp.h>
 
 
-class SelectionObject{
+class crosshairObject{
 public:
     Vector3 lookDirection;
     Point3 position;
@@ -53,11 +53,10 @@ public:
 
 
 
-    bool menu = false;
+    bool menuMode = false;
     CFrame menuFrame;
-    Array<Point3> menuButtons;
-    Array<Color3> buttonColors;
-    void initializeMenu();
+    shared_ptr<Entity> m_menu;
+    Array<Point3> m_menuButtons;
 
    
     int intersectMode=0;
@@ -82,7 +81,7 @@ public:
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
 	/** ArticulatedModel for menu */
-    const shared_ptr<ArticulatedModel>& m_menu = ArticulatedModel::createEmpty("menuModel");
+    const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
 	void addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type);
 
     /** Store the current voxel selection */
@@ -104,12 +103,14 @@ public:
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
     void drawSelection();
-    SelectionObject select;
+    crosshairObject crosshair;
 
 	void initializeModel();
-	void initializeMenu();
+	void makeMenuModel();
+    void initializeMenu();
+    void getMenuPositions();
 	void initializeMaterials();
-    void addVoxelModelToScene();
+    void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
     
 
 
