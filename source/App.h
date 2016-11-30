@@ -81,6 +81,10 @@ public:
     /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
+	/** ArticulatedModel for menu */
+    const shared_ptr<ArticulatedModel>& m_menu = ArticulatedModel::createEmpty("menuModel");
+	void addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type);
+
     /** Store the current voxel selection */
     Array<Point3int32> m_selection;
 
@@ -103,6 +107,7 @@ public:
     SelectionObject select;
 
 	void initializeModel();
+	void initializeMenu();
 	void initializeMaterials();
     void addVoxelModelToScene();
     
