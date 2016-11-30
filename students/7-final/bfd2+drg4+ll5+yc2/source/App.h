@@ -127,6 +127,6 @@ public:
 
     Vector3 m_controllerOffset = Vector3(0,0,0);//Vector3(0.05,0,4);
     Vector3 m_sceneOffset = Vector3(0,0,0);
-
+    void updateGeometry( Point2int32 chunkCoords,int type);
 
 };
