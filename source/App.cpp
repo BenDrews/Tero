@@ -379,17 +379,17 @@ void App::redrawChunk(Point2int32 chunkPos) {
 	    indexArray.fastClear();
         
         //hasValue doesn't work so I made this thing from the document:
-       bool terminate = false;
+       bool hasSomething = false;
        for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
             if ((*it).value == i) {
-                terminate = true;
+                hasSomething = true;
             }
        
        
        }
 
        //A TERRIBLE WORK AROUND
-            if (!terminate){
+            if (!hasSomething){
                 for(int i = 0; i<3;i++){
                     CPUVertexArray::Vertex& dummy = vertexArray.next();
 	                dummy.position = Point3(0,0,0);
@@ -398,16 +398,7 @@ void App::redrawChunk(Point2int32 chunkPos) {
                     dummy.tangent = Vector4::nan();
                 }
                 indexArray.append(0,1,2);
-                	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
-	            ArticulatedModel::CleanGeometrySettings geometrySettings;
-                geometrySettings.allowVertexMerging = false;
-                m_model->cleanGeometry(geometrySettings);
-
-            	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	            geometry->clearAttributeArrays();
-
-	            // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-	            mesh->clearIndexStream();
+                
             }
         }
        
@@ -418,7 +409,11 @@ void App::redrawChunk(Point2int32 chunkPos) {
         for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
 		    drawVoxel( (*it).key );
 	    }
-   
+    //Update the geometry for everytype
+    for (int i = 0; i < voxTypeCount; i++) { 
+        updateGeometry(chunkPos,i);
+    }
+
 	// I replaced this with above iterator. hope it works - Lylia
 //   Array<Point3int32> voxArray = m_posToChunk[chunkPos]->getKeys();
 //   for (int i = 0; i < voxArray.size(); ++i) {
@@ -429,6 +424,7 @@ void App::redrawChunk(Point2int32 chunkPos) {
     if (index > -1) {
         m_chunksToRedraw.remove(index);
     }
+
 }
 
 //Redraw the geometry for the chunks that need to be updated.
@@ -474,12 +470,14 @@ void App::drawVoxel(Point3int32 input) {
     if ( !voxIsSet(input + Vector3int32(0,0,-1)) ) {
         addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
     }
+    
 }
 
 // Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
     drawVoxel(input);
+    updateGeometry(getChunkCoords(input),type);
 }
 
 void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
@@ -543,16 +541,32 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 		mesh->cpuIndexArray.append(index, index + 2, index + 1);
     }
 
-	// Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
-	ArticulatedModel::CleanGeometrySettings geometrySettings;
-    geometrySettings.allowVertexMerging = false;
-    m_model->cleanGeometry(geometrySettings);
+	
 
-	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	geometry->clearAttributeArrays();
+}
 
-	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-	mesh->clearIndexStream();
+
+//Clean/update the geometry for our model. 
+//I put the dirty work here so that it is only called in addVoxel and redrawChunk
+void App::updateGeometry( Point2int32 chunkCoords,int type){
+    
+    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
+		ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+        ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+        // Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
+	    ArticulatedModel::CleanGeometrySettings geometrySettings;
+        geometrySettings.allowVertexMerging = false;
+        m_model->cleanGeometry(geometrySettings);
+
+	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	    geometry->clearAttributeArrays();
+
+	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+    	mesh->clearIndexStream();
+
+	}
+    
+
 
 }
 
