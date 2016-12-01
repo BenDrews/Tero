@@ -1,6 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
-
+#define PI 3.1415926f
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();
@@ -221,51 +221,54 @@ void App::initializeScene() {
 
 
 void App::getMenuPositions(){
-    m_menuButtons.append(Point3(-0.5, 0, -1));
-    m_menuButtons.append(Point3(0.5, 0, -1));
+    //m_menuButtons.append(Point3(-0.5, 0, -1));
+    //m_menuButtons.append(Point3(0.5, 0, -1));
 
-    //int rows = 2;
-    //int totalVoxels = voxTypeCount;
-    //int blocksPerRow = totalVoxels / rows;
-    //float rowSeparation = 0.5;
-    //float menuRadius = 2;
-    //float menuWidth = 180.0f; //Degrees
-    //float x,y,z;
-    //y = 0.25;
-    //
-    //for(int i = 0; i < totalVoxels; ++i){
-    //
-    //    float j = i % blocksPerRow;
-    //    float a = (float)j * ( menuWidth / (float)(totalVoxels) );
-    //    
-    //    for(int k = 1; k < rows; ++k){
-    //        if( i > k*blocksPerRow ){
-    //            y -= rowSeparation;
-    //        }
-    //    }
-    //    x = menuRadius * cos(a);
-    //    z = -1.0f * menuRadius * sin(a);
-    //    
-    //    m_menuButtons.append(Point3(x,y,z));
-    //    }
+    int rows = 4;
+    int totalVoxels = 8*voxTypeCount;
+    int blocksPerRow = totalVoxels / rows;
+    float rowSeparation = 0.2;
+    float menuRadius = 2;
+    float menuWidth = 2*PI; //radians
+    float x,y,z;
+    y = 0.75;
     
+    for(int i = 0; i < totalVoxels; ++i){
+    
+        float j = i % blocksPerRow;
+        float a = (float)j * ( menuWidth / (float)(totalVoxels) );
+        a += 5.0f*PI/16.0f;
+
+        for(int k = 1; k < rows; ++k){
+            if( j == 0 ){
+                y -= rowSeparation;
+            }
+        }
+        x = menuRadius * cos(a);
+        z = -1.0f * menuRadius * sin(a);
+        
+        m_menuButtons.append(Point3(x,y,z));
     }
+    m_menuButtons.append(Point3(0.0f,0.75f,-menuRadius));
+    
+}
 
 void App::makeMenuModel() {
     ArticulatedModel::Part* part = m_menuModel->addPart("root");
-
-	for (int type = 0; type < voxTypeCount; ++type) {
-		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", type));
-		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", type), m_menuModel->part("root"), geometry);
+    int type;
+	for (int t = 0; t < 8*voxTypeCount; ++t) {
+        type = t%voxTypeCount;
+		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", t));
+		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", t), m_menuModel->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 
-		Point3 current = m_menuButtons[type];
-		addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, type);
-		addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
-		addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
-		addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
-		addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
-		addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+		Point3 current = m_menuButtons[t];
+		addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, t);
+		addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, t);
+		addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, t);
+		addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, t);
+		addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, t);
+		addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, t);
 
         ArticulatedModel::CleanGeometrySettings geometrySettings;
         geometrySettings.allowVertexMerging = false;
@@ -283,7 +286,6 @@ void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int typ
 	float menuButtonSize = 0.25f;
     ArticulatedModel::Geometry* geometry = m_menuModel->geometry(format("geom %d", type));
     ArticulatedModel::Mesh*     mesh	 = m_menuModel->mesh(format("mesh %d", type));
-    mesh->material = m_voxToMat[type];
 
     center += normal.direction() * (menuButtonSize / 2.0f);
 
@@ -941,7 +943,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
     redrawChunks();
     if(menuMode){
         CFrame frame = menuFrame;
-        debugDrawLabel(frame.pointToWorldSpace(Point3(0,0.2,0)), Vector3(0,0,0), GuiText("Select Voxel Type"));
+        debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount*8]), Vector3(0,0,0), GuiText("Select Voxel Type"));
     }
     if(vrEnabled){
         //updateSelect();
