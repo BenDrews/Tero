@@ -192,7 +192,7 @@ void App::initializeScene() {
 
     m_voxToProp = Table<int, Any>();
 
-    m_chunksToRedraw = Array<Point2int32>();
+    m_chunksToUpdate = Array<Point2int32>();
 	
     for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -457,17 +457,17 @@ void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 zPlus   = getChunkCoords(pos + Point3int32(0,0,1));
     Point2int32 zMinus  = getChunkCoords(pos + Point3int32(0,0,-1));
 
-    if ( (xPlus != current) && (!m_chunksToRedraw.contains(xPlus)) ) {
-        m_chunksToRedraw.push(xPlus);
+    if ( (xPlus != current) && (!m_chunksToUpdate.contains(xPlus)) ) {
+        m_chunksToUpdate.push(xPlus);
     } 
-    if ( (xMinus != current) && (!m_chunksToRedraw.contains(xMinus)) ) {
-        m_chunksToRedraw.push(xMinus);
+    if ( (xMinus != current) && (!m_chunksToUpdate.contains(xMinus)) ) {
+        m_chunksToUpdate.push(xMinus);
     }
-    if ( (zPlus != current) && (!m_chunksToRedraw.contains(zPlus)) ) {
-        m_chunksToRedraw.push(zPlus);
+    if ( (zPlus != current) && (!m_chunksToUpdate.contains(zPlus)) ) {
+        m_chunksToUpdate.push(zPlus);
     } 
-    if ( (zMinus != current) && (!m_chunksToRedraw.contains(zMinus)) ) {
-        m_chunksToRedraw.push(zMinus);
+    if ( (zMinus != current) && (!m_chunksToUpdate.contains(zMinus)) ) {
+        m_chunksToUpdate.push(zMinus);
     }
 }
 
@@ -502,18 +502,27 @@ void App::unsetVoxel(Point3int32 pos) {
 	}
 }
 
-// Redraw the geometry for a given chunk.
-void App::redrawChunk(Point2int32 chunkPos) {
-	// Clear CPU vertex and CPU index arrays for every chunk type
+//Clear the geometry for a given chunk.
+void App::clearChunk(Point2int32 chunkPos) {
+    // Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; i++) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
-
-			ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
-			ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+            ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
+            ArticulatedModel::Mesh*     mesh     = m_model->mesh(format("mesh %d,%d,%d", chunkPos.x, chunkPos.y, i ));
 
 	        Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
 	        Array<int>&					   indexArray  = mesh->cpuIndexArray;
 
+            vertexArray.fastClear();
+	        indexArray.fastClear();
+
+            ArticulatedModel::CleanGeometrySettings geometrySettings;
+            geometrySettings.allowVertexMerging = false;
+            m_model->cleanGeometry(geometrySettings);
+
+            geometry->clearAttributeArrays();
+            mesh->clearIndexStream();
+       
 	        vertexArray.fastClear();
 	        indexArray.fastClear();
         
@@ -542,7 +551,11 @@ void App::redrawChunk(Point2int32 chunkPos) {
 			}
         }  
     }
+}
 
+// Redraw the geometry for a given chunk.
+void App::drawChunk(Point2int32 chunkPos) {
+	
 	Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();
 	
     for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
@@ -554,21 +567,17 @@ void App::redrawChunk(Point2int32 chunkPos) {
         updateGeometry(chunkPos, i);
     }
 
-    int index = m_chunksToRedraw.findIndex(chunkPos);
+    int index = m_chunksToUpdate.findIndex(chunkPos);
     if (index > -1) {
-        m_chunksToRedraw.remove(index);
+        m_chunksToUpdate.remove(index);
     }
 
 }
 
-//Redraw the geometry for the chunks that need to be updated.
-//SCREW RUNCONCURRENTLY AMIRIGHT(sorry Ben)
-
-void App::redrawChunks() {
-    /*Thread::runConcurrently(0, m_chunksToRedraw.size(), [&](int i) {
-        redrawChunk(m_chunksToRedraw[i]);});*/
-    for (int i = 0; i < m_chunksToRedraw.size(); ++i) {
-        redrawChunk(m_chunksToRedraw[i]);
+void App::updateChunks() {
+    for (int i = 0; i < m_chunksToUpdate.size(); ++i) {        
+        clearChunk(m_chunksToUpdate[i]);
+        drawChunk(m_chunksToUpdate[i]);
     }
 }
 
@@ -576,7 +585,8 @@ void App::redrawChunks() {
 void App::redrawWorld() {
     Array<Point2int32> chunkArray = m_posToChunk.getKeys();
     for (int i = 0; i < chunkArray.size(); ++i) {
-        redrawChunk(chunkArray[i]);
+        clearChunk(chunkArray[i]);
+        drawChunk(chunkArray[i]);
     }
 }
 
@@ -704,8 +714,8 @@ void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
 
 	Point2int32 chunkCoords = getChunkCoords(input);
-    if( !m_chunksToRedraw.contains(chunkCoords) ) {
-        m_chunksToRedraw.push(chunkCoords);
+    if( !m_chunksToUpdate.contains(chunkCoords) ) {
+        m_chunksToUpdate.push(chunkCoords);
     }
 
     checkBoundaryAdd(input);
@@ -734,7 +744,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 
     // Example GUI dynamic layout code.  Resize the debugWindow to fill
     // the screen horizontally.
-    debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
 
 
@@ -884,8 +893,8 @@ void App::elevateSelection(int delta) {
             Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(m_selection[i]));
             Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
-            if( !m_chunksToRedraw.contains(chunkCoords) ) {
-                m_chunksToRedraw.push(chunkCoords);
+            if( !m_chunksToUpdate.contains(chunkCoords) ) {
+                m_chunksToUpdate.push(chunkCoords);
             }
             unsetVoxel(m_selection[i]);
         }
@@ -940,7 +949,7 @@ void App::onUserInput(UserInput* ui) {
 
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
 
-    redrawChunks();
+    updateChunks();
     if(menuMode){
         CFrame frame = menuFrame;
         debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount*8]), Vector3(0,0,0), GuiText("Select Voxel Type"));
