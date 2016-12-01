@@ -98,8 +98,8 @@ void App::updateSelect(){
     Ray cameraRay;
     Ray empty;
 
-    if(menuMode){
-        if(vrEnabled){
+    if (menuMode) {
+        if (vrEnabled) {
             //if(m_vrControllerArray.size() > select.menuControllerIndex){
             //    cameraRay = m_vrControllerArray[select.menuControllerIndex]->frame().lookRay();
             //    cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
@@ -121,32 +121,28 @@ void App::updateSelect(){
             //}
         }
     
-    }else{
-        if(vrEnabled){
+    } else {
+        if (vrEnabled) {
            // if(m_vrControllerArray.size() > 0){
            //     cameraRay = m_vrControllerArray[0]->frame().lookRay();
            //     cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
            // }
            //
             
-        }else{
-            Point2 center = Point2(UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height());
+        } else {
+            Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
             cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
            
         }
 
-        if(cameraRay.origin() != empty.origin()){
-            crosshair.lookDirection = cameraRay.direction();
-            crosshair.position = cameraRay.origin() + 1*crosshair.lookDirection.direction();
-            crosshair.ray = cameraRay;
+        if (cameraRay.origin() != empty.origin()) {
+            m_crosshair.lookDirection = cameraRay.direction();
+            m_crosshair.position = cameraRay.origin() + m_crosshair.lookDirection.direction();
+            m_crosshair.ray = cameraRay;
             drawSelection();
         }
     
     }
-
-
-    
-
 
 }
 
@@ -155,11 +151,11 @@ void App::drawSelection(){
     //How does this if statement work?(what is menu?)
     // A boolean that indicates whether or not menu mode is activated
 
-    if(menuMode){
-        if(crosshair.buttonSelected){
-            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtons[crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
+    if (menuMode) {
+        if (m_crosshair.buttonSelected) {
+            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtons[m_crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
         }
-    }else{
+    } else {
 
         Point3int32 lastOpen;
         Point3int32 voxelTest;
@@ -168,22 +164,20 @@ void App::drawSelection(){
         Point3 sideHit = voxelToWorldSpace(lastOpen);
         Vector3 side = sideHit - voxelHit;
 
-        sideHit = voxelHit + side*0.01;
-        //debugDraw(Sphere(voxelHit, 0.3));
-        //debugDraw(Sphere(sideHit, 0.2), 0.0f, Color3::blue());
+        sideHit = voxelHit + side * 0.01;
 
-        debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2),voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
+        debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2), voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         if (lastOpen != voxelTest) {
             debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
         }
         
-        for (int i=0 ; i<m_selection.length() ; i++){
+        for (int i = 0; i < m_selection.length(); i++) {
             Point3int32 pos= m_selection[i];
             Point3 selection = voxelToWorldSpace(pos);
             debugDraw( Box(selection - Point3(voxelRes/2,voxelRes/2,voxelRes/2),selection + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         }
-         
-        
+
+       
     }
 }
 
@@ -256,19 +250,15 @@ void App::getMenuPositions(){
 void App::makeMenuModel() {
     ArticulatedModel::Part* part = m_menuModel->addPart("root");
     int type;
-	for (int t = 0; t < voxTypeCount; ++t) {
-        type = t%voxTypeCount;
+	for (int t = 0; t < voxTypeCount * 8; ++t) {
+        type = t % voxTypeCount;
+
 		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", t));
 		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", t), m_menuModel->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 
 		Point3 current = m_menuButtons[t];
-		addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, t);
-		addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, t);
-		addMenuFace(current, Vector3int32(0,1,0), Vector3::Y_AXIS, t);
-		addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, t);
-		addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, t);
-		addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, t);
+		drawVoxelNaive(geometry, mesh, current, 0.25f, t);
 
         ArticulatedModel::CleanGeometrySettings geometrySettings;
         geometrySettings.allowVertexMerging = false;
@@ -282,68 +272,24 @@ void App::makeMenuModel() {
 	}
 }
 
-void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type) {
-	float menuButtonSize = 0.25f;
-    ArticulatedModel::Geometry* geometry = m_menuModel->geometry(format("geom %d", type));
-    ArticulatedModel::Mesh*     mesh	 = m_menuModel->mesh(format("mesh %d", type));
-
-    center += normal.direction() * (menuButtonSize / 2.0f);
-
-
-    float sign = normal[axis];
-    Vector3 u = Vector3::zero();
-    Vector3 v = Vector3::zero();
-    u[(axis + 1) % 3] = 1;
-    v[(axis + 2) % 3] = 1;
-
-	// Fill vertex and index arrays
-	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	//AttributeArray<Vector3> normalArray = geometry->gpuNormalArray;
-
-	Array<int>& indexArray = mesh->cpuIndexArray;
-	int index = vertexArray.size();
-
-    CPUVertexArray::Vertex& a = vertexArray.next();
-	a.position = center + ((u * 0.5f - v * 0.5f) * menuButtonSize);
-    a.texCoord0=Point2(1, 0);
-    a.normal  = Vector3::nan();
-    a.tangent = Vector4::nan();
-
-	CPUVertexArray::Vertex& b = vertexArray.next();
-	b.position = center + ((u * 0.5f + v * 0.5f) * menuButtonSize);
-    b.texCoord0 = Point2(1, 1);
-    b.normal  = Vector3::nan();
-    b.tangent = Vector4::nan();
-
-	CPUVertexArray::Vertex& c = vertexArray.next();
-	c.position = center + ((-u * 0.5f + v * 0.5f) * menuButtonSize);
-    c.texCoord0 = Point2(0, 1);
-    c.normal  = Vector3::nan();
-    c.tangent = Vector4::nan();
-
-	CPUVertexArray::Vertex& d = vertexArray.next();
-	d.position = center + (( -u * 0.5f - v * 0.5f) * menuButtonSize);
-    d.texCoord0=Point2(0, 0);
-    d.normal  = Vector3::nan();
-    d.tangent = Vector4::nan();
-
-	// If positive, add counterclockwise
-	if (sign > 0.0f) {
-		mesh->cpuIndexArray.append(index, index + 1, index + 2);
-		mesh->cpuIndexArray.append(index, index + 2, index + 3);
-    }
-	// If negative, add clockwise
-	else {
-		mesh->cpuIndexArray.append(index, index + 3, index + 2);
-		mesh->cpuIndexArray.append(index, index + 2, index + 1);
-    }
-
+void App::makeHandModel() {
+    ArticulatedModel::Part*		part	 = m_handModel->addPart("root");
+	ArticulatedModel::Geometry* geometry = m_handModel->addGeometry("geom");
+	ArticulatedModel::Mesh*		mesh	 = m_handModel->addMesh("mesh", m_handModel->part("root"), geometry);
+	mesh->material = m_voxToMat[0];
+	
+	drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0.1f, 0);
+	
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+	geometrySettings.allowVertexMerging = false;
+	m_menuModel->cleanGeometry(geometrySettings);
+	
+	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	geometry->clearAttributeArrays();
+	
+	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	mesh->clearIndexStream();
 }
-
-
-
-
-
 
 void App::initializeMaterials() {
 	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
@@ -433,7 +379,7 @@ Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
 
 //Ditto
 Point3int32 App::worldToVoxelSpace(Point3 worldPos){
-    return (Point3int32)((worldPos - m_sceneOffset - Point3(0.5, 0.5f, 0.5f)) / voxelRes);
+    return (Point3int32)((worldPos - Point3(0.5, 0.5f, 0.5f)) / voxelRes);
 }
 
 //Returns the chunk coords for a given point.
@@ -545,7 +491,7 @@ void App::clearChunk(Point2int32 chunkPos) {
 
 			//A TERRIBLE WORK AROUND
 			if (!hasSomething){
-			    for(int i = 0; i<3;i++){
+			    for (int i = 0; i < 3; i++) {
 			        CPUVertexArray::Vertex& dummy = vertexArray.next();
 			        dummy.position = Point3(0,0,0);
 			        dummy.texCoord0 = Point2(0, 0);
@@ -593,35 +539,11 @@ void App::redrawWorld() {
     for (int i = 0; i < chunkArray.size(); ++i) {
         clearChunk(chunkArray[i]);
         drawChunk(chunkArray[i]);
+
     }
 }
 
  
-
-void App::drawVoxel(Point3int32 input) {
-    int type = posToVox(input);
-
-	// Check each position adjacent to voxel, and if nothing is there, add a face
-    if ( !voxIsSet(input + Vector3int32(1,0,0)) ) {
-        addFace(input, Vector3int32(1,0,0), Vector3::X_AXIS, type);
-    }
-    if ( !voxIsSet(input + Vector3int32(-1,0,0)) ) {
-        addFace(input, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
-    }
-    if ( !voxIsSet(input + Vector3int32(0,1,0)) ) {
-        addFace(input, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
-    }
-    if ( !voxIsSet(input + Vector3int32(0,-1,0)) ) {
-        addFace(input, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
-    }
-    if ( !voxIsSet(input + Vector3int32(0,0,1)) ) {
-        addFace(input, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
-    }
-    if ( !voxIsSet(input + Vector3int32(0,0,-1)) ) {
-        addFace(input, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
-    }
-    
-}
 
 // Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
@@ -630,18 +552,58 @@ void App::addVoxel(Point3int32 input, int type) {
     updateGeometry(getChunkCoords(input),type);
 }
 
-void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int type) {
-    Point2int32 chunkCoords = getChunkCoords(input);
-    if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
-		ArticulatedModel::Geometry* geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
-		ArticulatedModel::Mesh*		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type), m_model->part("root"), geometry);
+
+void App::drawVoxel(Point3int32 input) {
+    int type = posToVox(input);
+	ArticulatedModel::Geometry* geometry;
+	ArticulatedModel::Mesh*     mesh;
+
+	Point2int32 chunkCoords = getChunkCoords(input);
+	if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
+		geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type), m_model->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 	}
-    ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
-    ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+    geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+    mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
 
+	Point3 pos = voxelToWorldSpace(input);
+
+	// Check each position adjacent to voxel, and if nothing is there, add a face
+    if ( !voxIsSet(input + Vector3int32(1,0,0)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(1,0,0), Vector3::X_AXIS, type);
+    }
+    if ( !voxIsSet(input + Vector3int32(-1,0,0)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
+    }
+    if ( !voxIsSet(input + Vector3int32(0,1,0)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(0,1,0), Vector3::Y_AXIS, type);
+    }
+    if ( !voxIsSet(input + Vector3int32(0,-1,0)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
+    }
+    if ( !voxIsSet(input + Vector3int32(0,0,1)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
+    }
+    if ( !voxIsSet(input + Vector3int32(0,0,-1)) ) {
+        addFace(geometry, mesh, pos, voxelRes, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+    }
+    
+}
+
+/** Used for making the voxels in the menu and hand models, doesn't cull */
+void App::drawVoxelNaive(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type) {
+	addFace(geometry, mesh, pos, size, Vector3int32(1,0,0),  Vector3::X_AXIS, type);
+	addFace(geometry, mesh, pos, size, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
+	addFace(geometry, mesh, pos, size, Vector3int32(0,1,0),  Vector3::Y_AXIS, type);
+	addFace(geometry, mesh, pos, size, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
+	addFace(geometry, mesh, pos, size, Vector3int32(0,0,1),  Vector3::Z_AXIS, type);
+	addFace(geometry, mesh, pos, size, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+}
+
+void App::addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type) {
 	// Center of face we are adding
-	Point3 center = voxelToWorldSpace(input) + normal * (0.5f * voxelRes);
+	Point3 center = pos + normal * (0.5f * size);
 
     float sign = normal[axis];
     Vector3 u = Vector3::zero();
@@ -657,25 +619,25 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
 	int index = vertexArray.size();
 
     CPUVertexArray::Vertex& a = vertexArray.next();
-	a.position = center + ((u * 0.5f - v * 0.5f) * voxelRes);
+	a.position = center + ((u * 0.5f - v * 0.5f) * size);
     a.texCoord0=Point2(1, 0);
     a.normal  = Vector3::nan();
     a.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& b = vertexArray.next();
-	b.position = center + ((u * 0.5f + v * 0.5f) * voxelRes);
+	b.position = center + ((u * 0.5f + v * 0.5f) * size);
     b.texCoord0 = Point2(1, 1);
     b.normal  = Vector3::nan();
     b.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& c = vertexArray.next();
-	c.position = center + ((-u * 0.5f + v * 0.5f) * voxelRes);
+	c.position = center + ((-u * 0.5f + v * 0.5f) * size);
     c.texCoord0 = Point2(0, 1);
     c.normal  = Vector3::nan();
     c.tangent = Vector4::nan();
 
 	CPUVertexArray::Vertex& d = vertexArray.next();
-	d.position = center + (( -u * 0.5f - v * 0.5f) * voxelRes);
+	d.position = center + (( -u * 0.5f - v * 0.5f) * size);
     d.texCoord0=Point2(0, 0);
     d.normal  = Vector3::nan();
     d.tangent = Vector4::nan();
@@ -692,7 +654,6 @@ void App::addFace(Point3int32 input, Vector3 normal, Vector3::Axis axis, int typ
     }
 
 }
-
 
 //Clean/update the geometry for our model. 
 //I put the dirty work here so that it is only called in addVoxel and redrawChunk
@@ -728,6 +689,9 @@ void App::removeVoxel(Point3int32 input) {
 }
 
 
+
+
+
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
 
@@ -753,34 +717,34 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 }
 
 
-
-
-
-void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){ //make this work
+void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
-    const float maxDist = 2.0f+intersectMode*10.0f;
-    Vector3 direction = crosshair.lookDirection;
+	// Intersect with empty space
+    const float maxDist = 2.0f + intersectMode * 10.0f;
+    Vector3 direction = m_crosshair.lookDirection;
     
-    Ray cameraRay(crosshair.position, crosshair.lookDirection);
+    Ray cameraRay(m_crosshair.position, m_crosshair.lookDirection);
 
     //Point2 center = UserInput(this->window()).mouseXY();
     //Ray cameraRay = activeCamera()->worldRay(center.x / this->window()->width() * renderDevice->width(), center.y / this->window()->height() * renderDevice->height(), renderDevice->viewport());
 
-    hitPos = Point3int32( (crosshair.position + crosshair.lookDirection * maxDist) / voxelRes );
+    hitPos = Point3int32( (m_crosshair.position + m_crosshair.lookDirection * maxDist) / voxelRes );
 
     lastPos = hitPos;
+
+	// Intersect with voxel
     if(!forceIntersect){
-    //the Boundary of the voxels that would intersect
-    Point3int32 voxelBound = Point3int32(1<<15, 1<<15, 1<<15);
-    
-    for (RayGridIterator it(cameraRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid(); ++it) {
-    // Search for an intersection within this grid cell
-        if( voxIsSet(it.index()) ) {
-            hitPos = it.index();
-            lastPos = it.index() + it.enterNormal();
-            break;
-        }
-    }
+		//the Boundary of the voxels that would intersect
+		Point3int32 voxelBound = Point3int32(1<<15, 1<<15, 1<<15);
+		
+		for (RayGridIterator it(cameraRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid(); ++it) {
+		// Search for an intersection within this grid cell
+		    if( voxIsSet(it.index()) ) {
+		        hitPos = it.index();
+		        lastPos = it.index() + it.enterNormal();
+		        break;
+		    }
+		}
     }
 }
 
@@ -967,12 +931,10 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //Point3 hand2;
         //if(m_vrControllerArray.size() > 0){
         //    hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    hand1 += m_controllerOffset;
         //    debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
         //}
         //if(m_vrControllerArray.size() > 1){
         //    hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    hand2 += m_controllerOffset;
         //    debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
         //}
         //

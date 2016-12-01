@@ -9,7 +9,7 @@
 #include <GLG3DVR/VRApp.h>
 
 
-class crosshairObject{
+class CrosshairObject{
 public:
     Vector3 lookDirection;
     Point3 position;
@@ -47,23 +47,22 @@ protected:
   
 public:
 
-    int m_voxelType = 0;
-    /** VR Toggle**/
     bool vrEnabled = false;
-
-
 
     bool menuMode = false;
     CFrame menuFrame;
+    const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
     shared_ptr<Entity> m_menu;
     Array<Point3> m_menuButtons;
 
-   
-    int intersectMode=0;
+    int intersectMode = 0;
     bool forceIntersect = false;
 
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
+
+	/** Active voxel type */
+    int m_voxelType = 0;
 
     /** Maps 3D chunk positions to the Tables representing each individual chunk */
     Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
@@ -80,15 +79,18 @@ public:
     /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
-	/** ArticulatedModel for menu */
-    const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
-	void addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type);
+    /** Hand model */
+    const shared_ptr<ArticulatedModel>& m_handModel = ArticulatedModel::createEmpty("handModel");
+
+	/** Object that marks where the user is currently pointing */
+    CrosshairObject m_crosshair;
 
     /** Store the current voxel selection */
     Array<Point3int32> m_selection;
 
     /** Store marked position when mid transform */
     Point3int32 m_currentMark;
+
 
     App(const super::Settings& settings = super::Settings());
     virtual void onInit() override;
@@ -97,47 +99,44 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
+	void initializeModel();
+	void makeMenuModel();
+	void makeHandModel();
+    void getMenuPositions();
+	void initializeMaterials();
+    void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
+
     Point3 voxelToWorldSpace(Point3int32 voxelPos);
     Point3int32 worldToVoxelSpace(Point3 worldPos);
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
-    void drawSelection();
-    crosshairObject crosshair;
+    void drawSelection(); 
 
-	void initializeModel();
-	void makeMenuModel();
-    void initializeMenu();
-    void getMenuPositions();
-	void initializeMaterials();
-    void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
-    
+	// Voxel geometry
+	void addVoxel(Point3int32 input, int type);
+	void removeVoxel(Point3int32 input);
+    void addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type);
 
-
+	// Handling chunk data structures
     Point2int32 getChunkCoords(Point3int32 pos);
+    int posToVox(Point3int32 pos);
     bool voxIsSet(Point3int32 pos);
     shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
     void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
     void drawVoxel(Point3int32 input);
+	void drawVoxelNaive(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
     void clearChunk(Point2int32 chunkPos);
     void drawChunk(Point2int32 chunkPos);
     void updateChunks();
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
 
-
-	void addVoxel(Point3int32 input, int type);
-	void removeVoxel(Point3int32 input);
-    void addFace(Point3int32 pos, Vector3 normal, Vector3::Axis axis, int type);
-    float maxDistGrid(Point3 pos, Vector3 dir);
-    int posToVox(Point3int32 pos);
-
+	// Applying transforms to voxels
     void selectCircle(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
 
-    Vector3 m_controllerOffset = Vector3(0,0,0);//Vector3(0.05,0,4);
-    Vector3 m_sceneOffset = Vector3(0,0,0);
-    void updateGeometry( Point2int32 chunkCoords,int type);
+    void updateGeometry(Point2int32 chunkCoords, int type);
 
 };
