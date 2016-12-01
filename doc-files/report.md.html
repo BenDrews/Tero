@@ -8,11 +8,7 @@
 **TO DO:**
 - Topic overview (Ben)
 
-- Design
-    - Call diagram (Ben)
-
-- Quality images and evocative image (Diego)
-
+- Call diagram (Ben)
 
 
 ![Image that sells our project](evocativescene.jpg)
@@ -61,18 +57,12 @@ Specification
 
 1. Implement marching cubes algorithm to make smooth surfaces
 
-2. Add visual user interface in VR
+2. Add physics simulation so we can throw voxels around
 
-3. Add physics simulation so we can throw voxels around
+3. Import MagicaVoxel objects as templates
 
-4. Import MagicaVoxel objects as templates
+4. Make data structures more efficient
 
-5. Make data structures more efficient
-
-6. Voxel painting
-    - Existing set of voxels with 16 different textures to choose from when adding to scene
-    - Textures can be mildly transparent
-    - User can change the color/texture of any voxel that has already been placed in the scene
 
 **Program evaluation metric:**
 
@@ -93,43 +83,45 @@ Design
 
 **TO DO: INSERT CALL DIAGRAM**
 
-Why add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
-
-
 **Major functions of App: Voxel geometry**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- initializeModel      | Initializes an ArticulatedModel that will be edited at runtime when user input is received
+ initializeModel      | Initializes an `ArticulatedModel` that will be edited at runtime when user input is received
  initializeMaterials  | Initializes all of the materials that will be used for each voxel type
+ addVoxelModelToScene | Adds a `VisualEntity` to the scene with the voxel ArticulatedModel
+ addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by modifying the main `ArticulatedModel`, and updates relevant data structures
+ setVoxel             | Finds the given voxel's chunk and sets the voxel type given at the position given
  addVoxelModelToScene | Adds a VisualEntity to the scene with the voxel ArticulatedModel
- addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by modifying the main ArticulatedModel, and updates relevant data structures
- setVoxel             | Finds the voxel's chunk and sets the voxel type given at the position given
  addFace              | Adds one face of a voxel given the center of the voxel and a normal
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates relevant data structures
- unsetVoxel           | Finds the voxel's chunk and removes the voxel from that chunk
+ unsetVoxel           | Finds the given voxel's chunk and removes the voxel from that chunk
  voxelToWorldSpace / worldToVoxelSpace | Translates between voxel positions and world space positions
- getChunkCoords       | Returns the appropriate chunk given a position
- redrawChunk          | Redraws the geometry for the given chunk
- redrawChunks         | Redraws the chunks that have been tagged as "dirty"
- redrawWorld          | Redraws every chunk in the scene
- checkBoundaryAdd     | Checks to see if a removed voxel is the boundary for a chunk, if so, it can tag up to two additional chunks as "dirty"
+ getChunkCoords       | Given a voxel space position, returns the chunk the voxel is located in.
+ redrawChunk          | For one chunk, clears the geometries and meshes for each voxel type, and uses the chunk table to repopulate appropriate geomteries and meshes.
+ redrawChunks         | Redraws all chunks that have been modified, which are stored in `m_chunksToRedraw`
+ redrawWorld          | Redraws all chunks in the scene
+ checkBoundaryAdd     | When removing a voxel, checks whether the voxel is in the boundary between two chunks. If it is, pushes neighboring chunks to `m_chunksToRedraw`
 
-**Major functions of App: Transforms to voxels**
+
+**Major functions of App: Applying transforms to voxels**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ selectCircle         | Fills the m_selection array with voxels within a given radius of a given point
+ elevateSelection     | Moves voxels in the m_selection array up by a given height
+
+
+**Major functions of App: User interface**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
  cameraIntersectVoxel | Finds the voxel intersection by ray marching with the ray given by the crosshair object. Returns the voxel and adjacent voxel intersected.
  updateSelect         | Updates the ray of the crosshair object. This is different depending on whether or not vr is enabled
  drawSelection        | Draws debugSquares in the selected voxel, or a debug sphere over the selected menu item
- selectCircle         | Fills the m_selection array with voxels within a given radius of a given point
- elevateSelection     | Moves voxels in the m_selection array up by a given height
-
-
 
 We use one ArticulatedModel, `m_model`, in the scene to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into regions called chunks so that when a voxel is deleted in one chunk, only the voxels in that chunk have to be redrawn instead of all of the voxels in the scene. `m_model` has separate geometries and meshes per chunk and material. So even if a grass voxel and a stone voxel are in the same chunk, their vertex and index arrays are stored in different geometries and meshes because they have different materials.
 
 We maintain several data structures to keep track of the voxels in the scene:
 
-- `m_voxToProp` **TO DO: do we need this?**
+- `m_voxToProp` is a Table that maps `int`s that represent each voxel type to `Any` files that contain a list of their properties: material, whether the corners are rounded. *Not yet implemented: transparency, emissivity, if it should have a hit box (tangibility)*.
 
 - `m_voxToMat` is a Table that maps `int`s that represent each voxel type to different materials.
 
@@ -149,11 +141,11 @@ When we remove a voxel to the scene, first we get the chunk it is stored in and 
 Correctness Results
 =====================================================
 
-![scene with each of the different voxel types](voxelTypes.png)
+![Scene with each of the different voxel types](voxelTypes.png)
 
-![scene with non-VR user interface](nonVrMenu.png)
+![Scene with non-VR user interface](nonVrMenu.png)
 
-![scene with VR user interface](vrMenu.png)
+![Scene with VR user interface](vrMenu.png)
 
 
 
@@ -211,9 +203,21 @@ Schedule
 
 **TO DO:**
 
-- Ghost voxel bug
+- More transforms
+    - Fill
+    - Extrude
+    - Crater
+    - Mountain
 
 - Fix how selection works (Ben)
+
+- Selection options
+    - Sphere
+    - Cylinder
+    - Box
+    - Union
+    - Intersection
+    - Set minus
 
 - Rename methods (Ben)
 
@@ -221,11 +225,14 @@ Schedule
 
 - Add 8 materials, add more if program doesn't lag, remove some if the program does lag
 
-- Add more fun transforms
+- Ghost voxel bug (we have a work around, revisit with better solution)
+
+- Why do we add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
 
 - Youle: put in importing worlds feature from midterm project
 
-*UI*
+**UI**
+
 - Switch between materials (Diego - working on it, get rid of debug spheres in menu)
 
     - Panel with small voxels of differnt textures protruding from it
@@ -238,7 +245,7 @@ Schedule
 
     - Array of current selections is highlighted/glows
 
-    - ** STRETCH GOAL: ** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
+    - **STRETCH GOAL:** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
 
 **Speed up**
 
