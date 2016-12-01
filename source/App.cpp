@@ -1,5 +1,7 @@
 /** \file App.cpp */
 #include "App.h"
+#include <future>
+#include <chrono>
 #define PI 3.1415926f
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
@@ -125,7 +127,7 @@ void App::updateSelect(){
             //    select.lookDirection = cameraRay.direction();
             //    select.position = cameraRay.origin() + 1*select.lookDirection.direction();
             //    select.ray = cameraRay;
-            //    drawSelection();
+            //    drawCrosshair();
             //}
         }
     
@@ -147,17 +149,14 @@ void App::updateSelect(){
             m_crosshair.lookDirection = cameraRay.direction();
             m_crosshair.position = cameraRay.origin() + m_crosshair.lookDirection.direction();
             m_crosshair.ray = cameraRay;
-            drawSelection();
+            drawCrosshair();
         }
     
     }
 
 }
 
-void App::drawSelection(){
-
-    //How does this if statement work?(what is menu?)
-    // A boolean that indicates whether or not menu mode is activated
+void App::drawCrosshair(){
 
     if (menuMode) {
         if (m_crosshair.buttonSelected) {
@@ -177,11 +176,7 @@ void App::drawSelection(){
         debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2), voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         if (lastOpen != voxelTest) {
             debugDraw( Box(sideHit - Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f),sideHit + Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f)), 0.0f, Color3::blue() );
-        }
-        
-        
-
-       
+        }       
     }
 }
 
@@ -277,54 +272,6 @@ void App::makeMenuModel() {
 	}
 }
 
-void App::debugDrawVoxel(){
-
-	addModelToScene(m_debugModel, "debugEntity");
-	ArticulatedModel::Part* part = m_debugModel->addPart("root");
-	int type = voxTypeCount;
-	
-	ArticulatedModel::Geometry* geometry;
-	ArticulatedModel::Mesh*     mesh;
-	
-	if (isNull(m_debugModel->geometry("geom")))  {
-		geometry = m_debugModel->addGeometry("geom");
-	    mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
-	 
-	} else {
-	    geometry = m_debugModel->geometry("geom");
-	    mesh	 = m_debugModel->mesh("mesh");
-	}
-	
-	mesh->material = m_voxToMat[type];
-	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	Array<int>&					   indexArray  = mesh->cpuIndexArray;
-	
-	vertexArray.fastClear();
-	indexArray.fastClear();
-	
-	for (int i = 0; i < m_selection.length(); i++) {
-	    Point3int32 pos= m_selection[i];
-	    Point3 selection = voxelToWorldSpace(pos);
-	    drawVoxelNaive(geometry, mesh, selection, voxelRes * 1.1f, type);
-	}
-	
-	//yet another bad workaround
-	if (m_selection.length() == 0) {
-		drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
-	}
-	
-	ArticulatedModel::CleanGeometrySettings geometrySettings;
-	geometrySettings.allowVertexMerging = false;
-	m_debugModel->cleanGeometry(geometrySettings);
-	
-	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	geometry->clearAttributeArrays();
-	
-	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-	mesh->clearIndexStream();
-}
-
-
 void App::makeHandModel() {
     ArticulatedModel::Part*		part	 = m_handModel->addPart("root");
 	ArticulatedModel::Geometry* geometry = m_handModel->addGeometry("geom");
@@ -343,8 +290,6 @@ void App::makeHandModel() {
 	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
 	mesh->clearIndexStream();
 }
-
-
 
 void App::initializeMaterials() {
 	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
@@ -445,11 +390,9 @@ Point2int32 App::getChunkCoords(Point3int32 pos) {
     return Point2int32((pos.x / chunkSize) + addX, (pos.z / chunkSize) + addZ);
 }
 
-
-
-//Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk, if it is, 
-//push the neighboring chunk to the m_chunksToRedraw for later update. 
-//Can add up to 2 more chunks for update
+/** Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk.
+	If it is, push the neighboring chunk to the m_chunksToRedraw for later update. 
+	Can add up to 2 more chunks for update. */
 void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 current = getChunkCoords(pos);
     Point2int32 xPlus   = getChunkCoords(pos + Point3int32(1,0,0));
@@ -470,7 +413,6 @@ void App::checkBoundaryAdd(Point3int32 pos){
         m_chunksToUpdate.push(zMinus);
     }
 }
-
 
 //Return the chunk a given voxel resides in.
 shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
@@ -502,7 +444,7 @@ void App::unsetVoxel(Point3int32 pos) {
 	}
 }
 
-//Clear the geometry for a given chunk.
+// Clear the geometry for a given chunk.
 void App::clearChunk(Point2int32 chunkPos) {
     // Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; i++) {
@@ -767,6 +709,53 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     }
 }
 
+void App::debugDrawVoxel(){
+
+	addModelToScene(m_debugModel, "debugEntity");
+	ArticulatedModel::Part* part = m_debugModel->addPart("root");
+	int type = voxTypeCount;
+	
+	ArticulatedModel::Geometry* geometry;
+	ArticulatedModel::Mesh*     mesh;
+	
+	if (isNull(m_debugModel->geometry("geom")))  {
+		geometry = m_debugModel->addGeometry("geom");
+	    mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
+	 
+	} else {
+	    geometry = m_debugModel->geometry("geom");
+	    mesh	 = m_debugModel->mesh("mesh");
+	}
+	
+	mesh->material = m_voxToMat[type];
+	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	Array<int>&					   indexArray  = mesh->cpuIndexArray;
+	
+	vertexArray.fastClear();
+	indexArray.fastClear();
+	
+	for (int i = 0; i < m_selection.length(); i++) {
+	    Point3int32 pos= m_selection[i];
+	    Point3 selection = voxelToWorldSpace(pos);
+	    drawVoxelNaive(geometry, mesh, selection, voxelRes * 1.1f, type);
+	}
+	
+	//yet another bad workaround
+	if (m_selection.length() == 0) {
+		drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
+	}
+	
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+	geometrySettings.allowVertexMerging = false;
+	m_debugModel->cleanGeometry(geometrySettings);
+	
+	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	geometry->clearAttributeArrays();
+	
+	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	mesh->clearIndexStream();
+}
+
 void App::selectBox(Point3int32 center, int radius) {
     m_selection.clear();
 
@@ -823,6 +812,22 @@ void App::selectCylinder(Point3int32 center, int radius) {
     debugDrawVoxel();
 }
 
+void App::makeCrater(Point3int32 center, int radius, int depth) {
+	if ( depth != 0 ) {
+		for (int y = center.y - radius; y <= center.y; ++y) {
+		    for (int x = center.x - radius; x <= center.x + radius; ++x) {
+		        for (int z = center.z - radius; z <= center.z + radius; ++z) {
+		            Point3int32 pos = Point3int32(x, y, z);
+
+					// check if the voxel is in the crater
+		            if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
+		                removeVoxel(pos);
+		            }
+		        }
+		    }
+		}
+	}
+}
 
 
 
@@ -954,6 +959,20 @@ bool App::onEvent(const GEvent& event) {
         elevateSelection(hitPos.y - m_currentMark.y);
     }
 
+	// Crater
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('p')) ){ 
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+		m_currentMark = hitPos;
+    }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('p')) ){
+		// determine how big the radius is
+		Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude(), 3);
+	}
 
     //else if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
     //    m_firstPersonMode = ! m_firstPersonMode;
@@ -983,7 +1002,8 @@ void App::elevateSelection(int delta) {
             Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(m_selection[i]));
             Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
-            if( !m_chunksToUpdate.contains(chunkCoords) ) {
+
+            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
                 m_chunksToUpdate.push(chunkCoords);
             }
             unsetVoxel(m_selection[i]);

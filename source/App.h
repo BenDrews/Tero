@@ -83,18 +83,18 @@ public:
     /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
-    /** Hand model */
     const shared_ptr<ArticulatedModel>& m_handModel = ArticulatedModel::createEmpty("handModel");
 
-	/** Object that marks where the user is currently pointing */
+	/** Marks where the user is currently pointing */
     CrosshairObject m_crosshair;
 
-    /** Store the current voxel selection */
+    /** Stores the current voxel selection */
     Array<Point3int32> m_selection;
 
-    /** Store marked position when mid transform */
+    /** Stores marked position when mid transform */
     Point3int32 m_currentMark;
-    /** drawing the debug voxels */
+
+    /** Drawing the debug voxels */
     const shared_ptr<ArticulatedModel>& m_debugModel = ArticulatedModel::createEmpty("debugModel");
 
 
@@ -117,7 +117,7 @@ public:
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
-    void drawSelection(); 
+    void drawCrosshair(); 
 
 	// Voxel geometry
 	void addVoxel(Point3int32 input, int type);
@@ -138,13 +138,13 @@ public:
     void updateChunks();
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
+    void updateGeometry(Point2int32 chunkCoords, int type);
 
 	// Applying transforms to voxels
+    void debugDrawVoxel();
     void selectBox(Point3int32 center, int radius);
     void selectSphere(Point3int32 center, int radius);
     void selectCylinder(Point3int32 center, int radius);
-    void App::elevateSelection(int delta);
-
-    void updateGeometry(Point2int32 chunkCoords, int type);
-    void debugDrawVoxel();
+    void elevateSelection(int delta);
+	void makeCrater(Point3int32 center, int depth, int radius);
 };
