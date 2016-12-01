@@ -221,9 +221,9 @@ void App::getMenuPositions(){
     int rows = 2;
     int totalVoxels = voxTypeCount;
     int blocksPerRow = totalVoxels / rows;
-    float rowSeparation = 0.2;
+    float rowSeparation = 0.4;
     float menuRadius = 2;
-    float menuWidth = 2*PI; //radians
+    float menuWidth = 1.5f*PI; //radians
     float x,y,z;
     y = 0.75;
     
@@ -357,7 +357,7 @@ void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName)
         //SUPER HACKY IM SORRY BEN
         // TODO: FIX THIS
         if( entityName == "menuEntity"){
-            m_menu = entity;
+            m_menu = scene()->typedEntity<VisibleEntity>(entityName);
         }
 
     } else {
@@ -768,7 +768,7 @@ bool App::onEvent(const GEvent& event) {
                 m_menu->setFrame(menuFrame);
             }
 
-            //m_menu->setVisible(menuMode);
+            m_menu->setVisible(menuMode);
 
     } 
 
