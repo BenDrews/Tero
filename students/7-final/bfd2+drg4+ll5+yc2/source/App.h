@@ -51,8 +51,8 @@ public:
 
     bool menuMode = false;
     CFrame menuFrame;
+    shared_ptr<VisibleEntity> m_menu;
     const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
-    shared_ptr<Entity> m_menu;
     Array<Point3> m_menuButtons;
 
     int intersectMode = 0;
