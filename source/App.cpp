@@ -67,7 +67,7 @@ void App::makeGUI() {
         containerPane->addButton("Add voxel", [this](){
 			addVoxel(Point3int32(0,0,-5), 1);
 	    });
-        containerPane->addNumberBox("Voxel Type", &m_voxelType,"",GuiTheme::LINEAR_SLIDER, 0,1,1);
+        containerPane->addNumberBox("Voxel Type", &m_voxelType,"", GuiTheme::LINEAR_SLIDER, 0,voxTypeCount-1,1);
 
 		containerPane->pack();
 	}
@@ -190,12 +190,12 @@ void App::drawSelection(){
 void App::initializeScene() {
     m_posToChunk = Table<Point2int32, shared_ptr<Table<Point3int32, int>>>();
 
-    m_voxToProp = Table<int, Any>();
+    m_voxToProp = Array<Any>();
 
     m_chunksToUpdate = Array<Point2int32>();
 	
     for (int i = 0; i < voxTypeCount; ++i) {
-        m_voxToProp.set(i, Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
+        m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
 	initializeMaterials();
@@ -224,8 +224,8 @@ void App::getMenuPositions(){
     //m_menuButtons.append(Point3(-0.5, 0, -1));
     //m_menuButtons.append(Point3(0.5, 0, -1));
 
-    int rows = 4;
-    int totalVoxels = 8*voxTypeCount;
+    int rows = 2;
+    int totalVoxels = voxTypeCount;
     int blocksPerRow = totalVoxels / rows;
     float rowSeparation = 0.2;
     float menuRadius = 2;
@@ -256,7 +256,7 @@ void App::getMenuPositions(){
 void App::makeMenuModel() {
     ArticulatedModel::Part* part = m_menuModel->addPart("root");
     int type;
-	for (int t = 0; t < 8*voxTypeCount; ++t) {
+	for (int t = 0; t < voxTypeCount; ++t) {
         type = t%voxTypeCount;
 		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", t));
 		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", t), m_menuModel->part("root"), geometry);
@@ -346,7 +346,7 @@ void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int typ
 
 
 void App::initializeMaterials() {
-	m_voxToMat = Table<int, shared_ptr<UniversalMaterial>>();
+	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
 
 	// using morgan's premade materials. is there a way to access them without moving them to the local data-files directory?
 //	for (int i = 0; i < voxTypeCount; ++i) {
@@ -356,8 +356,14 @@ void App::initializeMaterials() {
 //	}
 
 	// for now just hard code each individual material?
-	m_voxToMat.set(0, UniversalMaterial::create( Any::fromFile("data-files/texture/greengrass/greengrass.UniversalMaterial.Any") ));
-	m_voxToMat.set(1, UniversalMaterial::create( Any::fromFile("data-files/texture/rockwall/rockwall.UniversalMaterial.Any") ));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("sand/sand.UniversalMaterial.Any") )));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("roughcedar/roughcedar.UniversalMaterial.Any")) ));
+	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
+    m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )));
+    m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
 
 }
 
@@ -952,7 +958,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
     updateChunks();
     if(menuMode){
         CFrame frame = menuFrame;
-        debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount*8]), Vector3(0,0,0), GuiText("Select Voxel Type"));
+        debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount]), Vector3(0,0,0), GuiText("Select Voxel Type"));
     }
     if(vrEnabled){
         //updateSelect();
