@@ -69,7 +69,7 @@ public:
     Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
 
     /** Contains the chunk positions of the chunks that need to be updated */
-    Array<Point2int32> m_chunksToRedraw;
+    Array<Point2int32> m_chunksToUpdate;
         
 	/** Maps type of voxel to Any files containing its specific properties */
 	Table<int, Any> m_voxToProp;
@@ -120,8 +120,9 @@ public:
     void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
     void drawVoxel(Point3int32 input);
-    void redrawChunk(Point2int32 chunkPos);
-    void redrawChunks();
+    void clearChunk(Point2int32 chunkPos);
+    void drawChunk(Point2int32 chunkPos);
+    void updateChunks();
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
 
