@@ -159,7 +159,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
-    <ClCompile Include="source\Plane.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="doc-files\report.md.html" />

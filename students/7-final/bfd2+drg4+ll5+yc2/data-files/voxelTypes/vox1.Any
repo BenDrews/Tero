@@ -1,5 +1,5 @@
 {
-    material = "wood.jpg";
+    name = "Rock Wall";
     rounded = false;
 
 };

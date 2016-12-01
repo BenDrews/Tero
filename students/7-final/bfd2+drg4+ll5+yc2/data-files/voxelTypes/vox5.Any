@@ -1,5 +1,5 @@
 {
-    material = "wood.jpg";
+    name = "Rusty Metal";
     rounded = false;
 
 };

@@ -44,12 +44,14 @@ protected:
 
     const int voxTypeCount = 8;
 
+	Array<String> m_typesList;
+
   
 public:
 
     bool vrEnabled = false;
 
-    bool menuMode = false;
+	bool menuMode = false;
     CFrame menuFrame;
     shared_ptr<VisibleEntity> m_menu;
     const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
@@ -57,6 +59,8 @@ public:
 
     int intersectMode = 0;
     bool forceIntersect = false;
+
+
 
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
@@ -101,11 +105,11 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
+    void getMenuPositions();
+	void initializeMaterials();
 	void initializeModel();
 	void makeMenuModel();
 	void makeHandModel();
-    void getMenuPositions();
-	void initializeMaterials();
     void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
 
     Point3 voxelToWorldSpace(Point3int32 voxelPos);
@@ -136,7 +140,9 @@ public:
     void checkBoundaryAdd(Point3int32 pos);
 
 	// Applying transforms to voxels
-    void selectCircle(Point3int32 center, int radius);
+    void selectBox(Point3int32 center, int radius);
+    void selectSphere(Point3int32 center, int radius);
+    void selectCylinder(Point3int32 center, int radius);
     void App::elevateSelection(int delta);
 
     void updateGeometry(Point2int32 chunkCoords, int type);
