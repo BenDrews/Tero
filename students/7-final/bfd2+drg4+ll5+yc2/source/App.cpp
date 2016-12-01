@@ -171,11 +171,7 @@ void App::drawSelection(){
             debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
         }
         
-        for (int i = 0; i < m_selection.length(); i++) {
-            Point3int32 pos= m_selection[i];
-            Point3 selection = voxelToWorldSpace(pos);
-            debugDraw( Box(selection - Point3(voxelRes/2,voxelRes/2,voxelRes/2),selection + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
-        }
+        
 
        
     }
@@ -210,6 +206,7 @@ void App::initializeScene() {
     getMenuPositions();
     makeMenuModel();
     addModelToScene(m_menuModel, "menuEntity");
+   
     redrawWorld();
 }
 
@@ -272,6 +269,61 @@ void App::makeMenuModel() {
 	}
 }
 
+void App::debugDrawVoxel(){
+
+        addModelToScene(m_debugModel, "debugEntity");
+        ArticulatedModel::Part* part = m_debugModel->addPart("root");
+        int type = voxTypeCount;
+
+        ArticulatedModel::Geometry* geometry;
+	    ArticulatedModel::Mesh*     mesh;
+
+        if ( isNull(m_debugModel->geometry("geom")))  {
+
+		    geometry = m_debugModel->addGeometry("geom");
+            mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
+		    
+	    } else {
+            geometry = m_debugModel->geometry("geom");
+            mesh	 = m_debugModel->mesh("mesh");
+        }
+		
+            
+	 
+        
+        mesh->material = m_voxToMat[type];
+        Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
+
+        vertexArray.fastClear();
+	    indexArray.fastClear();
+
+
+
+        for (int i = 0; i < m_selection.length(); i++) {
+            Point3int32 pos= m_selection[i];
+            Point3 selection = voxelToWorldSpace(pos);
+            drawVoxelNaive(geometry, mesh, selection, voxelRes*1.1, type);
+        }
+
+        //yet another bad workaround
+        if (m_selection.length()==0){
+     
+		    drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
+	    }
+
+        ArticulatedModel::CleanGeometrySettings geometrySettings;
+        geometrySettings.allowVertexMerging = false;
+        m_debugModel->cleanGeometry(geometrySettings);
+
+	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	    geometry->clearAttributeArrays();
+
+	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+    	mesh->clearIndexStream();
+}
+
+
 void App::makeHandModel() {
     ArticulatedModel::Part*		part	 = m_handModel->addPart("root");
 	ArticulatedModel::Geometry* geometry = m_handModel->addGeometry("geom");
@@ -310,6 +362,8 @@ void App::initializeMaterials() {
 	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
     m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )));
     m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
+    // using vox8.any, if you do add more materials, increase the number 8. This material is used for debug only, and stays at the end of voxToMat.
+    m_voxToMat.append( UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
 
 }
 
@@ -855,6 +909,7 @@ void App::selectCircle(Point3int32 center, int radius) {
             }
         }
     }
+    debugDrawVoxel();
 }
 
 void App::elevateSelection(int delta) {
@@ -870,9 +925,9 @@ void App::elevateSelection(int delta) {
         }
     }
 
-
+   
     m_selection.clear();
-
+    debugDrawVoxel();
 }
 
 void App::onUserInput(UserInput* ui) {
