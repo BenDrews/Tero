@@ -1,5 +1,5 @@
 {
-    material = "grass.png";
+    name = "Red Brick";
     rounded = false;
 
 };

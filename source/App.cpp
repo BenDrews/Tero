@@ -34,7 +34,7 @@ int main(int argc, const char* argv[]) {
     settings.window.width               = 1280; settings.window.height       = 720; settings.window.fullScreen          = false;
     settings.window.resizable           = ! settings.window.fullScreen;
     settings.window.framed              = ! settings.window.fullScreen;
-    settings.window.asynchronous        = true; //false if no vr
+    settings.window.asynchronous        = true; // false if no vr
     
     settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(0, 0); // 64 64 for non vr
     settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
@@ -63,11 +63,19 @@ void App::makeGUI() {
 
     debugPane->beginRow(); {
         GuiPane* containerPane = debugPane->addPane();
-	    
-        containerPane->addButton("Add voxel", [this](){
-			addVoxel(Point3int32(0,0,-5), 1);
-	    });
-        containerPane->addNumberBox("Voxel Type", &m_voxelType,"", GuiTheme::LINEAR_SLIDER, 0,voxTypeCount-1,1);
+
+		containerPane->addLabel("Left click: Add voxel");
+		containerPane->addLabel("Middle click: Remove voxel");
+		containerPane->addLabel("j: Box select");
+		containerPane->addLabel("k: Cylinder select");
+		containerPane->addLabel("l: Sphere select");
+		containerPane->addLabel("u: Elevate selection");
+		containerPane->addLabel("r: Change intersection distance");
+		containerPane->addLabel("f: Toggle force intersect");
+
+		m_typesList.append("Grass", "Rock", "Brick", "Sand", "Rough Cedar", "Rusty Metal");
+		m_typesList.append("Chrome", "Black Rubber");
+        containerPane->addDropDownList("Voxel Type", m_typesList, &m_voxelType);
 
 		containerPane->pack();
 	}
@@ -168,7 +176,7 @@ void App::drawSelection(){
 
         debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2), voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         if (lastOpen != voxelTest) {
-            debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
+            debugDraw( Box(sideHit - Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f),sideHit + Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f)), 0.0f, Color3::blue() );
         }
         
         
@@ -220,17 +228,17 @@ void App::getMenuPositions(){
     int blocksPerRow = totalVoxels / rows;
     float rowSeparation = 0.4;
     float menuRadius = 2;
-    float menuWidth = 1.5f*PI; //radians
-    float x,y,z;
+    float menuWidth = 1.5 * PI; //radians
+    float x, y, z;
     y = 0.75;
     
-    for(int i = 0; i < totalVoxels; ++i){
+    for (int i = 0; i < totalVoxels; ++i) {
     
-        float j = i % blocksPerRow;
+        int j = i % blocksPerRow;
         float a = (float)j * ( menuWidth / (float)(totalVoxels) );
-        a += 5.0f*PI/16.0f;
+        a += 5.0f * PI / 16.0f;
 
-        for(int k = 1; k < rows; ++k){
+        for (int k = 1; k < rows; ++k) {
             if( j == 0 ){
                 y -= rowSeparation;
             }
@@ -271,56 +279,49 @@ void App::makeMenuModel() {
 
 void App::debugDrawVoxel(){
 
-        addModelToScene(m_debugModel, "debugEntity");
-        ArticulatedModel::Part* part = m_debugModel->addPart("root");
-        int type = voxTypeCount;
-
-        ArticulatedModel::Geometry* geometry;
-	    ArticulatedModel::Mesh*     mesh;
-
-        if ( isNull(m_debugModel->geometry("geom")))  {
-
-		    geometry = m_debugModel->addGeometry("geom");
-            mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
-		    
-	    } else {
-            geometry = m_debugModel->geometry("geom");
-            mesh	 = m_debugModel->mesh("mesh");
-        }
-		
-            
+	addModelToScene(m_debugModel, "debugEntity");
+	ArticulatedModel::Part* part = m_debugModel->addPart("root");
+	int type = voxTypeCount;
+	
+	ArticulatedModel::Geometry* geometry;
+	ArticulatedModel::Mesh*     mesh;
+	
+	if (isNull(m_debugModel->geometry("geom")))  {
+		geometry = m_debugModel->addGeometry("geom");
+	    mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
 	 
-        
-        mesh->material = m_voxToMat[type];
-        Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
-	    Array<int>&					   indexArray  = mesh->cpuIndexArray;
-
-        vertexArray.fastClear();
-	    indexArray.fastClear();
-
-
-
-        for (int i = 0; i < m_selection.length(); i++) {
-            Point3int32 pos= m_selection[i];
-            Point3 selection = voxelToWorldSpace(pos);
-            drawVoxelNaive(geometry, mesh, selection, voxelRes*1.1, type);
-        }
-
-        //yet another bad workaround
-        if (m_selection.length()==0){
-     
-		    drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
-	    }
-
-        ArticulatedModel::CleanGeometrySettings geometrySettings;
-        geometrySettings.allowVertexMerging = false;
-        m_debugModel->cleanGeometry(geometrySettings);
-
-	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	    geometry->clearAttributeArrays();
-
-	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-    	mesh->clearIndexStream();
+	} else {
+	    geometry = m_debugModel->geometry("geom");
+	    mesh	 = m_debugModel->mesh("mesh");
+	}
+	
+	mesh->material = m_voxToMat[type];
+	Array<CPUVertexArray::Vertex>& vertexArray = geometry->cpuVertexArray.vertex;
+	Array<int>&					   indexArray  = mesh->cpuIndexArray;
+	
+	vertexArray.fastClear();
+	indexArray.fastClear();
+	
+	for (int i = 0; i < m_selection.length(); i++) {
+	    Point3int32 pos= m_selection[i];
+	    Point3 selection = voxelToWorldSpace(pos);
+	    drawVoxelNaive(geometry, mesh, selection, voxelRes * 1.1f, type);
+	}
+	
+	//yet another bad workaround
+	if (m_selection.length() == 0) {
+		drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
+	}
+	
+	ArticulatedModel::CleanGeometrySettings geometrySettings;
+	geometrySettings.allowVertexMerging = false;
+	m_debugModel->cleanGeometry(geometrySettings);
+	
+	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	geometry->clearAttributeArrays();
+	
+	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+	mesh->clearIndexStream();
 }
 
 
@@ -343,17 +344,11 @@ void App::makeHandModel() {
 	mesh->clearIndexStream();
 }
 
+
+
 void App::initializeMaterials() {
 	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
 
-	// using morgan's premade materials. is there a way to access them without moving them to the local data-files directory?
-//	for (int i = 0; i < voxTypeCount; ++i) {
-//		Any any = m_voxToProp.get(i);
-//		String materialName = any["material"];
-//		m_voxToMat.set(i, UniversalMaterial::create( Any::fromFile(format("data-files/texture/%s/%s.UniversalMaterial.Any", materialName, materialName)) ));
-//	}
-
-	// for now just hard code each individual material?
 	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ));
 	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ));
 	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )));
@@ -370,7 +365,6 @@ void App::initializeMaterials() {
 void App::initializeModel() {
     ArticulatedModel::Part* part = m_model->addPart("root");
 }
-
 
 
 // Create a cube model. Code pulled from sample/proceduralGeometry
@@ -742,35 +736,6 @@ void App::removeVoxel(Point3int32 input) {
     checkBoundaryAdd(input);
 }
 
-
-
-
-
-void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
-     GApp::onSimulation(rdt, sdt, idt);
-
-
-
-
-
-     //if(m_firstPersonMode){
-     //   CFrame c = player.position;
-     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
-     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
-     //   activeCamera()->setFrame(c);
-     //
-     //   movePlayer(sdt);
-     //}
-
-
-    
-
-
-    // Example GUI dynamic layout code.  Resize the debugWindow to fill
-    // the screen horizontally.
-}
-
-
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
 	// Intersect with empty space
@@ -802,19 +767,110 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     }
 }
 
+void App::selectBox(Point3int32 center, int radius) {
+    m_selection.clear();
+
+    for (int y = center.y - radius; y <= center.y + radius; ++y) {
+        for (int x = center.x - radius; x <= center.x + radius; ++x) {
+            for (int z = center.z - radius; z <= center.z + radius; ++z) {
+                Point3int32 pos = Point3int32(x, y, z);
+
+				if ( voxIsSet(pos) ) {
+                    m_selection.append(pos);
+				}
+            }
+        }
+    }
+
+    debugDrawVoxel();
+}
+
+void App::selectSphere(Point3int32 center, int radius) {
+    m_selection.clear();
+
+    for (int y = center.y - radius; y <= center.y + radius; ++y) {
+        for (int x = center.x - radius; x <= center.x + radius; ++x) {
+            for (int z = center.z - radius; z <= center.z + radius; ++z) {
+                Point3int32 pos = Point3int32(x, y, z);
+
+				// check if the voxel is in the sphere
+                if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
+                    m_selection.append(pos);
+                }
+            }
+        }
+    }
+
+    debugDrawVoxel();
+}
+
+void App::selectCylinder(Point3int32 center, int radius) {
+    m_selection.clear();
+
+    for (int y = center.y - radius; y <= center.y + radius; ++y) {
+        for (int x = center.x - radius; x <= center.x + radius; ++x) {
+            for (int z = center.z - radius; z <= center.z + radius; ++z) {
+                Point3int32 pos = Point3int32(x, y, z);
+
+				// check if the voxel is in the cylinder
+                if(sqrt((x-center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
+                    m_selection.append(pos);
+                }
+            }
+        }
+    }
+
+    debugDrawVoxel();
+}
+
+
+
+
+
+void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
+     GApp::onSimulation(rdt, sdt, idt);
+
+
+
+
+
+     //if(m_firstPersonMode){
+     //   CFrame c = player.position;
+     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
+     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
+     //   activeCamera()->setFrame(c);
+     //
+     //   movePlayer(sdt);
+     //}
+
+
+    
+
+
+    // Example GUI dynamic layout code.  Resize the debugWindow to fill
+    // the screen horizontally.
+}
+
 
 bool App::onEvent(const GEvent& event) {
-    //r for change intersect distance (idk)
-    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
-            intersectMode +=1;
-            intersectMode %=3;
-    } 
-    //f for forceIntersect
-    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
-            forceIntersect = !forceIntersect;
-    } 
+    if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
+          // Add voxel
+          if (event.button.button == (uint8)0) {
+            Point3int32 hitPos;
+            Point3int32 lastPos;
+            cameraIntersectVoxel(lastPos, hitPos);
+            addVoxel(lastPos, m_voxelType);
+          
+          // Remove voxel
+          } else if (event.button.button == (uint8)1) {
+            Point3int32 hitPos;
+            Point3int32 lastPos;
+            cameraIntersectVoxel(lastPos, hitPos);
+            removeVoxel(hitPos);
+          }
+    }
 
-    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
             menuMode = !menuMode;
                 
             if(menuMode){
@@ -824,27 +880,50 @@ bool App::onEvent(const GEvent& event) {
 
             m_menu->setVisible(menuMode);
 
+    }
+
+    // Change intersect distance
+    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
+            intersectMode +=1;
+            intersectMode %=3;
     } 
 
-      
-
-    //if((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey(' '))){
-    if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
-          // Left mouse
-          if (event.button.button == (uint8)0) {
-            Point3int32 hitPos;
-            Point3int32 lastPos;
-            cameraIntersectVoxel(lastPos, hitPos);
-            addVoxel(lastPos, m_voxelType);
-          
-          // Middle mouse
-          } else if (event.button.button == (uint8)1) {
-            Point3int32 hitPos;
-            Point3int32 lastPos;
-            cameraIntersectVoxel(lastPos, hitPos);
-            removeVoxel(hitPos);
-          }
+    // Force intersect
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
+            forceIntersect = !forceIntersect;
     }
+
+	// Box select
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('j')) ){ 
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+		m_currentMark = hitPos;
+    }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('j')) ){
+		// determine how big the radius is
+		Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        selectBox(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+	}
+
+	// Cylinder select
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('k')) ){ 
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+		m_currentMark = hitPos;
+    }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('k')) ){
+		// determine how big the radius is
+		Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        selectCylinder(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+	}
+
+	// Sphere select
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('l')) ){ 
         Point3int32 hitPos;
         Point3int32 lastPos;
@@ -856,8 +935,10 @@ bool App::onEvent(const GEvent& event) {
 		Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
-        selectCircle(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+        selectSphere(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
 	}
+
+	// Elevate selection
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('u')) ) {
         Point3int32 hitPos;
         Point3int32 lastPos;
@@ -874,13 +955,13 @@ bool App::onEvent(const GEvent& event) {
     }
 
 
-    //if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+    //else if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
     //    m_firstPersonMode = ! m_firstPersonMode;
     //    const shared_ptr<Camera>& camera = m_firstPersonMode ? scene()->defaultCamera() : debugCamera();
     //    setActiveCamera(camera);
     //}
     //
-    //if (event.key.keysym.sym == GKey('w')){
+    //else if (event.key.keysym.sym == GKey('w')){
     //    if((event.type == GEventType::KEY_DOWN)){
     //        player.desiredOS = Vector3(player.speed, 0, 0);
     //    }else{
@@ -894,23 +975,7 @@ bool App::onEvent(const GEvent& event) {
     return false;
 }
 
-void App::selectCircle(Point3int32 center, int radius) {
-    m_selection.clear();
 
-    for (int y = center.y - radius; y <= center.y + radius; ++y) {
-        for (int x = center.x - radius; x <= center.x + radius; ++x) {
-            for (int z = center.z-radius; z <= center.z + radius; ++z) {
-                Point3int32 pos = Point3int32(x,y,z);
-
-				// check if the voxel is in the sphere
-                if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
-                    m_selection.append(Point3int32(x,y,z));
-                }
-            }
-        }
-    }
-    debugDrawVoxel();
-}
 
 void App::elevateSelection(int delta) {
     if (delta != 0) {
