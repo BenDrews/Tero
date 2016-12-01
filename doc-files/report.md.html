@@ -15,7 +15,7 @@
 
 
 
-![Image that sells our project](evocativescene.png)
+![Image that sells our project](evocativescene.jpg)
 
 Introduction 
 ==================================
@@ -103,31 +103,26 @@ Why add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
  initializeMaterials  | Initializes all of the materials that will be used for each voxel type
  addVoxelModelToScene | Adds a VisualEntity to the scene with the voxel ArticulatedModel
  addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by modifying the main ArticulatedModel, and updates relevant data structures
- setVoxel             | ---
+ setVoxel             | Finds the voxel's chunk and sets the voxel type given at the position given
  addFace              | Adds one face of a voxel given the center of the voxel and a normal
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates relevant data structures
- unsetVoxel           | ---
+ unsetVoxel           | Finds the voxel's chunk and removes the voxel from that chunk
  voxelToWorldSpace / worldToVoxelSpace | Translates between voxel positions and world space positions
- getChunkCoords       | ---
- redrawChunk          | ---
- redrawChunks         | ---
- redrawWorld          | ---
- checkBoundaryAdd     | ---
+ getChunkCoords       | Returns the appropriate chunk given a position
+ redrawChunk          | Redraws the geometry for the given chunk
+ redrawChunks         | Redraws the chunks that have been tagged as "dirty"
+ redrawWorld          | Redraws every chunk in the scene
+ checkBoundaryAdd     | Checks to see if a removed voxel is the boundary for a chunk, if so, it can tag up to two additional chunks as "dirty"
 
 **Major functions of App: Transforms to voxels**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- cameraIntersectVoxel | ---
- updateSelect         | ---
- drawSelection        | ---
- selectCircle         | ---
- elevateSelection     | ---
+ cameraIntersectVoxel | Finds the voxel intersection by ray marching with the ray given by the crosshair object. Returns the voxel and adjacent voxel intersected.
+ updateSelect         | Updates the ray of the crosshair object. This is different depending on whether or not vr is enabled
+ drawSelection        | Draws debugSquares in the selected voxel, or a debug sphere over the selected menu item
+ selectCircle         | Fills the m_selection array with voxels within a given radius of a given point
+ elevateSelection     | Moves voxels in the m_selection array up by a given height
 
-**Major functions of App: User interface**
- Function             | Description                                                
- ---------------------|------------------------------------------------------------
- initializePlayer     | ---
- movePlayer           | ---
 
 
 We use one ArticulatedModel, `m_model`, in the scene to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into regions called chunks so that when a voxel is deleted in one chunk, only the voxels in that chunk have to be redrawn instead of all of the voxels in the scene. `m_model` has separate geometries and meshes per chunk and material. So even if a grass voxel and a stone voxel are in the same chunk, their vertex and index arrays are stored in different geometries and meshes because they have different materials.
@@ -153,13 +148,14 @@ When we remove a voxel to the scene, first we get the chunk it is stored in and 
 
 Correctness Results
 =====================================================
-Debugging images we will need:
 
-- Empty scene with each of the different voxel types
+![scene with each of the different voxel types](voxelTypes.png)
 
-- Empty scene with non-VR user interface
+![scene with non-VR user interface](nonVrMenu.png)
 
-- Empty scene with VR user interface
+![scene with VR user interface](vrMenu.png)
+
+
 
 
 Placeholder Quality Images
@@ -188,7 +184,7 @@ Placeholder Quality Images
 
 Evocative Result
 ==================================
-![Evocative result.](evocativescene.png)
+![Evocative result.](evocativescene.jpg)
 
 
 Schedule

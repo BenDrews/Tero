@@ -153,6 +153,7 @@ void App::updateSelect(){
 void App::drawSelection(){
 
     //How does this if statement work?(what is menu?)
+    // A boolean that indicates whether or not menu mode is activated
 
     if(menuMode){
         if(crosshair.buttonSelected){
@@ -220,20 +221,22 @@ void App::initializeScene() {
 
 
 void App::getMenuPositions(){
-    m_menuButtons.append(Point3(0.5,0,0.5));
-    m_menuButtons.append(Point3(-0.5,0,0.5));
-    //int rows = 1;
-    //int totalVoxels = m_voxToMat.size();
-    //int blocksPerRow = m_voxToMat.size() / rows;
+    m_menuButtons.append(Point3(-0.5, 0, -1));
+    m_menuButtons.append(Point3(0.5, 0, -1));
+
+    //int rows = 2;
+    //int totalVoxels = voxTypeCount;
+    //int blocksPerRow = totalVoxels / rows;
     //float rowSeparation = 0.5;
-    //float menuRadius = 1;
+    //float menuRadius = 2;
+    //float menuWidth = 180.0f; //Degrees
     //float x,y,z;
     //y = 0.25;
     //
     //for(int i = 0; i < totalVoxels; ++i){
     //
     //    float j = i % blocksPerRow;
-    //    float a = (float)j*(180.0f/(totalVoxels));
+    //    float a = (float)j * ( menuWidth / (float)(totalVoxels) );
     //    
     //    for(int k = 1; k < rows; ++k){
     //        if( i > k*blocksPerRow ){
@@ -241,11 +244,11 @@ void App::getMenuPositions(){
     //        }
     //    }
     //    x = menuRadius * cos(a);
-    //    z = menuRadius * sin(a);
+    //    z = -1.0f * menuRadius * sin(a);
     //    
     //    m_menuButtons.append(Point3(x,y,z));
     //    }
-    //
+    
     }
 
 void App::makeMenuModel() {
@@ -256,7 +259,6 @@ void App::makeMenuModel() {
 		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", type), m_menuModel->part("root"), geometry);
 		mesh->material = m_voxToMat[type];
 
-
 		Point3 current = m_menuButtons[type];
 		addMenuFace(current, Vector3int32(1,0,0), Vector3::X_AXIS, type);
 		addMenuFace(current, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
@@ -264,13 +266,24 @@ void App::makeMenuModel() {
 		addMenuFace(current, Vector3int32(0,-1,0), Vector3::Y_AXIS, type);
 		addMenuFace(current, Vector3int32(0,0,1), Vector3::Z_AXIS, type);
 		addMenuFace(current, Vector3int32(0,0,-1), Vector3::Z_AXIS, type);
+
+        ArticulatedModel::CleanGeometrySettings geometrySettings;
+        geometrySettings.allowVertexMerging = false;
+        m_menuModel->cleanGeometry(geometrySettings);
+
+	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	    geometry->clearAttributeArrays();
+
+	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+    	mesh->clearIndexStream();
 	}
 }
 
 void App::addMenuFace(Point3 center, Vector3 normal, Vector3::Axis axis, int type) {
-	float menuButtonSize = 0.5f;
+	float menuButtonSize = 0.25f;
     ArticulatedModel::Geometry* geometry = m_menuModel->geometry(format("geom %d", type));
     ArticulatedModel::Mesh*     mesh	 = m_menuModel->mesh(format("mesh %d", type));
+    mesh->material = m_voxToMat[type];
 
     center += normal.direction() * (menuButtonSize / 2.0f);
 
@@ -394,7 +407,7 @@ void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName)
         }
 
     } else {
-        // Change the model on the existing voxel entity
+        // Change the model on the existing  entity
         dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
 }
@@ -926,7 +939,10 @@ void App::onUserInput(UserInput* ui) {
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
 
     redrawChunks();
-
+    if(menuMode){
+        CFrame frame = menuFrame;
+        debugDrawLabel(frame.pointToWorldSpace(Point3(0,0.2,0)), Vector3(0,0,0), GuiText("Select Voxel Type"));
+    }
     if(vrEnabled){
         //updateSelect();
         //Point3 head;
