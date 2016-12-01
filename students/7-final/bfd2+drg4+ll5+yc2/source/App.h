@@ -42,7 +42,7 @@ protected:
 
     const int chunkSize = 8;
 
-    const int voxTypeCount = 2;
+    const int voxTypeCount = 8;
 
   
 public:
@@ -72,10 +72,10 @@ public:
     Array<Point2int32> m_chunksToUpdate;
         
 	/** Maps type of voxel to Any files containing its specific properties */
-	Table<int, Any> m_voxToProp;
+	Array<Any> m_voxToProp;
 
 	/** Maps type of voxel to Material of that voxel */
-	Table<int, shared_ptr<UniversalMaterial>> m_voxToMat;
+	Array<shared_ptr<UniversalMaterial>> m_voxToMat;
 
     /** Stores the scene model */
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
