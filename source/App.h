@@ -90,6 +90,8 @@ public:
 
     /** Store marked position when mid transform */
     Point3int32 m_currentMark;
+    /** drawing the debug voxels */
+    const shared_ptr<ArticulatedModel>& m_debugModel = ArticulatedModel::createEmpty("debugModel");
 
 
     App(const super::Settings& settings = super::Settings());
@@ -138,5 +140,5 @@ public:
     void App::elevateSelection(int delta);
 
     void updateGeometry(Point2int32 chunkCoords, int type);
-
+    void debugDrawVoxel();
 };
