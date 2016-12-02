@@ -15,20 +15,20 @@ int main(int argc, const char* argv[]) {
     }
 
     // NON-VR CODE //////////////////////
-    GApp::Settings settings(argc, argv);
+    //GApp::Settings settings(argc, argv);
     //////////////////////////////
     
     // VR CODE////////////////
 
 
    // VR CODE////////////////
-   //VRApp::Settings settings(argc, argv);
-   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-   //    VRApp::DebugMirrorMode::PRE_DISTORTION;
-   //
-   //settings.vr.disablePostEffectsIfTooSlow = true;
-   //    settings.renderer.deferredShading   = true;
-   // settings.renderer.orderIndependentTransparency = true;
+   VRApp::Settings settings(argc, argv);
+   settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+       VRApp::DebugMirrorMode::PRE_DISTORTION;
+   
+   settings.vr.disablePostEffectsIfTooSlow = true;
+       settings.renderer.deferredShading   = true;
+    settings.renderer.orderIndependentTransparency = true;
    ///////////////////////////
 
 
@@ -110,34 +110,34 @@ void App::updateSelect(){
 
     if (menuMode) {
         if (vrEnabled) {
-            //if(m_vrControllerArray.size() > select.menuControllerIndex){
-            //    cameraRay = m_vrControllerArray[select.menuControllerIndex]->frame().lookRay();
-            //    cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
+            //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
+            //    cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
+            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
             //}
             //
-            //select.buttonSelected = false;
-            //for(int i = 0; i < menuButtons.length() && !select.buttonSelected; ++i){
-            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(menuButtons[i]) ).length() <= 0.2){
-            //        select.buttonSelected = true;
-            //        select.buttonIndex = i;
+            // m_crosshair.buttonSelected = false;
+            //for(int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i){
+            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtons[i]) ).length() <= 0.3){
+            //         m_crosshair.buttonSelected = true;
+            //         m_crosshair.buttonIndex = i;
             //    }    
             //}
             //
             //if(cameraRay.origin() != empty.origin()){
-            //    select.lookDirection = cameraRay.direction();
-            //    select.position = cameraRay.origin() + 1*select.lookDirection.direction();
-            //    select.ray = cameraRay;
+            //     m_crosshair.lookDirection = cameraRay.direction();
+            //     m_crosshair.position = cameraRay.origin() + 1* m_crosshair.lookDirection.direction();
+            //     m_crosshair.ray = cameraRay;
             //    drawCrosshair();
             //}
         }
     
     } else {
         if (vrEnabled) {
-           // if(m_vrControllerArray.size() > 0){
-           //     cameraRay = m_vrControllerArray[0]->frame().lookRay();
-           //     cameraRay = Ray(cameraRay.origin() + m_controllerOffset, cameraRay.direction());
-           // }
-           //
+            //if(m_vrControllerArray.size() > 0){
+            //    cameraRay = m_vrControllerArray[0]->frame().lookRay();
+            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
+            //}
+            //
             
         } else {
             Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
@@ -358,6 +358,13 @@ void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName)
         dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
 }
+
+
+//void App::changeSkymap(String filename){
+//    shared_ptr<Skybox> skybox = scene()->typedEntity<Skybox>("environmentMap");
+//    skybox = 
+//
+//}
 
 //Returns true if the positions given is occupied.
 bool App::voxIsSet(Point3int32 pos) {
@@ -678,6 +685,36 @@ void App::removeVoxel(Point3int32 input) {
     checkBoundaryAdd(input);
 }
 
+
+
+
+
+void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
+     super::onSimulation(rdt, sdt, idt);
+
+
+
+
+
+     //if(m_firstPersonMode){
+     //   CFrame c = player.position;
+     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
+     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
+     //   activeCamera()->setFrame(c);
+     //
+     //   movePlayer(sdt);
+     //}
+
+
+    
+
+
+    // Example GUI dynamic layout code.  Resize the debugWindow to fill
+    // the screen horizontally.
+}
+
+
+
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
 	// Intersect with empty space
@@ -989,7 +1026,7 @@ bool App::onEvent(const GEvent& event) {
     //}
 
     // Handle super-class events
-    if (GApp::onEvent(event)) { return true; }
+    if (super::onEvent(event)) { return true; }
 
     return false;
 }
@@ -1080,18 +1117,16 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //
         //
         //
-        //if(menu){
+        //if(menuMode){
         //   CFrame frame = menuFrame;
-        //   for(int i = 0; i < menuButtons.length(); ++i){
-        //    debugDraw(Sphere(menuFrame.pointToWorldSpace(menuButtons[i]), 0.2), 0.0f, buttonColors[i]);
-        //   }
+        //   //m_menu->setVisible(true);
         //}
         //
-
-
-        //VR CONTROLLER INPUT
-        //BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
-
+        //
+        //
+        ////VR CONTROLLER INPUT
+        ////BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
+        //
         //vr::VREvent_t vrEvent;
         //while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
         //    debugPrintf("Device %d sent button %d press\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
@@ -1141,8 +1176,8 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //            
         //            //trigger
         //            case 33:
-        //                if(select.buttonSelected){
-        //                    m_voxelType = select.buttonIndex;
+        //                if(m_crosshair.buttonSelected){
+        //                    m_voxelType = m_crosshair.buttonIndex;
         //                
         //                }
         //                break;
@@ -1155,11 +1190,11 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //        }
         //
         //       if(vrEvent.data.controller.button == 1){
-        //            menu = !menu;
-        //            debugPrintf("MENU %d\n", menu);
-        //            if(menu){
+        //            menuMode = !menuMode;
+        //            debugPrintf("MENU %d\n", menuMode);
+        //            if(menuMode){
         //                menuFrame = m_vrHead->frame();
-        //                select.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
+        //                m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
         //            }
         //       }
         //
@@ -1174,8 +1209,8 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //        ;
         //    }
         //}
-
-        //END_PROFILER_EVENT();
+        //
+        ////END_PROFILER_EVENT();
         
         
         
