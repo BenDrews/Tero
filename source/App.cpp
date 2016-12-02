@@ -15,20 +15,20 @@ int main(int argc, const char* argv[]) {
     }
 
     // NON-VR CODE //////////////////////
-    //GApp::Settings settings(argc, argv);
+    GApp::Settings settings(argc, argv);
     //////////////////////////////
     
     // VR CODE////////////////
 
 
    // VR CODE////////////////
-   VRApp::Settings settings(argc, argv);
-   settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-       VRApp::DebugMirrorMode::PRE_DISTORTION;
-   
-   settings.vr.disablePostEffectsIfTooSlow = true;
-       settings.renderer.deferredShading   = true;
-    settings.renderer.orderIndependentTransparency = true;
+   //VRApp::Settings settings(argc, argv);
+   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+   //VRApp::DebugMirrorMode::PRE_DISTORTION;
+   //
+   // settings.vr.disablePostEffectsIfTooSlow = true;
+   // settings.renderer.deferredShading   = true;
+   // settings.renderer.orderIndependentTransparency = true;
    ///////////////////////////
 
 
@@ -688,33 +688,6 @@ void App::removeVoxel(Point3int32 input) {
 
 
 
-
-void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
-     super::onSimulation(rdt, sdt, idt);
-
-
-
-
-
-     //if(m_firstPersonMode){
-     //   CFrame c = player.position;
-     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
-     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
-     //   activeCamera()->setFrame(c);
-     //
-     //   movePlayer(sdt);
-     //}
-
-
-    
-
-
-    // Example GUI dynamic layout code.  Resize the debugWindow to fill
-    // the screen horizontally.
-}
-
-
-
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
 	// Intersect with empty space
@@ -870,27 +843,8 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
-     GApp::onSimulation(rdt, sdt, idt);
+     super::onSimulation(rdt, sdt, idt);
 
-
-
-
-
-     //if(m_firstPersonMode){
-     //   CFrame c = player.position;
-     //   c.translation += Vector3(0, 0.6f, 0); // Get up to head height
-     //   c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), player.headTilt);
-     //   activeCamera()->setFrame(c);
-     //
-     //   movePlayer(sdt);
-     //}
-
-
-    
-
-
-    // Example GUI dynamic layout code.  Resize the debugWindow to fill
-    // the screen horizontally.
 }
 
 
@@ -1059,38 +1013,6 @@ void App::onUserInput(UserInput* ui) {
     if(!vrEnabled){
         updateSelect();
     }
-
-
-
-    //ui->setPureDeltaMouse(m_firstPersonMode);
-    //
-    //if(m_firstPersonMode){
-    //    const float   pixelsPerRevolution = 30;
-    //    const float   turnRatePerPixel  = -pixelsPerRevolution * units::degrees() / (units::seconds()); 
-    //    const float   tiltRatePerPixel  = -0.2f * units::degrees() / (units::seconds()); 
-    //
-    //    const Vector3& forward = -Vector3::unitZ();
-    //    const Vector3& right   =  Vector3::unitX();
-    //
-    //    Vector3 linear  = Vector3::zero();
-    //    float   yaw = 0.0f;
-    //    float   pitch = 0.0f;
-    //    linear += forward * ui->getY() * player.speed;
-    //    linear += right   * ui->getX() * player.speed;
-    //    
-    //    yaw     = ui->mouseDX() * turnRatePerPixel;
-    //    pitch   = ui->mouseDY() * tiltRatePerPixel;
-    //
-    //    static const Vector3 jumpVelocity(0, 40 * units::meters() / units::seconds(), 0);
-    //
-    //
-    //    linear += player.desiredOS;
-    //    
-    //    
-    //    player.desiredOS= linear;
-    //    player.desiredYaw = yaw;
-    //    player.desiredPitch = pitch;
-    //}
     
 }
 
@@ -1211,8 +1133,8 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //}
         //
         ////END_PROFILER_EVENT();
-        
-        
+        //
+        //
         
 
 
