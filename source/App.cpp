@@ -198,7 +198,7 @@ void App::initializeScene() {
 
     initializeModel();
 
-    addModelToScene(m_model, "voxel");
+    addEntity(m_model, "voxel");
 
     // Initialize ground
     for(int x = -25; x < 25; ++x) {
@@ -211,7 +211,7 @@ void App::initializeScene() {
 
     getMenuPositions();
     makeMenuModel();
-    m_menu = addModelToScene(m_menuModel, "menuEntity", false);
+    m_menu = addEntity(m_menuModel, "menuEntity", false);
    
     redrawWorld();
 }
@@ -317,7 +317,7 @@ void App::initializeModel() {
 
 
 // Adds given model to scene and returns a visible entity. Entity is not visible by default
-shared_ptr<VisibleEntity> App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName, bool visible) {
+shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible) {
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
     // with a VisibleEntity.
@@ -359,6 +359,10 @@ shared_ptr<VisibleEntity> App::addModelToScene(shared_ptr<ArticulatedModel> mode
     shared_ptr<VisibleEntity> visibleEntity = scene()->typedEntity<VisibleEntity>(entityName);
     visibleEntity->setVisible(visible);
     return visibleEntity;
+}
+
+void App::removeEntity(shared_ptr<VisibleEntity> entity){
+    scene()->removeEntity(entity->name());
 }
 
 
