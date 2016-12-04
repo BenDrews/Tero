@@ -1,6 +1,7 @@
 /** \file App.cpp */
 #include "App.h"
-#include <future>
+#include "Selection.h"
+#include "Util.h"
 #define PI 3.1415926f
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
@@ -166,16 +167,24 @@ void App::drawCrosshair(){
         Point3int32 lastOpen;
         Point3int32 voxelTest;
         cameraIntersectVoxel(lastOpen, voxelTest);
-        Point3 voxelHit = voxelToWorldSpace(voxelTest);
-        Point3 sideHit = voxelToWorldSpace(lastOpen);
+        Point3 voxelHit = Util::voxelToWorldSpace(voxelTest);
+        Point3 sideHit = Util::voxelToWorldSpace(lastOpen);
         Vector3 side = sideHit - voxelHit;
 
         sideHit = voxelHit + side * 0.01;
 
         debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2), voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
         if (lastOpen != voxelTest) {
-            debugDraw( Box(sideHit - Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f),sideHit + Point3(voxelRes/2.01f,voxelRes/2.01f,voxelRes/2.01f)), 0.0f, Color3::blue() );
-        }       
+            debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
+        }
+        
+        Array<Point3int32>& selectionArray = m_selection.getArray();
+        
+        for (int i = 0; i < selectionArray.length(); i++) {
+            Point3int32 pos= selectionArray[i];
+            Point3 selection = Util::voxelToWorldSpace(pos);
+            debugDraw( Box(selection - Point3(voxelRes/2,voxelRes/2,voxelRes/2),selection + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
+        }
     }
 }
 
@@ -185,6 +194,8 @@ void App::initializeScene() {
     m_voxToProp = Array<Any>();
 
     m_chunksToUpdate = Array<Point2int32>();
+
+    m_selection = Selection();
 	
     for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -371,15 +382,7 @@ bool App::voxIsSet(Point3int32 pos) {
 }
 
 
-// Conversions between voxelspace and worldspace, the hard coded point3 is because voxels are drawn in center 
-Point3 App::voxelToWorldSpace(Point3int32 voxelPos) {
-    return Point3(voxelPos) * voxelRes + Point3(0.5, 0.5f, 0.5f);
-}
 
-//Ditto
-Point3int32 App::worldToVoxelSpace(Point3 worldPos){
-    return (Point3int32)((worldPos - Point3(0.5, 0.5f, 0.5f)) / voxelRes);
-}
 
 //Returns the chunk coords for a given point.
 //I changed this I hope it works -Youle
@@ -563,7 +566,7 @@ void App::drawVoxel(Point3int32 input) {
     geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
 
-	Point3 pos = voxelToWorldSpace(input);
+	Point3 pos = Util::voxelToWorldSpace(input);
 
 	// Check each position adjacent to voxel, and if nothing is there, add a face
     if ( !voxIsSet(input + Vector3int32(1,0,0)) ) {
@@ -742,15 +745,16 @@ void App::debugDrawVoxel(){
 	
 	vertexArray.fastClear();
 	indexArray.fastClear();
-	
-	for (int i = 0; i < m_selection.length(); i++) {
-	    Point3int32 pos= m_selection[i];
-	    Point3 selection = voxelToWorldSpace(pos);
+	Array<Point3int32> selectionArray = m_selection.getArray();
+
+	for (int i = 0; i < selectionArray.length(); i++) {
+	    Point3int32 pos= selectionArray[i];
+	    Point3 selection = Util::voxelToWorldSpace(pos);
 	    drawVoxelNaive(geometry, mesh, selection, voxelRes * 1.1f, type);
 	}
 	
 	//yet another bad workaround
-	if (m_selection.length() == 0) {
+	if (selectionArray.length() == 0) {
 		drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
 	}
 	
@@ -774,27 +778,8 @@ void App::selectBox(Point3int32 center, int radius) {
                 Point3int32 pos = Point3int32(x, y, z);
 
 				if ( voxIsSet(pos) ) {
-                    m_selection.append(pos);
+                    m_selection.getArray().append(pos);
 				}
-            }
-        }
-    }
-
-    debugDrawVoxel();
-}
-
-void App::selectSphere(Point3int32 center, int radius) {
-    m_selection.clear();
-
-    for (int y = center.y - radius; y <= center.y + radius; ++y) {
-        for (int x = center.x - radius; x <= center.x + radius; ++x) {
-            for (int z = center.z - radius; z <= center.z + radius; ++z) {
-                Point3int32 pos = Point3int32(x, y, z);
-
-				// check if the voxel is in the sphere
-                if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
-                    m_selection.append(pos);
-                }
             }
         }
     }
@@ -812,7 +797,7 @@ void App::selectCylinder(Point3int32 center, int radius) {
 
 				// check if the voxel is in the cylinder
                 if(sqrt((x-center.x) * (x-center.x) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
-                    m_selection.append(pos);
+                    m_selection.getArray().append(pos);
                 }
             }
         }
@@ -820,26 +805,6 @@ void App::selectCylinder(Point3int32 center, int radius) {
 
     debugDrawVoxel();
 }
-
-void App::elevateSelection(int delta) {
-    if (delta != 0) {
-        for (int i = 0; i < m_selection.size(); ++i) {
-            Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
-            setVoxel(targetPos, posToVox(m_selection[i]));
-            Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
-
-            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
-                m_chunksToUpdate.push(chunkCoords);
-            }
-            unsetVoxel(m_selection[i]);
-        }
-    }
-
-   
-    m_selection.clear();
-    debugDrawVoxel();
-}
-
 
 
 void App::makeCrater(Point3int32 center, int radius, int depth) {
@@ -947,7 +912,6 @@ bool App::onEvent(const GEvent& event) {
             removeVoxel(hitPos);
           }
     }
-
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
             menuMode = !menuMode;
                 
@@ -1006,14 +970,11 @@ bool App::onEvent(const GEvent& event) {
         Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
-		m_currentMark = hitPos;
+        m_selection.setMark(hitPos);
     }
 	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('l')) ){
 		// determine how big the radius is
-		Point3int32 hitPos;
-        Point3int32 lastPos;
-        cameraIntersectVoxel(lastPos, hitPos);
-        selectSphere(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+        selectSphere(m_crosshair.position, m_crosshair.lookDirection);
 	}
 
 	// Elevate selection
@@ -1067,6 +1028,33 @@ bool App::onEvent(const GEvent& event) {
     return false;
 }
 
+void App::selectSphere(Point3 origin, Vector3 direction) {
+    m_selection.commitSphere(origin, direction);
+}
+
+void App::elevateSelection(int delta) {
+    Array<Point3int32>& selectionArray = m_selection.getArray();
+    Array<Point3int32> changeBuffer;
+    if (delta != 0) {
+        for (int i = 0; i < selectionArray.size(); ++i) {
+            if(voxIsSet(selectionArray[i])){
+                changeBuffer.push(selectionArray[i]);
+            }
+        }
+
+        for(int i = 0; i < changeBuffer.size(); ++i) {
+            Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
+            setVoxel(targetPos, posToVox(changeBuffer[i]));
+            Point2int32 chunkCoords = getChunkCoords(changeBuffer[i]);
+            if( !m_chunksToUpdate.contains(chunkCoords) ) {
+                m_chunksToUpdate.push(chunkCoords);
+            }
+            unsetVoxel(selectionArray[i]);
+        }
+    }
+    m_selection.clear();
+    debugDrawVoxel();
+}
 
 void App::onUserInput(UserInput* ui) {
     
