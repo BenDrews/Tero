@@ -1,7 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
 #include <future>
-#include <chrono>
 #define PI 3.1415926f
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
@@ -822,21 +821,97 @@ void App::selectCylinder(Point3int32 center, int radius) {
     debugDrawVoxel();
 }
 
-void App::makeCrater(Point3int32 center, int radius, int depth) {
-	if ( depth != 0 ) {
-		for (int y = center.y - radius; y <= center.y; ++y) {
-		    for (int x = center.x - radius; x <= center.x + radius; ++x) {
-		        for (int z = center.z - radius; z <= center.z + radius; ++z) {
-		            Point3int32 pos = Point3int32(x, y, z);
+void App::elevateSelection(int delta) {
+    if (delta != 0) {
+        for (int i = 0; i < m_selection.size(); ++i) {
+            Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
+            setVoxel(targetPos, posToVox(m_selection[i]));
+            Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
 
-					// check if the voxel is in the crater
-		            if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
-		                removeVoxel(pos);
-		            }
-		        }
-		    }
+            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
+                m_chunksToUpdate.push(chunkCoords);
+            }
+            unsetVoxel(m_selection[i]);
+        }
+    }
+
+   
+    m_selection.clear();
+    debugDrawVoxel();
+}
+
+
+
+void App::makeCrater(Point3int32 center, int radius, int depth) {
+    debugDrawVoxel();
+
+	// sdt = differential (time since last call of this function)
+	// st = absolute (time since animation began)
+	
+	std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
+		
+		SimTime threshold = 0.1f;
+		int currentRadius = (int)args.get("currentRadius");
+		int radius = (int)args.get("radius");
+		Point3int32 center(args.get("centerX"), args.get("centerY"), args.get("centerZ"));
+
+		while ( currentRadius < radius ) {
+			if ( st < threshold ) {
+				float bound = currentRadius / sqrt(2);
+				
+				for (int x = center.x - bound; x <= center.x + bound; ++x) {
+					for (int z = center.z = bound; z <= center.x + bound; ++z) {
+				
+						Point3int32 pos = Point3int32(x, center.y, z);
+						if ( voxIsSet(pos) ) {
+							removeVoxel(pos);
+						}
+				
+					}
+				}
+
+				currentRadius++;
+				args.set("currentRadius", currentRadius);
+				threshold += 0.1f;
+			}
+			else {
+				debugPrintf("didn't go in the if\n");
+			}
 		}
-	}
+
+		lastAnimFinished = true;
+
+		debugPrintf("out of while\n");
+	
+	};
+	AnimationControl a(lambda);
+	a.args.set("radius", radius);
+	a.args.set("currentRadius", 0.0f);
+	a.args.set("depth", depth);
+	a.args.set("currentDepth", 0.0f);
+	a.args.set("centerX", center.x);
+	a.args.set("centerY", center.y);
+	a.args.set("centerZ", center.z);
+	m_animControls.push(a);
+
+
+
+
+
+//	if ( depth != 0 ) {
+//		for (int y = center.y - radius; y <= center.y; ++y) {
+//		    for (int x = center.x - radius; x <= center.x + radius; ++x) {
+//		        for (int z = center.z - radius; z <= center.z + radius; ++z) {
+//		            Point3int32 pos = Point3int32(x, y, z);
+//
+//					// check if the voxel is in the crater
+//		            if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
+//		                removeVoxel(pos);
+//		            }
+//		        }
+//		    }
+//		}
+//	}
 }
 
 
@@ -845,6 +920,13 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      super::onSimulation(rdt, sdt, idt);
 
+	 for (int i = 0; i < m_animControls.size(); ++i) {
+		AnimationControl current = m_animControls[i];
+		current.invoke(sdt);
+		if (lastAnimFinished) {
+			m_animControls.remove(i);
+		}
+	 }
 }
 
 
@@ -985,26 +1067,6 @@ bool App::onEvent(const GEvent& event) {
     return false;
 }
 
-
-
-void App::elevateSelection(int delta) {
-    if (delta != 0) {
-        for (int i = 0; i < m_selection.size(); ++i) {
-            Point3int32 targetPos = m_selection[i] + Point3int32(0, delta, 0);
-            setVoxel(targetPos, posToVox(m_selection[i]));
-            Point2int32 chunkCoords = getChunkCoords(m_selection[i]);
-
-            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
-                m_chunksToUpdate.push(chunkCoords);
-            }
-            unsetVoxel(m_selection[i]);
-        }
-    }
-
-   
-    m_selection.clear();
-    debugDrawVoxel();
-}
 
 void App::onUserInput(UserInput* ui) {
     

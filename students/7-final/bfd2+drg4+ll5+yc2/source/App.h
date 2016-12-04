@@ -7,7 +7,12 @@
 #pragma once
 #include <G3D/G3DAll.h>
 #include <GLG3DVR/VRApp.h>
+#include "AnimationControl.h"
 
+typedef 
+    //VRApp 
+    GApp
+    AppBase;
 
 class CrosshairObject{
 public:
@@ -18,14 +23,6 @@ public:
     int buttonIndex = 0;
     int menuControllerIndex = 0;
 };
-
-
-
-
-typedef 
-    //VRApp 
-    GApp
-    AppBase; 
 
 /** \brief Application framework. */
 class App : public AppBase {
@@ -45,6 +42,10 @@ protected:
     const int voxTypeCount = 8;
 
 	Array<String> m_typesList;
+
+	Array<AnimationControl> m_animControls;
+
+	bool lastAnimFinished;
 
   
 public:

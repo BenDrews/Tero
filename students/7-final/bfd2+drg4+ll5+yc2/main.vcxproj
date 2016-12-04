@@ -158,6 +158,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\AnimationControl.cpp" />
     <ClCompile Include="source\App.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -165,8 +166,8 @@
     <None Include="journal\journal.md.html" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\AnimationControl.h" />
     <ClInclude Include="source\App.h" />
-    <ClInclude Include="source\Plane.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
