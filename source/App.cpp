@@ -719,7 +719,7 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
 
 void App::debugDrawVoxel(){
 
-	addModelToScene(m_debugModel, "debugEntity");
+	addEntity(m_debugModel, "debugEntity");
 	ArticulatedModel::Part* part = m_debugModel->addPart("root");
 	int type = voxTypeCount;
 	
