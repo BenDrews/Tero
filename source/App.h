@@ -25,6 +25,14 @@ public:
     int menuControllerIndex = 0;
 };
 
+
+
+typedef 
+    //VRApp 
+    GApp
+    AppBase; 
+
+
 /** \brief Application framework. */
 class App : public AppBase {
 protected:
@@ -111,8 +119,8 @@ public:
 	void initializeMaterials();
 	void initializeModel();
 	void makeMenuModel();
-	void makeHandModel();
-    void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
+	void makeVoxelModel(String modelName, int type, float size = 1.0f);
+    shared_ptr<VisibleEntity> addModelToScene(shared_ptr<ArticulatedModel> model, String entityName, bool visible=true);
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();

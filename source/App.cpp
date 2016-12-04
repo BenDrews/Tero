@@ -125,7 +125,7 @@ void App::updateSelect(){
             //
             //if(cameraRay.origin() != empty.origin()){
             //     m_crosshair.lookDirection = cameraRay.direction();
-            //     m_crosshair.position = cameraRay.origin() + 1* m_crosshair.lookDirection.direction();
+            //     m_crosshair.position = cameraRay.origin();
             //     m_crosshair.ray = cameraRay;
             //    drawCrosshair();
             //}
@@ -138,7 +138,7 @@ void App::updateSelect(){
             //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
             //}
             //
-            
+            //
         } else {
             Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
             cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
@@ -147,7 +147,7 @@ void App::updateSelect(){
 
         if (cameraRay.origin() != empty.origin()) {
             m_crosshair.lookDirection = cameraRay.direction();
-            m_crosshair.position = cameraRay.origin() + m_crosshair.lookDirection.direction();
+            m_crosshair.position = cameraRay.origin();
             m_crosshair.ray = cameraRay;
             drawCrosshair();
         }
@@ -184,7 +184,7 @@ void App::drawCrosshair(){
 void App::initializeScene() {
     m_posToChunk = Table<Point2int32, shared_ptr<Table<Point3int32, int>>>();
 
-    m_voxToProp = Array<Any>();
+    m_voxToProp = Array< Any>();
 
     m_chunksToUpdate = Array<Point2int32>();
 
@@ -203,7 +203,7 @@ void App::initializeScene() {
     // Initialize ground
     for(int x = -25; x < 25; ++x) {
         for(int z = -25; z < 25; ++z) {
-            for(int y = -25; y < 25; ++y) {
+            for(int y = -50; y < 0; ++y) {
             setVoxel(Point3int32(x,y,z), 0);
             }
         }
@@ -211,30 +211,28 @@ void App::initializeScene() {
 
     getMenuPositions();
     makeMenuModel();
-    addModelToScene(m_menuModel, "menuEntity");
+    m_menu = addModelToScene(m_menuModel, "menuEntity", false);
    
     redrawWorld();
 }
 
 
 void App::getMenuPositions(){
-    //m_menuButtons.append(Point3(-0.5, 0, -1));
-    //m_menuButtons.append(Point3(0.5, 0, -1));
 
     int rows = 2;
     int totalVoxels = voxTypeCount;
     int blocksPerRow = totalVoxels / rows;
-    float rowSeparation = 0.4;
-    float menuRadius = 2;
-    float menuWidth = 1.5 * PI; //radians
+    float rowSeparation = 0.5;
+    float menuRadius = 0.75;
+    float menuWidth = 0.75 * PI; //radians
     float x, y, z;
-    y = 0.75;
+    y = 0.25;
     
     for (int i = 0; i < totalVoxels; ++i) {
     
         int j = i % blocksPerRow;
-        float a = (float)j * ( menuWidth / (float)(totalVoxels) );
-        a += 5.0f * PI / 16.0f;
+        float a = (float)j * ( menuWidth / (float)(blocksPerRow) );
+        a += PI / 4.0f;
 
         for (int k = 1; k < rows; ++k) {
             if( j == 0 ){
@@ -246,14 +244,14 @@ void App::getMenuPositions(){
         
         m_menuButtons.append(Point3(x,y,z));
     }
-    m_menuButtons.append(Point3(0.0f,0.75f,-menuRadius));
+    m_menuButtons.append(Point3(0.0f,0.25f,-menuRadius));
     
 }
 
 void App::makeMenuModel() {
     ArticulatedModel::Part* part = m_menuModel->addPart("root");
     int type;
-	for (int t = 0; t < voxTypeCount * 8; ++t) {
+	for (int t = 0; t < voxTypeCount; ++t) {
         type = t % voxTypeCount;
 
 		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", t));
@@ -275,17 +273,19 @@ void App::makeMenuModel() {
 	}
 }
 
-void App::makeHandModel() {
-    ArticulatedModel::Part*		part	 = m_handModel->addPart("root");
-	ArticulatedModel::Geometry* geometry = m_handModel->addGeometry("geom");
-	ArticulatedModel::Mesh*		mesh	 = m_handModel->addMesh("mesh", m_handModel->part("root"), geometry);
-	mesh->material = m_voxToMat[0];
+void App::makeVoxelModel(String modelName, int type, float size) {
+     const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty(modelName);
+
+    ArticulatedModel::Part*		part	 = model->addPart("root");
+	ArticulatedModel::Geometry* geometry = model->addGeometry("geom");
+	ArticulatedModel::Mesh*		mesh	 = model->addMesh("mesh", model->part("root"), geometry);
+	mesh->material = m_voxToMat[type];
 	
-	drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0.1f, 0);
+	drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0.1f, type);
 	
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
 	geometrySettings.allowVertexMerging = false;
-	m_menuModel->cleanGeometry(geometrySettings);
+	model->cleanGeometry(geometrySettings);
 	
 	// If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
 	geometry->clearAttributeArrays();
@@ -297,16 +297,17 @@ void App::makeHandModel() {
 void App::initializeMaterials() {
 	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
 
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ));
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ));
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )));
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("sand/sand.UniversalMaterial.Any") )));
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("roughcedar/roughcedar.UniversalMaterial.Any")) ));
-	m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
-    m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )));
-    m_voxToMat.append( UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("sand/sand.UniversalMaterial.Any") )));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("roughcedar/roughcedar.UniversalMaterial.Any")) ));
+	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
+    m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )));
+    m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
+    
     // using vox8.any, if you do add more materials, increase the number 8. This material is used for debug only, and stays at the end of voxToMat.
-    m_voxToMat.append( UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
+    m_voxToMat.append(UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
 
 }
 
@@ -315,8 +316,8 @@ void App::initializeModel() {
 }
 
 
-// Create a cube model. Code pulled from sample/proceduralGeometry
-void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName) {
+// Adds given model to scene and returns a visible entity. Entity is not visible by default
+shared_ptr<VisibleEntity> App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName, bool visible) {
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
     // with a VisibleEntity.
@@ -350,16 +351,14 @@ void App::addModelToScene(shared_ptr<ArticulatedModel> model, String entityName)
         anyFile["model"] = model->name();
         entity = scene()->createEntity(entityName, anyFile);
 
-        //SUPER HACKY IM SORRY BEN
-        // TODO: FIX THIS
-        if( entityName == "menuEntity"){
-            m_menu = scene()->typedEntity<VisibleEntity>(entityName);
-        }
-
     } else {
         // Change the model on the existing  entity
         dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
+
+    shared_ptr<VisibleEntity> visibleEntity = scene()->typedEntity<VisibleEntity>(entityName);
+    visibleEntity->setVisible(visible);
+    return visibleEntity;
 }
 
 
@@ -876,7 +875,7 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
-     super::onSimulation(rdt, sdt, idt);
+     GApp::onSimulation(rdt, sdt, idt);
 
 	 for (int i = 0; i < m_animControls.size(); ++i) {
 		AnimationControl current = m_animControls[i];
@@ -889,6 +888,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
 
 
 bool App::onEvent(const GEvent& event) {
+    
+    if (super::onEvent(event)) { return true; }
+
     if (event.isMouseEvent() && event.button.type == GEventType::MOUSE_BUTTON_CLICK) {
           // Add voxel
           if (event.button.button == (uint8)0) {
@@ -916,6 +918,7 @@ bool App::onEvent(const GEvent& event) {
             m_menu->setVisible(menuMode);
 
     }
+
 
     // Change intersect distance
     if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
@@ -1016,7 +1019,6 @@ bool App::onEvent(const GEvent& event) {
     //}
 
     // Handle super-class events
-    if (super::onEvent(event)) { return true; }
 
     return false;
 }
@@ -1159,9 +1161,14 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //            menuMode = !menuMode;
         //            debugPrintf("MENU %d\n", menuMode);
         //            if(menuMode){
-        //                menuFrame = m_vrHead->frame();
+        //                float yaw, pitch, roll;
+        //                m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
+        //                Point3 translation = m_vrHead->frame().translation;
+        //                menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
         //                m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
+        //                m_menu->setFrame(menuFrame);
         //            }
+        //            m_menu->setVisible(menuMode);
         //       }
         //
         //       break;
@@ -1177,8 +1184,8 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //}
         //
         ////END_PROFILER_EVENT();
-        //
-        //
+        
+        
         
 
 
