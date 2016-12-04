@@ -177,14 +177,7 @@ void App::drawCrosshair(){
         if (lastOpen != voxelTest) {
             debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
         }
-        
-        Array<Point3int32>& selectionArray = m_selection.getArray();
-        
-        for (int i = 0; i < selectionArray.length(); i++) {
-            Point3int32 pos= selectionArray[i];
-            Point3 selection = Util::voxelToWorldSpace(pos);
-            debugDraw( Box(selection - Point3(voxelRes/2,voxelRes/2,voxelRes/2),selection + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
-        }
+       
     }
 }
 
@@ -745,7 +738,7 @@ void App::debugDrawVoxel(){
 	
 	vertexArray.fastClear();
 	indexArray.fastClear();
-	Array<Point3int32> selectionArray = m_selection.getArray();
+	Array<Point3int32>& selectionArray = m_selection.getArray();
 
 	for (int i = 0; i < selectionArray.length(); i++) {
 	    Point3int32 pos= selectionArray[i];
@@ -1030,6 +1023,7 @@ bool App::onEvent(const GEvent& event) {
 
 void App::selectSphere(Point3 origin, Vector3 direction) {
     m_selection.commitSphere(origin, direction);
+    debugDrawVoxel();
 }
 
 void App::elevateSelection(int delta) {
