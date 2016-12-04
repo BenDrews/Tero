@@ -15,6 +15,7 @@ protected:
 public:
 	
 	Table<String, float> args;
+    Array<shared_ptr<VisibleEntity>> activeVoxels;
 	AnimationControl();
 
 	// c is the function that will be called by onSimulation

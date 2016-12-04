@@ -54,6 +54,7 @@ protected:
 
 	Array<AnimationControl> m_animControls;
 
+
 	bool lastAnimFinished;
 
   
@@ -120,7 +121,8 @@ public:
 	void initializeModel();
 	void makeMenuModel();
 	void makeVoxelModel(String modelName, int type, float size = 1.0f);
-    shared_ptr<VisibleEntity> addModelToScene(shared_ptr<ArticulatedModel> model, String entityName, bool visible=true);
+    shared_ptr<VisibleEntity> addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible=true);
+    void removeEntity(shared_ptr<VisibleEntity> entity);
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
