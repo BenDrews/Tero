@@ -160,6 +160,8 @@
   <ItemGroup>
     <ClCompile Include="source\AnimationControl.cpp" />
     <ClCompile Include="source\App.cpp" />
+    <ClCompile Include="source\Selection.cpp" />
+    <ClCompile Include="source\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="doc-files\report.md.html" />
@@ -168,6 +170,8 @@
   <ItemGroup>
     <ClInclude Include="source\AnimationControl.h" />
     <ClInclude Include="source\App.h" />
+    <ClInclude Include="source\Selection.h" />
+    <ClInclude Include="source\Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

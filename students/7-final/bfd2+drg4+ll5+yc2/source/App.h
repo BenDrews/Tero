@@ -7,6 +7,7 @@
 #pragma once
 #include <G3D/G3DAll.h>
 #include <GLG3DVR/VRApp.h>
+#include "Selection.h"
 #include "AnimationControl.h"
 
 typedef 
@@ -90,7 +91,7 @@ public:
     CrosshairObject m_crosshair;
 
     /** Stores the current voxel selection */
-    Array<Point3int32> m_selection;
+    Selection m_selection;
 
     /** Stores marked position when mid transform */
     Point3int32 m_currentMark;
@@ -112,9 +113,6 @@ public:
 	void makeMenuModel();
 	void makeHandModel();
     void addModelToScene(shared_ptr<ArticulatedModel> model, String entityName);
-
-    Point3 voxelToWorldSpace(Point3int32 voxelPos);
-    Point3int32 worldToVoxelSpace(Point3 worldPos);
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
@@ -142,10 +140,12 @@ public:
     void updateGeometry(Point2int32 chunkCoords, int type);
 
 	// Applying transforms to voxels
+
+    void selectSphere(Point3 origin, Vector3 direction);
+    void App::elevateSelection(int delta);
+
     void debugDrawVoxel();
     void selectBox(Point3int32 center, int radius);
-    void selectSphere(Point3int32 center, int radius);
     void selectCylinder(Point3int32 center, int radius);
-    void elevateSelection(int delta);
 	void makeCrater(Point3int32 center, int depth, int radius);
 };
