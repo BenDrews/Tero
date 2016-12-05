@@ -10,7 +10,7 @@ G3D_START_AT_MAIN();
 int main(int argc, const char* argv[]) {
     {
         G3DSpecification g3dSpec;
-        g3dSpec.audio = false;
+        g3dSpec.audio = true;
         initGLG3D(g3dSpec);
     }
 
@@ -91,7 +91,7 @@ void App::onInit() {
     super::onInit();
     setFrameDuration(1.0f / 120.0f);
 
-    showRenderingStats      = false;
+    showRenderingStats = false;
 
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
@@ -188,6 +188,8 @@ void App::initializeScene() {
     }
 
 	initializeMaterials();
+
+	initializeSounds();
 
     initializeModel();
 
@@ -288,7 +290,6 @@ void App::makeVoxelModel(String modelName, int type, float size) {
 }
 
 void App::initializeMaterials() {
-	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
 
 	m_voxToMat.append(
         UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ),
@@ -303,6 +304,22 @@ void App::initializeMaterials() {
     
     // using vox8.any, if you do add more materials, increase the number 8. This material is used for debug only, and stays at the end of voxToMat.
     m_voxToMat.append(UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
+
+}
+
+void App::initializeSounds() {
+
+	// 0 = add
+	// 1 = remove
+	// 2 = elevate
+	// 3 = crater
+	m_sounds.append(
+		Sound::create("data-files/sounds/ui_wood_back.wav"),				// add
+		Sound::create("data-files/sounds/ui_wood_close.wav"),				// remove
+		Sound::create("data-files/sounds/ui_casual_countup.wav"),			// elevate
+		Sound::create("data-files/sounds/ui_wood_back.wav")					// crater
+		//Sound::create("data-files/sounds/ui_wood_back.wav")				// menu
+	);
 
 }
 
@@ -371,16 +388,13 @@ void App::removeEntity(shared_ptr<VisibleEntity> entity){
 //
 //}
 
-//Returns true if the positions given is occupied.
+// Returns true if the positions given is occupied.
 bool App::voxIsSet(Point3int32 pos) {
     return getChunk(pos)->containsKey(pos);
 }
 
 
-
-
-//Returns the chunk coords for a given point.
-//I changed this I hope it works -Youle
+// Returns the chunk coords for a given point.
 Point2int32 App::getChunkCoords(Point3int32 pos) {
 	// Chunks between -7 and 7 are too big, modify
     int32 addX = 0;
@@ -418,7 +432,7 @@ void App::checkBoundaryAdd(Point3int32 pos){
     }
 }
 
-//Return the chunk a given voxel resides in.
+// Return the chunk a given voxel resides in.
 shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
     Point2int32 key = getChunkCoords(pos);
     if (!m_posToChunk.containsKey(key)) {
@@ -427,7 +441,7 @@ shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
     return m_posToChunk[key];
 }
 
-//Return the voxel type at a given grid position.
+// Return the voxel type at a given grid position.
 int App::posToVox(Point3int32 pos) {
     return getChunk(pos)->operator[](pos);
 }
@@ -542,6 +556,7 @@ void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
     createVoxelGeometry(input);
     updateGeometry(getChunkCoords(input),type);
+	m_sounds[0]->play();
 }
 
 
@@ -647,8 +662,7 @@ void App::addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* 
 
 }
 
-//Clean/update the geometry for our model. 
-//I put the dirty work here so that it is only called in addVoxel and redrawChunk
+// Clean/update the geometry for our model.
 void App::updateGeometry(Point2int32 chunkCoords, int type) {
     
     if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
@@ -678,6 +692,8 @@ void App::removeVoxel(Point3int32 input) {
     }
 
     checkBoundaryAdd(input);
+
+	m_sounds[1]->play();
 }
 
 
@@ -816,84 +832,102 @@ void App::pullVoxelOrbit(Point3int32 origin) {
 void App::makeCrater(Point3int32 center, int radius, int depth) {
     debugDrawVoxel();
 
+	// Lambda function for AnimationControl.
 	// sdt = differential (time since last call of this function)
 	// st = absolute (time since animation began)
-	
-	std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
+	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args) {
 		
-		SimTime threshold = 0.1f;
-		int currentRadius = (int)args.get("currentRadius");
-		int radius = (int)args.get("radius");
-		Point3int32 center(args.get("centerX"), args.get("centerY"), args.get("centerZ"));
+		int currentRadius = (int)(args->get("currentRadius"));
+		int radius = (int)args->get("radius");
+		Point3int32 center(args->get("centerX"), args->get("centerY"), args->get("centerZ"));
 
-		while ( currentRadius < radius ) {
-			if ( st < threshold ) {
-				float bound = currentRadius / sqrt(2);
+		SimTime threshold = 0.005f * currentRadius;
+
+		if ( currentRadius < radius ) {
+			if ( st > threshold ) {
+				float bound = max(currentRadius / sqrt(2.0f) - 1.0f, 0.0f);
+				float depth = sqrt(radius - currentRadius);
 				
-				for (int x = center.x - bound; x <= center.x + bound; ++x) {
-					for (int z = center.z = bound; z <= center.x + bound; ++z) {
-				
-						Point3int32 pos = Point3int32(x, center.y, z);
-						if ( voxIsSet(pos) ) {
-							removeVoxel(pos);
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - currentRadius; P.x <= center.x - bound; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
 						}
-				
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x + bound; P.x <= center.x + currentRadius; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - bound; P.x <= center.x + bound; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z - bound; ++P.z) {
+
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - bound; P.x <= center.x + bound; ++P.x) {
+						for (P.z = center.z + bound; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
 					}
 				}
 
 				currentRadius++;
-				args.set("currentRadius", currentRadius);
-				threshold += 0.1f;
-			}
-			else {
-				debugPrintf("didn't go in the if\n");
+				args->set("currentRadius", float(currentRadius));
 			}
 		}
 
-		lastAnimFinished = true;
-
-		debugPrintf("out of while\n");
-	
+		if (currentRadius == radius) {
+			lastAnimFinished = true;
+		} else {
+			lastAnimFinished = false;
+		}
+			
 	};
+
+
 	AnimationControl a(lambda);
-	a.args.set("radius", radius);
-	a.args.set("currentRadius", 0.0f);
-	a.args.set("depth", depth);
-	a.args.set("currentDepth", 0.0f);
-	a.args.set("centerX", center.x);
-	a.args.set("centerY", center.y);
-	a.args.set("centerZ", center.z);
+	a.args->set("radius", radius);
+	a.args->set("currentRadius", 0.0f);
+	a.args->set("depth", depth);
+	a.args->set("currentDepth", 0.0f);
+	a.args->set("centerX", center.x);
+	a.args->set("centerY", center.y);
+	a.args->set("centerZ", center.z);
 	m_animControls.push(a);
 
-
-
-
-
-//	if ( depth != 0 ) {
-//		for (int y = center.y - radius; y <= center.y; ++y) {
-//		    for (int x = center.x - radius; x <= center.x + radius; ++x) {
-//		        for (int z = center.z - radius; z <= center.z + radius; ++z) {
-//		            Point3int32 pos = Point3int32(x, y, z);
-//
-//					// check if the voxel is in the crater
-//		            if(sqrt((x-center.x) * (x-center.x) + (y-center.y) * (y-center.y) + (z-center.z) * (z-center.z)) <= radius && voxIsSet(pos)) {
-//		                removeVoxel(pos);
-//		            }
-//		        }
-//		    }
-//		}
-//	}
 }
-
-
 
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
 
 	 for (int i = 0; i < m_animControls.size(); ++i) {
-		AnimationControl current = m_animControls[i];
-		current.invoke(sdt);
+		m_animControls[i].invoke(sdt);
 		if (lastAnimFinished) {
 			m_animControls.remove(i);
 		}
@@ -1064,6 +1098,8 @@ void App::elevateSelection(int delta) {
     }
     m_selection.clear();
     debugDrawVoxel();
+
+	m_sounds[2]->play();
 }
 
 void App::onUserInput(UserInput* ui) {

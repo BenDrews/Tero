@@ -10,16 +10,17 @@ class AnimationControl {
 protected:
 
 	SimTime m_currentTime;//Should be Any;
-	std::function<void(SimTime, SimTime, Table<String, float>)> m_callback;
+	std::function<void(SimTime, SimTime, shared_ptr<Table<String, float>>)> m_callback;
 
 public:
 	
-	Table<String, float> args;
+	shared_ptr<Table<String, float>> args;
+
     Array<shared_ptr<VisibleEntity>> activeVoxels;
 	AnimationControl();
 
 	// c is the function that will be called by onSimulation
-	AnimationControl(std::function<void(SimTime, SimTime, Table<String, float>)> c);
+	AnimationControl(std::function<void(SimTime, SimTime, shared_ptr<Table<String, float>>)> c);
 
 	void invoke(SimTime sdt);
     
