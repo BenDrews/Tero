@@ -46,6 +46,8 @@ protected:
 	static const int CHROME	= 6;
 	static const int RUBBER	= 7;
 
+	enum SoundIndex { add, remove, elevate, openMenu, closeMenu, menuSelect };
+
     typedef AppBase super;
 
     /** Called from onInit */
@@ -171,5 +173,5 @@ public:
     void pullVoxelOrbit(Point3int32 origin);
 	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
-	void makeMountain(Point3int32 center, int radius, int height);
+	void makeMountain(Point3int32 center, int height);
 };
