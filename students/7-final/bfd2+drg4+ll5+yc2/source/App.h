@@ -37,6 +37,9 @@ typedef
 class App : public AppBase {
 protected:
 
+    static const int GRASS = 0;
+    //TODO the other ones.
+
     typedef AppBase super;
 
     /** Called from onInit */
@@ -46,7 +49,7 @@ protected:
 
     const float voxelRes = 0.5f;
 
-    const int chunkSize = 8;
+    const int chunkSize = 32;
 
     const int voxTypeCount = 8;
 
@@ -140,10 +143,10 @@ public:
     shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
     void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
-    void drawVoxel(Point3int32 input);
+    void createVoxelGeometry(Point3int32 input);
 	void drawVoxelNaive(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
     void clearChunk(Point2int32 chunkPos);
-    void drawChunk(Point2int32 chunkPos);
+    void createChunkGeometry(Point2int32 chunkPos);
     void updateChunks();
     void redrawWorld();
     void checkBoundaryAdd(Point3int32 pos);
@@ -157,5 +160,7 @@ public:
     void debugDrawVoxel();
     void selectBox(Point3int32 center, int radius);
     void selectCylinder(Point3int32 center, int radius);
+
+    void pullVoxelOrbit(Point3int32 origin);
 	void makeCrater(Point3int32 center, int depth, int radius);
 };
