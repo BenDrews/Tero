@@ -196,12 +196,11 @@ void App::initializeScene() {
     addEntity(m_model, "voxel");
 
     // Initialize ground
-
-    for(Point3int32 P(-25, -25, -50); P.x < 25; ++P.x) {
-        for(P.z = -25; P.z < 25; ++P.z) {
-            for(P.y = -50; P.y < 0; ++P.y) {
-                setVoxel(P, GRASS);
-
+    for (Point3int32 P(-25, -25, -50); P.x < 25; ++P.x) {
+        for (P.z = -25; P.z < 25; ++P.z) {
+            for (P.y = -50; P.y < 0; ++P.y) {
+				VoxelType t = grass;
+                setVoxel(P, t);
             }
         }
     }
@@ -713,7 +712,7 @@ void App::removeVoxel(Point3int32 input) {
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
 	// Intersect with empty space
-    const float maxDist = 2.0f + intersectMode * 10.0f;
+    const float maxDist = 2.0f + m_intersectMode * 10.0f;
     Vector3 direction = m_crosshair.lookDirection;
     
     Ray cameraRay(m_crosshair.position, m_crosshair.lookDirection);
@@ -789,54 +788,51 @@ void App::debugDrawVoxel(){
 	mesh->clearIndexStream();
 }
 
-void App::selectBox(Point3int32 center, int radius) {
-    m_selection.clear();
-
-    for (Point3int32 P(center.x, center.y - radius, center.z); P.y <= center.y + radius; ++P.y) {
-        for (P.x = center.x - radius; P.x <= center.x + radius; ++P.x) {
-            for (P.z = center.z - radius; P.z <= center.z + radius; ++P.z) {
-
-				if ( voxIsSet(P) ) {
-                    m_selection.getArray().append(P);
-				}
-            }
-        }
-    }
-
+void App::selectSphere(Point3 origin, Vector3 direction) {
+	m_selection.setMode(m_selectionMode);
+    m_selection.commitSphere(origin, direction);
     debugDrawVoxel();
 }
 
 void App::selectCylinder(Point3int32 center, int radius) {
-    m_selection.clear();
-
-    for (Point3int32 P(center.x, center.y - radius, center.z); P.y <= center.y + radius; ++P.y) {
-        for (P.x = center.x - radius; P.x <= center.x + radius; ++P.x) {
-            for (P.z = center.z - radius; P.z <= center.z + radius; ++P.z) {
-
-				// check if the voxel is in the cylinder
-                if(sqrt((P.x-center.x) * (P.x-center.x) + (P.z-center.z) * (P.z-center.z)) <= radius && voxIsSet(P)) {
-                    m_selection.getArray().append(P);
-                }
-            }
-        }
-    }
-
+	m_selection.setMode(m_selectionMode);
+	m_selection.commitCylinder(center, radius);
     debugDrawVoxel();
 }
 
-void App::pullVoxelOrbit(Point3int32 origin) {
-
-    Array<Point3int32> queue;
-    queue.push(origin);
-    while(queue.size()) {
-        
-    }
-
-    std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
-        
-    };
-
+void App::selectBox(Point3int32 center, int radius) {
+	m_selection.setMode(m_selectionMode);
+	m_selection.commitBox(center, radius);
+    debugDrawVoxel();
 }
+
+void App::elevateSelection(int delta) {
+    Array<Point3int32>& selectionArray = m_selection.getArray();
+    Array<Point3int32> changeBuffer;
+    if (delta != 0) {
+        for (int i = 0; i < selectionArray.size(); ++i) {
+            if(voxIsSet(selectionArray[i])){
+                changeBuffer.push(selectionArray[i]);
+            }
+        }
+
+        for(int i = 0; i < changeBuffer.size(); ++i) {
+            Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
+            setVoxel(targetPos, posToVox(changeBuffer[i]));
+            Point2int32 chunkCoords = getChunkCoords(changeBuffer[i]);
+            if( !m_chunksToUpdate.contains(chunkCoords) ) {
+                m_chunksToUpdate.push(chunkCoords);
+            }
+            unsetVoxel(selectionArray[i]);
+        }
+    }
+    m_selection.clear();
+    debugDrawVoxel();
+
+	SoundIndex i = elevate;
+	m_sounds[i]->play();
+}
+
 
 void App::makeCrater(Point3int32 center, int radius) {
 
@@ -1072,7 +1068,7 @@ void App::makeMountain(Point3int32 center, int height) {
 		} else {
 			lastAnimFinished = false;
 		}
-			
+
 	};
 
 
@@ -1087,6 +1083,20 @@ void App::makeMountain(Point3int32 center, int height) {
 	m_animControls.push(a);
 
 }
+
+void App::pullVoxelOrbit(Point3int32 origin) {
+
+    Array<Point3int32> queue;
+    queue.push(origin);
+    while(queue.size()) {
+        
+    }
+
+    std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
+        
+    };
+}
+
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
@@ -1153,14 +1163,21 @@ bool App::onEvent(const GEvent& event) {
 
     // Change intersect distance
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
-            intersectMode +=1;
-            intersectMode %=3;
+		m_intersectMode += 1;
+		m_intersectMode %= 3;
     } 
 
     // Force intersect
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
-            forceIntersect = !forceIntersect;
+		forceIntersect = !forceIntersect;
     }
+
+    // Change selection mode
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('n')) ){ 
+		m_selectionMode += 1;
+		m_selectionMode %= 5;
+		debugPrintf("mode: %d\n", m_selectionMode);
+    } 
 
 	// Box select
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('j')) ){ 
@@ -1268,37 +1285,6 @@ bool App::onEvent(const GEvent& event) {
     return false;
 }
 
-void App::selectSphere(Point3 origin, Vector3 direction) {
-    m_selection.commitSphere(origin, direction);
-    debugDrawVoxel();
-}
-
-void App::elevateSelection(int delta) {
-    Array<Point3int32>& selectionArray = m_selection.getArray();
-    Array<Point3int32> changeBuffer;
-    if (delta != 0) {
-        for (int i = 0; i < selectionArray.size(); ++i) {
-            if(voxIsSet(selectionArray[i])){
-                changeBuffer.push(selectionArray[i]);
-            }
-        }
-
-        for(int i = 0; i < changeBuffer.size(); ++i) {
-            Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
-            setVoxel(targetPos, posToVox(changeBuffer[i]));
-            Point2int32 chunkCoords = getChunkCoords(changeBuffer[i]);
-            if( !m_chunksToUpdate.contains(chunkCoords) ) {
-                m_chunksToUpdate.push(chunkCoords);
-            }
-            unsetVoxel(selectionArray[i]);
-        }
-    }
-    m_selection.clear();
-    debugDrawVoxel();
-
-	SoundIndex i = elevate;
-	m_sounds[i]->play();
-}
 
 void App::onUserInput(UserInput* ui) {
     
