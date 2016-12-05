@@ -26,7 +26,6 @@ public:
 };
 
 
-
 typedef 
     //VRApp 
     GApp
@@ -37,14 +36,7 @@ typedef
 class App : public AppBase {
 protected:
 
-    static const int GRASS	= 0;
-	static const int ROCK	= 1;
-	static const int BRICK	= 2;
-	static const int SAND	= 3;
-	static const int CEDAR	= 4;
-	static const int METAL	= 5;
-	static const int CHROME	= 6;
-	static const int RUBBER	= 7;
+	enum VoxelType { grass, rock, brick, sand, cedar, metal, chrome, rubber };
 
 	enum SoundIndex { add, remove, elevate, menuOpen, menuClose, menuSelect };
 
@@ -80,7 +72,8 @@ public:
     const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
     Array<Point3> m_menuButtons;
 
-    int intersectMode = 0;
+    int m_intersectMode = 0;
+	int m_selectionMode = 1;
     bool forceIntersect = false;
 
 
@@ -163,15 +156,14 @@ public:
     void updateGeometry(Point2int32 chunkCoords, int type);
 
 	// Applying transforms to voxels
-    void elevateSelection(int delta);
-
     void debugDrawVoxel();
     void selectSphere(Point3 origin, Vector3 direction);
+	void selectCylinder(Point3int32 center, int radius);
     void selectBox(Point3int32 center, int radius);
-    void selectCylinder(Point3int32 center, int radius);
+    void elevateSelection(int delta);
 
-    void pullVoxelOrbit(Point3int32 origin);
 	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
+    void pullVoxelOrbit(Point3int32 origin);
 };
