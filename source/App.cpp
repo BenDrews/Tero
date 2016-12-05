@@ -313,17 +313,23 @@ void App::initializeMaterials() {
 
 void App::initializeSounds() {
 
-	// 0 = add
-	// 1 = remove
-	// 2 = elevate
-	// 3 = crater
-	//m_sounds.append(
-	//	Sound::create("data-files/sounds/ui_wood_back.wav"),				// add
-	//	Sound::create("data-files/sounds/ui_wood_close.wav"),				// remove
-	//	Sound::create("data-files/sounds/ui_casual_countup.wav"),			// elevate
-	//	Sound::create("data-files/sounds/ui_wood_back.wav")					// crater
-	//	//Sound::create("data-files/sounds/ui_wood_back.wav")				// menu
-	//);
+	m_sounds.append(
+		Sound::create("data-files/sounds/ui_wood_back.wav"),				// 0 = add
+		Sound::create("data-files/sounds/ui_wood_error.wav"),				// 1 = remove
+		Sound::create("data-files/sounds/ui_wood_open.wav"),				// 2 = elevate
+		Sound::create("data-files/sounds/ui_casual_pops_back.wav"),			// 3 = open menu
+		Sound::create("data-files/sounds/ui_casual_pops_close.wav"),		// 4 = close menu
+		Sound::create("data-files/sounds/ui_casual_pops_confirm.wav")		// 5 = select from menu (???)
+	);
+
+	m_sounds.append(
+		Sound::create("data-files/sounds/ui_laser_shoot_01.wav"),			// 6  = shock wave
+		Sound::create("data-files/sounds/ui_wood_close.wav"),				// 7  = mountain
+		Sound::create("data-files/sounds/ui_wood_close.wav"),				// 8  =
+		Sound::create("data-files/sounds/ui_wood_back.wav"),				// 9  = 
+		Sound::create("data-files/sounds/ui_casual_pops_back.wav"),			// 10 = 
+		Sound::create("data-files/sounds/ui_casual_pops_close.wav")			// 11 = 
+	);
 
 }
 
@@ -563,7 +569,7 @@ void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
     createVoxelGeometry(input);
     updateGeometry(getChunkCoords(input),type);
-	//m_sounds[0]->play();
+	m_sounds[0]->play();
 }
 
 
@@ -700,7 +706,7 @@ void App::removeVoxel(Point3int32 input) {
 
     checkBoundaryAdd(input);
 
-	//m_sounds[1]->play();
+	m_sounds[1]->play();
 }
 
 
@@ -836,16 +842,14 @@ void App::pullVoxelOrbit(Point3int32 origin) {
 
 }
 
-void App::makeCrater(Point3int32 center, int radius, int depth) {
-    debugDrawVoxel();
+void App::makeCrater(Point3int32 center, int radius) {
 
 	// Lambda function for AnimationControl.
 	// sdt = differential (time since last call of this function)
 	// st = absolute (time since animation began)
 	
-	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table< Point3int32, shared_ptr<VisibleEntity>>&, Table< Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table< Point3int32, SimTime>& ) {
+	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table< Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&) {
 
-		
 		int currentRadius = (int)(args->get("currentRadius"));
 		int radius = (int)args->get("radius");
 		Point3int32 center(args->get("centerX"), args->get("centerY"), args->get("centerZ"));
@@ -920,21 +924,18 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 
 
 	AnimationControl a(lambda);
-	a.args->set("radius", radius);
+	a.args->set("radius", float(radius));
 	a.args->set("currentRadius", 0.0f);
-	a.args->set("depth", depth);
-	a.args->set("currentDepth", 0.0f);
-	a.args->set("centerX", center.x);
-	a.args->set("centerY", center.y);
-	a.args->set("centerZ", center.z);
+	a.args->set("centerX", float(center.x));
+	a.args->set("centerY", float(center.y));
+	a.args->set("centerZ", float(center.z));
 	m_animControls.push(a);
 
 }
 
-void App::makeShockWave(Point3 origin, Vector3 direction){
+void App::makeShockWave(Point3 origin, Vector3 direction) {
     debugPrintf("SHOCKWAVE START\n");
     std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table<Point3int32, SimTime>& timeAdded) {
-
 
         float bounds = (st / 12.0f) * (float)(1<<7);
 
@@ -950,7 +951,6 @@ void App::makeShockWave(Point3 origin, Vector3 direction){
         //debugPrintf("ORIGIN> %f, %f, %f\n", origin.x, origin.y, origin.z);
         //debugPrintf("DIRECTION> %f, %f, %f\n", direction.x, direction.y, direction.z);
         Ray shockWaveRay(origin, direction);
-
 
 
         int i = 0;
@@ -1029,13 +1029,107 @@ void App::makeShockWave(Point3 origin, Vector3 direction){
 	a.args->set("directionZ", direction.z);
 	m_animControls.push(a);
 
-
-
-
 }
 
+void App::makeMountain(Point3int32 center, int radius, int height) {
+
+	// Lambda function for AnimationControl.
+	// sdt = differential (time since last call of this function)
+	// st = absolute (time since animation began)
+	
+	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&) {
+
+		int currentRadius = (int)(args->get("currentRadius"));
+		int radius = (int)args->get("radius");
+		int currentHeight = (int)(args->get("currentHeight"));
+		int height = (int)args->get("height");
+		Point3int32 center(args->get("centerX"), args->get("centerY"), args->get("centerZ"));
+
+		SimTime threshold = 0.005f * currentRadius;
+
+		if ( currentHeight < height ) {
+			if ( st > threshold ) {
+				float bound = max(currentRadius / sqrt(2.0f) - 1.0f, 0.0f);
+				float depth = sqrt(radius - currentRadius);
+				
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - currentRadius; P.x <= center.x - bound; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x + bound; P.x <= center.x + currentRadius; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - bound; P.x <= center.x + bound; ++P.x) {
+						for (P.z = center.z - currentRadius; P.z <= center.z - bound; ++P.z) {
+
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
+					for (P.x = center.x - bound; P.x <= center.x + bound; ++P.x) {
+						for (P.z = center.z + bound; P.z <= center.z + currentRadius; ++P.z) {
+					
+							if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && voxIsSet(P) ) {
+								removeVoxel(P);
+							}
+					
+						}
+					}
+				}
+
+				currentHeight++;
+				args->set("currentHeight", float(currentHeight));
+
+				if ( currentRadius > 1 ) {
+					currentRadius--;
+					args->set("currentRadius", float(currentRadius));
+				}
+			}
+		}
+
+		if (currentRadius == radius) {
+			lastAnimFinished = true;
+		} else {
+			lastAnimFinished = false;
+		}
+			
+	};
 
 
+	AnimationControl a(lambda);
+	a.args->set("currentRadius", float(radius));
+	a.args->set("radius", float(radius));
+	a.args->set("currentHeight", 0.0f);
+	a.args->set("height", float(height));
+	a.args->set("centerX", float(center.x));
+	a.args->set("centerY", float(center.y));
+	a.args->set("centerZ", float(center.z));
+	m_animControls.push(a);
+
+}
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
@@ -1069,13 +1163,17 @@ bool App::onEvent(const GEvent& event) {
             removeVoxel(hitPos);
           }
     }
+
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
             menuMode = !menuMode;
                 
-            if(menuMode){
+            if (menuMode) {
                 menuFrame = activeCamera()->frame();
                 m_menu->setFrame(menuFrame);
-            }
+				m_sounds[3]->play();
+            } else {
+				m_sounds[4]->play();
+			}
 
             m_menu->setVisible(menuMode);
 
@@ -1092,9 +1190,8 @@ bool App::onEvent(const GEvent& event) {
         }
     }
 
-
     // Change intersect distance
-    if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
             intersectMode +=1;
             intersectMode %=3;
     } 
@@ -1162,6 +1259,20 @@ bool App::onEvent(const GEvent& event) {
         elevateSelection(hitPos.y - m_currentMark.y);
     }
 
+	// Mountain
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('i')) ) {
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        m_currentMark = hitPos;
+    }
+	else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('i')) ) {
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        makeMountain(hitPos.y - m_currentMark.y);
+    }
+
 	// Crater
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('p')) ){ 
         Point3int32 hitPos;
@@ -1174,7 +1285,7 @@ bool App::onEvent(const GEvent& event) {
 		Point3int32 hitPos;
         Point3int32 lastPos;
         cameraIntersectVoxel(lastPos, hitPos);
-        makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude(), 3);
+        makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
 	}
 
     //else if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
@@ -1224,7 +1335,7 @@ void App::elevateSelection(int delta) {
     m_selection.clear();
     debugDrawVoxel();
 
-	//m_sounds[2]->play();
+	m_sounds[2]->play();
 }
 
 void App::onUserInput(UserInput* ui) {

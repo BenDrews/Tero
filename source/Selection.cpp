@@ -26,7 +26,7 @@ void Selection::commitSphere(Point3 origin, Vector3 direction) {
     Point3 mark = Util::voxelToWorldSpace(m_mark);
     float t = Util::intersectPlane(intersect, origin, direction, mark, origin-mark);
     int radius = int((mark-intersect).magnitude() + 0.5f);
-    if( t > 0) {
+    if (t > 0) {
         
         for (int y = m_mark.y - radius; y <= m_mark.y + radius; ++y) {
             for (int x = m_mark.x - radius; x <= m_mark.x + radius; ++x) {
