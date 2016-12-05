@@ -173,9 +173,14 @@ void App::drawCrosshair(){
 
         sideHit = voxelHit + side * 0.01;
 
-        debugDraw( Box(voxelHit - Point3(voxelRes/2,voxelRes/2,voxelRes/2), voxelHit + Point3(voxelRes/2,voxelRes/2,voxelRes/2)) );
-        if (lastOpen != voxelTest) {
-            debugDraw( Box(sideHit - Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01),sideHit + Point3(voxelRes/2.01,voxelRes/2.01,voxelRes/2.01)), 0.0f, Color3::blue() );
+		float c = voxelRes / 2.0f;
+		Point3 P = Point3(c, c, c);
+        debugDraw( Box(voxelHit - P, voxelHit + P) );
+        
+		if (lastOpen != voxelTest) {
+			c = voxelRes / 2.01f;
+			P = Point3(c, c, c);
+            debugDraw( Box(sideHit - P, sideHit + P), 0.0f, Color3::blue() );
         }
        
     }
@@ -749,7 +754,7 @@ void App::debugDrawVoxel(){
 	ArticulatedModel::Geometry* geometry;
 	ArticulatedModel::Mesh*     mesh;
 	
-	if (isNull(m_debugModel->geometry("geom")))  {
+	if ( isNull(m_debugModel->geometry("geom")) )  {
 		geometry = m_debugModel->addGeometry("geom");
 	    mesh	 = m_debugModel->addMesh("mesh", m_debugModel->part("root"), geometry);
 	 
@@ -851,7 +856,7 @@ void App::makeCrater(Point3int32 center, int radius) {
 		if ( currentRadius < radius ) {
 			if ( st > threshold ) {
 				float bound = max(currentRadius / sqrt(2.0f) - 1.0f, 0.0f);
-				float depth = sqrt(radius - currentRadius);
+				float depth = (float)sqrt(radius - currentRadius);
 				
 				for (Point3int32 P(center.x, center.y - depth, center.z); P.y <= center.y; ++P.y) {
 					for (P.x = center.x - currentRadius; P.x <= center.x - bound; ++P.x) {
