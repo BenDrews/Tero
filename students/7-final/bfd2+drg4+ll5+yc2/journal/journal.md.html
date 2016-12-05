@@ -5,6 +5,26 @@
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
 
+2016-12-05: Making mountains
+=====================================================
+
+Once the interface was in place for making animations, it was easy to start adding a mountain transform. I started off by just successively adding circles with smaller radiuses on top of each other, decrementing the current radius and incrementing the current height each time. I had the transform stop when radius reached 0. The results were cones:
+
+![](firstmountains.png)
+![](firstmountains2.png)
+
+To get some variation, I added some random noise in the y coordinate of the voxel points, and updated the radius and height only if a random integer that was chosen was 1.
+
+![](randommtns1.png)
+![](randommtns2.png)
+
+An issue is that the final size of the mountains are being determined mostly by the radius, since we stop adding to the mountain when the radius reaches 0. We would like the mountain to be determined by the height specified by the user input. Here is a larger mountain I made by initializing the final radius to be the height from UI:
+
+![Looks more like a hill than a mountain.](hill.png)
+
+Also, making mountains makes the program lag a lot since the number of faces drastically increases. Setting the voxels in the mountain itself also results in some lag.
+
+
 2016-12-04: Sound
 =====================================================
 Added sound effects by changing g3dSpec.audio to true in the main method. Then all we had to do was make an `Array` of `Sound`s we will use and call `play` in the methods where we want a sound effect.

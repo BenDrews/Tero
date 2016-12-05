@@ -456,6 +456,11 @@ void App::setVoxel(Point3int32 pos, int type) {
 	if ( !voxIsSet(pos) ) {
 		chunk->set(pos, type);
 	}
+
+	Point2int32 chunkCoords = getChunkCoords(pos);
+	if( !m_chunksToUpdate.contains(chunkCoords) ) {
+        m_chunksToUpdate.push(chunkCoords);
+    }
 }
 
 // Unset the voxel at a given grid position in the world data structure.
@@ -1033,28 +1038,36 @@ void App::makeMountain(Point3int32 center, int height) {
 
 		if ( currentHeight < height ) {
 			if ( st > threshold ) {
+				Noise n = Noise::common();
 
 				for (Point3int32 P(center.x - currentRadius, center.y + currentHeight, center.z); P.x <= center.x + currentRadius; ++P.x) {
 					for (P.z = center.z - currentRadius; P.z <= center.z + currentRadius; ++P.z) {
-					
-						if ( sqrt((P.x - center.x) * (P.x - center.x) + (P.z - center.z) * (P.z - center.z)) <= currentRadius && !voxIsSet(P) ) {
-							setVoxel(P, m_voxelType);
+						
+						float noise = n.sampleFloat(P.x, P.y, P.z);
+
+						Point3int32 pos(P.x, P.y + noise, P.z);
+
+						if ( sqrt((pos.x - center.x) * (pos.x - center.x) + (pos.z - center.z) * (pos.z - center.z)) <= currentRadius && !voxIsSet(pos) ) {
+							setVoxel(pos, m_voxelType);
 						}
 					
 					}
 				}
 
-				currentHeight++;
-				args->set("currentHeight", float(currentHeight));
-
-				if ( currentRadius > 0 ) {
+				int a = Random::threadCommon().integer(0, 1);
+				if (a == 1) {
+					currentHeight++;
+					args->set("currentHeight", float(currentHeight));
+				}
+				int b = Random::threadCommon().integer(0, 1);
+				if (b == 1) {
 					currentRadius--;
 					args->set("currentRadius", float(currentRadius));
 				}
 			}
 		}
 
-		if (currentHeight == height) {
+		if ( (currentHeight == height) || (currentRadius == -1) ) {
 			lastAnimFinished = true;
 		} else {
 			lastAnimFinished = false;
@@ -1064,8 +1077,8 @@ void App::makeMountain(Point3int32 center, int height) {
 
 
 	AnimationControl a(lambda);
-	a.args->set("currentRadius", float(height / 2));
-	a.args->set("radius", float(height / 2));
+	a.args->set("currentRadius", float(height));
+	a.args->set("radius", float(height));
 	a.args->set("currentHeight", 1.0f);
 	a.args->set("height", float(height));
 	a.args->set("centerX", float(center.x));
@@ -1116,9 +1129,9 @@ bool App::onEvent(const GEvent& event) {
                 menuFrame = activeCamera()->frame();
                 m_menu->setFrame(menuFrame);
 	
-				i = openMenu;
+				i = menuOpen;
             } else {
-				i = closeMenu;
+				i = menuClose;
 			}
 
 			m_sounds[i]->play();
