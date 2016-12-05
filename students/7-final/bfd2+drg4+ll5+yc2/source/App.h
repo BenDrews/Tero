@@ -161,15 +161,15 @@ public:
     void updateGeometry(Point2int32 chunkCoords, int type);
 
 	// Applying transforms to voxels
-
-    void selectSphere(Point3 origin, Vector3 direction);
-    void App::elevateSelection(int delta);
+    void elevateSelection(int delta);
 
     void debugDrawVoxel();
+    void selectSphere(Point3 origin, Vector3 direction);
     void selectBox(Point3int32 center, int radius);
     void selectCylinder(Point3int32 center, int radius);
 
     void pullVoxelOrbit(Point3int32 origin);
-	void makeCrater(Point3int32 center, int depth, int radius);
+	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
+	void makeMountain(Point3int32 center, int radius, int height);
 };
