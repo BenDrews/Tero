@@ -5,6 +5,7 @@
             Lylia Li (ll5@williams.edu)
             Youle Chen (yc2@williams.edu)
 
+
 ![Image that sells our project](evocativescene.jpg)
 
 Introduction 
@@ -23,14 +24,21 @@ Specification
 
 2. Program is compatible with virtual reality headsets and controllers, and the user can move around in 3D space
 
-3. User is able to apply interesting transforms to the voxels in the scene, for example:
-    - Making a crater in the world
-    - Raising mountains
-    - Digging caves
-    - Ideally these wouldn't happen instantaneously (we want to see the mountain being raised)
+3. User is able to apply interesting transforms/animations to the voxels in the scene, for example:
+    - Making a crater: The user can specify a center and radius and create a crater of depth _____.
+    - Raising mountains: The user can specify a center and a height and create a mountain.
+    - Creating a shockwave: When a button is pressed, the first hundred voxels in front of the user move up and down in a noisy wave pattern
+    - Orbital: Voxels can be removed from the world and start orbiting the user
+    - Transforms are animated and do not happen instantaneously (we want to see the mountain being raised)
     - Button user interface (on game controls) that determine what operation we are performing on the scene
 
-4. User is able to change how the world is scaled
+4. Selection: User can select groups of voxels
+    - Cylinder: The user can specify a center and a radius to select a cylinder of voxels of height ____.
+    - Sphere: The user can specify a center and a radius to select a sphere.
+    - Box: The user can specify a center and a radius (half an edge length) to select a sphere.
+    - Set union: Mode that allows users to add to their current selection.
+    - Set intersection: Mode that allows users to select voxels by performing a set intersection with two previous selections.
+    - Set minus: Mode that allows users to remove from their current selection.
 
 5. Virtual Reality User Interface
     - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
@@ -39,32 +47,24 @@ Specification
     - Use G3D debug camera for head position
     - User navigates the world by moving the mouse (the camera movements are controlled by the mouse)
     - User places or destroys voxels by left clicking the mouse
-    - When you press 'p', a control panel with all of the voxel types pops up in the scene that the user can interact with using the mouse
+    - When you press 'm', a menu with all of the voxel types pops up in the scene that the user can interact with using the mouse
 
-8. Rendering
+7. Rendering
     - Use G3D built-in renderer: There will be shadows but no indirect lighting
 
-9. Audio
-    - Sound effects for placing voxels and destroying voxels
+8. Audio
+    - Sound effects for placing voxels, removing voxels, transforms, and animations
 
-**Stretch goals:**
-
-1. Implement marching cubes algorithm to make smooth surfaces
-
-2. Add physics simulation so we can throw voxels around
-
-3. Import MagicaVoxel objects as templates
-
-4. Make data structures more efficient
+9. User can import MagicaVoxel objects as templates
 
 
 **Program evaluation metric:**
 
 1. What is the maximum amount of voxels in the scene before noticeable performance decay?
 
-2. What kinds of transformations can be applied to the scene?
+2. Are the controls intuitive?
+    - Survey of other people (Juchan, Tony, other classmates)
 
-3. Are these transformations easily repeatable? (Are the controls understandable)
 
 Topic Overview 
 ==================================
@@ -189,64 +189,63 @@ Schedule
  Virtual Reality functionality | User input from VR controllers and being able to move around the scene VR | 11/19 |
  Chunking optimization | Divide groups of voxels into different geometries and meshes to speed up program | 11/20 |
  Dynamic selection    | Radius of circle selection is determined by user input     |     11/28     |
- Selection visualization | Current selection is highlighted                        |               |
- Add sound effects    | Different sounds are heard when voxels are placed, removed, or transforms applied |    |
- More materials       | Users can add up to 8 different types of voxels            |               |
- Better VR GUI        | Make Virtual Reality menu look more professional           |               |
- **MAKE POWERPOINT** | **MAKE A POWERPOINT PRESENTATION SO WE ARE NOT EMBARRASSMENTS AT THE FINAL PROJECT PRESENTATIONS** | 12/7 |
+ Better VR GUI        | Make Virtual Reality menu look more professional           |     11/30     |
+ Selection visualization | Current selection is highlighted                        |     12/1      |
+ More materials       | Users can add up to 8 different types of voxels            |     12/1      |
+ Add animation interface| Add AnimationControl class, set up data structures       |     12/3      |
+ Debug animation interface| Get working animations (crater, shockwave)             |     12/4      |
+ Add sound effects    | Different sounds are heard when voxels are placed, removed, or transforms applied | 12/4 |
+ Finish up animations |                                                            |     12/5      |
+ More materials       | Users can add up to 16 different types of voxels.          |     12/5      |
+ Save option          | Add option to save created voxel model to a file           |     12/5      |
+ Import worlds        | Add importing worlds feature from Youle's midterm project  |     12/5      |
+ Make new scene file  | Have program start in a different scene, not G3D Whiteroom |     12/6      |
+ Fix selection options | Union, intersection, difference                           |     12/6      |
 
 **TO DO:**
 
-- More transforms
-    - Fill
-    - Extrude
-    - Crater
-    - Mountain
+12/5
 
-- Fix how selection works (Ben)
+- Add more voxel types (Youle)
 
-- Selection options
-    - Sphere
-    - Cylinder
-    - Box
+- Add importing worlds feature from midterm project (Youle)
+
+- Add option to save model (Youle)
+
+- Animations (Ben, Lylia, Diego)
+    - Shock wave (Diego)
+    - Crater (Lylia)
+    - Mountain (Lylia)
+    - Orbital (Ben)
+
+
+12/6
+
+- New scene file (Ben)
+
+- Sound effects (Lylia)
+
+- Selection options (Ben) - fix overlapping bug
     - Union
     - Intersection
     - Set minus
 
+- Fix how selection works (Ben)
+
 - Rename methods (Ben)
 
-- Add sound effects
 
-- Add 8 materials, add more if program doesn't lag, remove some if the program does lag
+12/7
 
-- Why do we add Point3(0.5, 0.5, 0.5) when getting vox to world space positions?
-
-- Youle: put in importing worlds feature from midterm project
-
-**UI**
-
-- Switch between materials (Diego - working on it, get rid of debug spheres in menu)
-
-    - Highlight the one that's currently selected
-
-- Visualize selections
-
-    - Array of current selections is highlighted/glows
-
-    - **STRETCH GOAL:** Highlight a selection with the VR control laser and have everything in the selection be highlighted (by changing the texture?)
-
-**Speed up**
-
-- Make add voxel method for large sections 
-
-- Remove voxel
-
+- Finish report: performance metric, topic overview, screenshots
+- Make powerpoint
 
 Change Log
 ==================================
 1. May have to reconsider max number of voxels in the scene depending on how much optimization we can do
 2. May also have to reduce number of materials to choose from depending again on how much faster we can get our program to run
 3. Removed "painting voxels" from specification
+4. Removed specification bullet where user is able to change how the world is scaled
 
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace;}</style><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

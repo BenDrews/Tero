@@ -4,6 +4,19 @@
                    Diego Gonzalez (drg4@williams.edu)
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
+
+2016-12-04: Sound
+=====================================================
+Added sound effects by changing g3dSpec.audio to true in the main method. Then all we had to do was make an `Array` of `Sound`s we will use and call `play` in the methods where we want a sound effect.
+
+
+2016-12-04: Debugging crater
+=====================================================
+The crater not being shaped right and appearing in the wrong place were just due to some stupid typos I made.
+
+The other errors were being caused by creating extra copies of the args table and creating a new shared pointer every time the `invoke` method is called, causing table values to not be updated correctly.
+
+
 2016-12-03: Updating Selection
 =====================================================
 Attempted to change how the sphere select worked so that the crosshair looks instead at the intersection of the plane normal to the camera/center ray with the crosshair ray. For a long time it did not work because the coordinates were in voxel coords and were being treated as if they were world space coordinates. 
@@ -17,7 +30,6 @@ To do this, we added a class called `AnimationControl` that holds the function a
 I implemented all of this using `makeCrater`, but there are some bugs. All of the voxels in the crater disappear simultaneously, the crater doesn't start at the center specified by the user input, and the crater is not shaped like a circle.
 
 ![](flawedcrater.png)
-
 
 
 2016-12-01: Changing the debugDrawVoxel

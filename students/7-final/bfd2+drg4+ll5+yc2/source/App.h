@@ -37,8 +37,14 @@ typedef
 class App : public AppBase {
 protected:
 
-    static const int GRASS = 0;
-    //TODO the other ones.
+    static const int GRASS	= 0;
+	static const int ROCK	= 1;
+	static const int BRICK	= 2;
+	static const int SAND	= 3;
+	static const int CEDAR	= 4;
+	static const int METAL	= 5;
+	static const int CHROME	= 6;
+	static const int RUBBER	= 7;
 
     typedef AppBase super;
 
@@ -57,8 +63,9 @@ protected:
 
 	Array<AnimationControl> m_animControls;
 
+	Array<shared_ptr<Sound>> m_sounds;
 
-	bool lastAnimFinished;
+	bool lastAnimFinished = false;
 
   
 public:
@@ -121,6 +128,7 @@ public:
 
     void getMenuPositions();
 	void initializeMaterials();
+	void initializeSounds();
 	void initializeModel();
 	void makeMenuModel();
 	void makeVoxelModel(String modelName, int type, float size = 1.0f);
