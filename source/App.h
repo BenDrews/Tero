@@ -46,7 +46,7 @@ protected:
 	static const int CHROME	= 6;
 	static const int RUBBER	= 7;
 
-	enum SoundIndex { add, remove, elevate, openMenu, closeMenu, menuSelect };
+	enum SoundIndex { add, remove, elevate, menuOpen, menuClose, menuSelect };
 
     typedef AppBase super;
 
