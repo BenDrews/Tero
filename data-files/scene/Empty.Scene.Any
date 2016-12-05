@@ -1,0 +1,67 @@
+
+/* -*- c++ -*- */
+{ 
+    entities = { 
+        skybox = Skybox { 
+            texture = "cubemap/noonclouds/noonclouds_*.png"; 
+        }; 
+        
+        sun = Light { 
+            attenuation = ( 0, 0, 1 ); 
+            bulbPower = Power3(1e+06 ); 
+            castsShadows = true; 
+            shadowMapBias = 0.01; 
+            shadowMapSize = Vector2int16(4096, 4096 ); 
+            spotHalfAngleDegrees = 5; 
+            spotSquare = true; 
+            track = lookAt(
+                Point3(-50, 200, 100 ), 
+                Point3(0, 0, 0 ) ); 
+            
+            type = "SPOT"; 
+        }; 
+        
+    }; 
+    
+    lightingEnvironment = LightingEnvironment { 
+        ambientOcclusionSettings = AmbientOcclusionSettings { 
+            bias = 0.023; 
+            blurRadius = 4; 
+            blurStepSize = 2; 
+            depthPeelSeparationHint = 0.05; 
+            edgeSharpness = 1; 
+            enabled = true; 
+            highQualityBlur = true; 
+            intensity = 2; 
+            monotonicallyDecreasingBilateralWeights = false; 
+            numSamples = 9; 
+            packBlurKeys = true; 
+            radius = 0.490811; 
+            temporalFilterSettings = TemporalFilter::Settings { 
+                falloffEndDistance = 0.07; 
+                falloffStartDistance = 0.05; 
+                hysteresis = 0.916667; 
+            }; 
+            
+            temporallyVarySamples = true; 
+            useDepthPeelBuffer = true; 
+            useNormalBuffer = true; 
+            useNormalsInBlur = true; 
+            zStorage = "HALF"; 
+        }; 
+        
+        environmentMap = Texture::Specification { 
+            encoding = Texture::Encoding { 
+                readMultiplyFirst = 2.0; 
+            }; 
+            
+            filename = "cubemap/uffizi/uffizi*.jpg"; 
+        }; 
+        
+    }; 
+    
+    models = { 
+    }; 
+    
+    name = "Empty Scene"; 
+} 

@@ -96,7 +96,7 @@ void App::onInit() {
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
-    loadScene("G3D Whiteroom");
+    loadScene("Empty Scene");
 
 	initializeScene();
 
@@ -182,13 +182,6 @@ void App::drawCrosshair(){
 }
 
 void App::initializeScene() {
-    m_posToChunk = Table<Point2int32, shared_ptr<Table<Point3int32, int>>>();
-
-    m_voxToProp = Array< Any>();
-
-    m_chunksToUpdate = Array<Point2int32>();
-
-    m_selection = Selection();
 	
     for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
@@ -201,10 +194,10 @@ void App::initializeScene() {
     addEntity(m_model, "voxel");
 
     // Initialize ground
-    for(int x = -25; x < 25; ++x) {
-        for(int z = -25; z < 25; ++z) {
-            for(int y = -50; y < 0; ++y) {
-            setVoxel(Point3int32(x,y,z), 0);
+    for(Point3int32 P(-25, -25, -50); P.x < 25; ++P.x) {
+        for(P.z = -25; P.z < 25; ++P.z) {
+            for(P.y = -50; P.y < 0; ++P.y) {
+                setVoxel(P, GRASS);
             }
         }
     }
@@ -297,14 +290,16 @@ void App::makeVoxelModel(String modelName, int type, float size) {
 void App::initializeMaterials() {
 	m_voxToMat = Array<shared_ptr<UniversalMaterial>>();
 
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ));
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ));
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )));
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("sand/sand.UniversalMaterial.Any") )));
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("roughcedar/roughcedar.UniversalMaterial.Any")) ));
-	m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
-    m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )));
-    m_voxToMat.append(UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
+	m_voxToMat.append(
+        UniversalMaterial::create( Any::fromFile(System::findDataFile("greengrass/greengrass.UniversalMaterial.Any")) ),
+	    UniversalMaterial::create( Any::fromFile(System::findDataFile("rockwall/rockwall.UniversalMaterial.Any")) ),
+	    UniversalMaterial::create( Any::fromFile(System::findDataFile("redbrick/redbrick.UniversalMaterial.Any") )),
+	    UniversalMaterial::create( Any::fromFile(System::findDataFile("sand/sand.UniversalMaterial.Any") )),
+	    UniversalMaterial::create( Any::fromFile(System::findDataFile("roughcedar/roughcedar.UniversalMaterial.Any")) ),
+	    UniversalMaterial::create( Any::fromFile(System::findDataFile("rustymetal/rustymetal.UniversalMaterial.Any") )));
+    m_voxToMat.append(
+        UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )),
+        UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
     
     // using vox8.any, if you do add more materials, increase the number 8. This material is used for debug only, and stays at the end of voxToMat.
     m_voxToMat.append(UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
@@ -318,6 +313,8 @@ void App::initializeModel() {
 
 // Adds given model to scene and returns a visible entity. Entity is not visible by default
 shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible) {
+    //TODO understand and fix this method.
+
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
     // with a VisibleEntity.
@@ -345,6 +342,8 @@ shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, Str
             PARSE_ANY(
                 VisibleEntity {
                     model = "";
+                    shouldBeSaved = false;
+                    canChange = true;
                 };
             );
 
@@ -501,12 +500,10 @@ void App::clearChunk(Point2int32 chunkPos) {
 }
 
 // Redraw the geometry for a given chunk.
-void App::drawChunk(Point2int32 chunkPos) {
+void App::createChunkGeometry(Point2int32 chunkPos) {
 	
-	Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();
-	
-    for (it; it != m_posToChunk[chunkPos]->end(); ++it) {
-	    drawVoxel( (*it).key );
+    for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.hasMore(); ++it) {
+	    createVoxelGeometry( it->key );
 	}
     
 	// Update the geometry for every type
@@ -518,13 +515,13 @@ void App::drawChunk(Point2int32 chunkPos) {
     if (index > -1) {
         m_chunksToUpdate.remove(index);
     }
-
+    scene()->entity("voxel")->markChanged();
 }
 
 void App::updateChunks() {
     for (int i = 0; i < m_chunksToUpdate.size(); ++i) {        
         clearChunk(m_chunksToUpdate[i]);
-        drawChunk(m_chunksToUpdate[i]);
+        createChunkGeometry(m_chunksToUpdate[i]);
     }
 }
 
@@ -533,7 +530,7 @@ void App::redrawWorld() {
     Array<Point2int32> chunkArray = m_posToChunk.getKeys();
     for (int i = 0; i < chunkArray.size(); ++i) {
         clearChunk(chunkArray[i]);
-        drawChunk(chunkArray[i]);
+        createChunkGeometry(chunkArray[i]);
 
     }
 }
@@ -543,12 +540,12 @@ void App::redrawWorld() {
 // Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
-    drawVoxel(input);
+    createVoxelGeometry(input);
     updateGeometry(getChunkCoords(input),type);
 }
 
 
-void App::drawVoxel(Point3int32 input) {
+void App::createVoxelGeometry(Point3int32 input) {
     int type = posToVox(input);
 	ArticulatedModel::Geometry* geometry;
 	ArticulatedModel::Mesh*     mesh;
@@ -802,6 +799,19 @@ void App::selectCylinder(Point3int32 center, int radius) {
     debugDrawVoxel();
 }
 
+void App::pullVoxelOrbit(Point3int32 origin) {
+
+    Array<Point3int32> queue;
+    queue.push(origin);
+    while(queue.size()) {
+        
+    }
+
+    std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
+        
+    };
+
+}
 
 void App::makeCrater(Point3int32 center, int radius, int depth) {
     debugDrawVoxel();
