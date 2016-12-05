@@ -196,10 +196,12 @@ void App::initializeScene() {
     addEntity(m_model, "voxel");
 
     // Initialize ground
+
     for(Point3int32 P(-25, -25, -50); P.x < 25; ++P.x) {
         for(P.z = -25; P.z < 25; ++P.z) {
             for(P.y = -50; P.y < 0; ++P.y) {
                 setVoxel(P, GRASS);
+
             }
         }
     }
@@ -268,7 +270,7 @@ void App::makeMenuModel() {
 	}
 }
 
-void App::makeVoxelModel(String modelName, int type, float size) {
+const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int type, float size) {
      const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty(modelName);
 
     ArticulatedModel::Part*		part	 = model->addPart("root");
@@ -276,7 +278,7 @@ void App::makeVoxelModel(String modelName, int type, float size) {
 	ArticulatedModel::Mesh*		mesh	 = model->addMesh("mesh", model->part("root"), geometry);
 	mesh->material = m_voxToMat[type];
 	
-	drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0.1f, type);
+	drawVoxelNaive(geometry, mesh, Point3(0,0,0), size, type);
 	
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
 	geometrySettings.allowVertexMerging = false;
@@ -287,6 +289,8 @@ void App::makeVoxelModel(String modelName, int type, float size) {
 	
 	// If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
 	mesh->clearIndexStream();
+
+    return model;
 }
 
 void App::initializeMaterials() {
@@ -313,13 +317,13 @@ void App::initializeSounds() {
 	// 1 = remove
 	// 2 = elevate
 	// 3 = crater
-	m_sounds.append(
-		Sound::create("data-files/sounds/ui_wood_back.wav"),				// add
-		Sound::create("data-files/sounds/ui_wood_close.wav"),				// remove
-		Sound::create("data-files/sounds/ui_casual_countup.wav"),			// elevate
-		Sound::create("data-files/sounds/ui_wood_back.wav")					// crater
-		//Sound::create("data-files/sounds/ui_wood_back.wav")				// menu
-	);
+	//m_sounds.append(
+	//	Sound::create("data-files/sounds/ui_wood_back.wav"),				// add
+	//	Sound::create("data-files/sounds/ui_wood_close.wav"),				// remove
+	//	Sound::create("data-files/sounds/ui_casual_countup.wav"),			// elevate
+	//	Sound::create("data-files/sounds/ui_wood_back.wav")					// crater
+	//	//Sound::create("data-files/sounds/ui_wood_back.wav")				// menu
+	//);
 
 }
 
@@ -335,7 +339,10 @@ shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, Str
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
     // with a VisibleEntity.
-    if (scene()->modelTable().containsKey(model->name())) {
+    ModelTable mt = scene()->modelTable();
+    String name = model->name();
+
+    if (mt.containsKey(name)){
         scene()->removeModel(model->name());
     }
     scene()->insert(model);
@@ -556,7 +563,7 @@ void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
     createVoxelGeometry(input);
     updateGeometry(getChunkCoords(input),type);
-	m_sounds[0]->play();
+	//m_sounds[0]->play();
 }
 
 
@@ -693,7 +700,7 @@ void App::removeVoxel(Point3int32 input) {
 
     checkBoundaryAdd(input);
 
-	m_sounds[1]->play();
+	//m_sounds[1]->play();
 }
 
 
@@ -835,7 +842,9 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 	// Lambda function for AnimationControl.
 	// sdt = differential (time since last call of this function)
 	// st = absolute (time since animation began)
-	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args) {
+	
+	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table< Point3int32, shared_ptr<VisibleEntity>>&, Table< Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table< Point3int32, SimTime>& ) {
+
 		
 		int currentRadius = (int)(args->get("currentRadius"));
 		int radius = (int)args->get("radius");
@@ -922,6 +931,111 @@ void App::makeCrater(Point3int32 center, int radius, int depth) {
 
 }
 
+void App::makeShockWave(Point3 origin, Vector3 direction){
+    debugPrintf("SHOCKWAVE START\n");
+    std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table<Point3int32, SimTime>& timeAdded) {
+
+
+        float bounds = (st / 12.0f) * (float)(1<<7);
+
+        //the Boundary of the voxels that would intersect
+		Point3int32 voxelBound = Point3int32( (int)bounds, (int)bounds, (int)bounds );
+
+
+        Point3 origin = Point3(args->get("originX"),args->get("originY"), args->get("originZ"));
+		Vector3 direction = Vector3(args->get("directionX"), args->get("directionY"), args->get("directionZ"));
+
+        origin = Point3(0,-1,0);
+
+        //debugPrintf("ORIGIN> %f, %f, %f\n", origin.x, origin.y, origin.z);
+        //debugPrintf("DIRECTION> %f, %f, %f\n", direction.x, direction.y, direction.z);
+        Ray shockWaveRay(origin, direction);
+
+
+
+        int i = 0;
+        int j = 0;
+        int numVoxels = 50;
+		for (RayGridIterator it(shockWaveRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid() && i < numVoxels; ++it) {
+            //debugPrintf("%d: %d %d %d\n", j, it.index().x, it.index().y, it.index().z);
+            j++;
+            if(voxIsSet(it.index())){
+                shared_ptr<VisibleEntity> ent;
+                SimTime timePassed;
+                String name = format("animatedvox%d,%d,%d", it.index().x, it.index().y, it.index().z);
+
+                if(!entities.containsKey(it.index())){
+                    shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( it.index() ) );    
+                    ent = addEntity(model, name, true);
+                    entities.set(it.index(), ent);
+                    timeAdded.set(it.index(), st);
+                    timePassed = 0.0f;
+                }else{
+                    //debugPrintf("EXISTING ENT\n");
+                    ent = entities[it.index()];
+                    timePassed = (st - timeAdded[it.index()]);
+
+                }
+
+                    float rise;
+                    float totalTime = 1.0f;
+                    float maxRise = 1.0f;
+                    if(timePassed <= totalTime/2.0f){
+                        rise = (timePassed/(totalTime/2.0f))*maxRise;
+                    }else if(timePassed <= totalTime){
+                        rise = ( ( (totalTime/2.0f) - (timePassed - (totalTime/2.0f) ) ) / (totalTime/2.0f))*maxRise;
+                    }else{
+                        ent->setVisible(false);
+
+                        if(notNull(scene()->entity(ent->name()))){
+                            removeEntity(ent);   
+                        }
+                    }
+                    Point3int32 voxPos = Point3int32(it.index().x, it.index().y, it.index().z);
+                    Point3 worldPos = Util::voxelToWorldSpace(voxPos);
+                    CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y + rise, worldPos.z);
+                    ent->setFrame(frame);
+                    ++i;
+                }else{
+                
+                break;
+
+            }
+            
+        }
+
+        lastAnimFinished = st > 30.0f;
+        //printf("finishFrame\n");
+
+        if(lastAnimFinished){
+            //Array<shared_ptr<VisibleEntity>> ents;
+            //entities.getValues(ents);
+            //for(int i = 0; i < ents.size(); ++i){
+            //
+            //    if(notNull(scene()->entity(ents[i]->name()))){
+            //        removeEntity(ents[i]);   
+            //    }
+            //}
+        
+            entities.clear();
+        }
+    };
+    AnimationControl a(lambda);
+	a.args->set("originX", origin.x);
+	a.args->set("originY", origin.y);
+	a.args->set("originZ", origin.z);
+	a.args->set("directionX", direction.x);
+	a.args->set("directionY", direction.y);
+	a.args->set("directionZ", direction.z);
+	m_animControls.push(a);
+
+
+
+
+}
+
+
+
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt){
      GApp::onSimulation(rdt, sdt, idt);
@@ -965,6 +1079,17 @@ bool App::onEvent(const GEvent& event) {
 
             m_menu->setVisible(menuMode);
 
+    }  else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ){ 
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        m_crosshair.lookDirection = Vector3(0,-1,0);
+        cameraIntersectVoxel(lastPos, hitPos);
+        updateSelect();
+        Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
+
+        if(lastPos != hitPos){
+            makeShockWave(hitPos, direction);
+        }
     }
 
 
@@ -1099,7 +1224,7 @@ void App::elevateSelection(int delta) {
     m_selection.clear();
     debugDrawVoxel();
 
-	m_sounds[2]->play();
+	//m_sounds[2]->play();
 }
 
 void App::onUserInput(UserInput* ui) {

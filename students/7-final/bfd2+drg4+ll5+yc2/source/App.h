@@ -131,7 +131,7 @@ public:
 	void initializeSounds();
 	void initializeModel();
 	void makeMenuModel();
-	void makeVoxelModel(String modelName, int type, float size = 1.0f);
+	const shared_ptr<ArticulatedModel> makeVoxelModel(String modelName, int type, float size = 0.5f);
     shared_ptr<VisibleEntity> addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible=true);
     void removeEntity(shared_ptr<VisibleEntity> entity);
 
@@ -171,4 +171,5 @@ public:
 
     void pullVoxelOrbit(Point3int32 origin);
 	void makeCrater(Point3int32 center, int depth, int radius);
+    void makeShockWave(Point3 origin, Vector3 direction);
 };
