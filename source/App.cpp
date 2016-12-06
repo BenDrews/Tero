@@ -573,7 +573,6 @@ void App::clearChunkGeometry(Point2int32 chunkPos) {
 	        vertexArray.fastClear();
 	        indexArray.fastClear();
         
-            //hasValue doesn't work so I made this thing from the document:
             bool hasSomething = false;
             for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.isValid(); ++it) {
                  if ((*it).value == i) {
@@ -581,7 +580,6 @@ void App::clearChunkGeometry(Point2int32 chunkPos) {
                  } 
             }
 
-			//A TERRIBLE WORK AROUND
 			if ( !hasSomething ) {
 			    for (int i = 0; i < 3; ++i) {
 			        CPUVertexArray::Vertex& dummy = vertexArray.next();
@@ -847,7 +845,6 @@ void App::drawSelectionPreview(){
 		}
 	}
 	
-	//yet another bad workaround
 	if (selectionArray.length() == 0) {
 		createNaiveVoxelGeometry(geometry, mesh, Point3(0,0,0), 0, type);
 	}
