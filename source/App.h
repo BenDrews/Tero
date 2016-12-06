@@ -49,7 +49,12 @@ protected:
 
 	const int menuPageSize = 12;
 
+    // Number of naive colors in rainbow voxels
+    const int rainbowSize = 100;
+
     int voxTypeCount = 8;
+
+	int numMenuPages;
 
 	Array<String> m_typesList;
 
@@ -58,9 +63,6 @@ protected:
 	Array<shared_ptr<Sound>> m_sounds;
 
 	bool lastAnimFinished = false;
-
-    //how many naive colors would you like in the rainbows
-    const int rainbowSize = 100;
 	
     bool vrEnabled = false;
 
@@ -73,6 +75,7 @@ protected:
     int m_intersectMode = 0;
 	int m_selectionMode = 1;
 	int m_currentMenuPage = 0;
+
     bool forceIntersect = false;
 
     /** Camera manipulator*/
