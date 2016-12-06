@@ -9,7 +9,8 @@
 #include <GLG3DVR/VRApp.h>
 #include "Selection.h"
 #include "AnimationControl.h"
-
+#include "Chunk.h"
+#include "Util.h"
 
 class CrosshairObject{
 public:
@@ -44,8 +45,6 @@ protected:
     void initializeScene();
 
     const float voxelRes = 0.5f;
-
-    const int chunkSize = 32;
 
 	const int menuPageSize = 12;
 
@@ -87,7 +86,7 @@ protected:
 public:
 
     /** Maps 3D chunk positions to the Tables representing each individual chunk */
-    Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
+    Table<Point2int32, shared_ptr<Chunk>> m_posToChunk;
 
     /** Contains the chunk positions of the chunks that need to be updated */
     Array<Point2int32> m_chunksToUpdate;
@@ -149,10 +148,9 @@ public:
 	void removeVoxel(Point3int32 input);
   
 	// Handling chunk data structures
-    Point2int32 getChunkCoords(Point3int32 pos);
     int posToVox(Point3int32 pos);
     bool voxIsSet(Point3int32 pos);
-    shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
+    shared_ptr<Chunk> getChunk(Point3int32 pos);
     
 	//Main geometry update function
     void updateChunks();
@@ -161,7 +159,7 @@ public:
     void redrawWorld();
 	
 	//Called from update chunks
-    void clearChunk(Point2int32 chunkPos);
+    void clearChunkGeometry(Point2int32 chunkPos);
     void createChunkGeometry(Point2int32 chunkPos);
     void cleanChunkGeometry(Point2int32 chunkCoords, int type);
 

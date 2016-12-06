@@ -1,6 +1,5 @@
 /** \file Selection.cpp */
 #include "Selection.h"
-#include "Util.h"
 
 
 Array<Point3int32>& Selection::getArray(){

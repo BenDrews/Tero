@@ -160,6 +160,7 @@
   <ItemGroup>
     <ClCompile Include="source\AnimationControl.cpp" />
     <ClCompile Include="source\App.cpp" />
+    <ClCompile Include="source\Chunk.cpp" />
     <ClCompile Include="source\Selection.cpp" />
     <ClCompile Include="source\Util.cpp" />
   </ItemGroup>
@@ -170,6 +171,7 @@
   <ItemGroup>
     <ClInclude Include="source\AnimationControl.h" />
     <ClInclude Include="source\App.h" />
+    <ClInclude Include="source\Chunk.h" />
     <ClInclude Include="source\Selection.h" />
     <ClInclude Include="source\Util.h" />
   </ItemGroup>

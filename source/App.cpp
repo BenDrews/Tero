@@ -1,7 +1,5 @@
 /** \file App.cpp */
 #include "App.h"
-#include "Selection.h"
-#include "Util.h"
 #define PI 3.1415926f
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
@@ -499,32 +497,18 @@ void App::removeEntity(shared_ptr<VisibleEntity> entity){
 
 // Returns true if the positions given is occupied.
 bool App::voxIsSet(Point3int32 pos) {
-    return getChunk(pos)->containsKey(pos);
-}
-
-// Returns the chunk coords for a given point.
-Point2int32 App::getChunkCoords(Point3int32 pos) {
-	// Chunks between -7 and 7 are too big, modify
-    int32 addX = 0;
-    int32 addZ = 0;
-    if (pos.x < 0) {
-        addX = -1;
-    }
-    if (pos.z < 0) {
-        addZ = -1;
-    }
-    return Point2int32((pos.x / chunkSize) + addX, (pos.z / chunkSize) + addZ);
+    return getChunk(pos)->contains(pos);
 }
 
 /** Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk.
 	If it is, push the neighboring chunk to the m_chunksToRedraw for later update. 
 	Can add up to 2 more chunks for update. */
 void App::checkBoundaryAdd(Point3int32 pos){
-    Point2int32 current = getChunkCoords(pos);
-    Point2int32 xPlus   = getChunkCoords(pos + Point3int32(1,0,0));
-    Point2int32 xMinus  = getChunkCoords(pos + Point3int32(-1,0,0));
-    Point2int32 zPlus   = getChunkCoords(pos + Point3int32(0,0,1));
-    Point2int32 zMinus  = getChunkCoords(pos + Point3int32(0,0,-1));
+    Point2int32 current = Chunk::getChunkCoords(pos);
+    Point2int32 xPlus   = Chunk::getChunkCoords(pos + Point3int32(1,0,0));
+    Point2int32 xMinus  = Chunk::getChunkCoords(pos + Point3int32(-1,0,0));
+    Point2int32 zPlus   = Chunk::getChunkCoords(pos + Point3int32(0,0,1));
+    Point2int32 zMinus  = Chunk::getChunkCoords(pos + Point3int32(0,0,-1));
 
     if ( (xPlus != current) && (!m_chunksToUpdate.contains(xPlus)) ) {
         m_chunksToUpdate.push(xPlus);
@@ -541,22 +525,22 @@ void App::checkBoundaryAdd(Point3int32 pos){
 }
 
 // Return the chunk a given voxel resides in.
-shared_ptr<Table<Point3int32, int>> App::getChunk(Point3int32 pos) {
-    Point2int32 key = getChunkCoords(pos);
-    if (!m_posToChunk.containsKey(key)) {
-        m_posToChunk.set( key, std::make_shared<Table<Point3int32, int>>(Table<Point3int32, int>()) );
+shared_ptr<Chunk> App::getChunk(Point3int32 pos) {
+    Point2int32 key = Chunk::getChunkCoords(pos);
+    if ( !m_posToChunk.containsKey(key) ) {
+        m_posToChunk.set( key, std::make_shared<Chunk>(Chunk(key)) );
     }
     return m_posToChunk[key];
 }
 
 // Return the voxel type at a given grid position.
 int App::posToVox(Point3int32 pos) {
-    return getChunk(pos)->operator[](pos);
+    return getChunk(pos)->get(pos);
 }
 
 //Set the voxel at a given grid position in the world data structure.
 void App::setVoxel(Point3int32 pos, int type) {
-    shared_ptr<Table<Point3int32, int>> chunk = getChunk(pos);
+    shared_ptr<Chunk> chunk = getChunk(pos);
 	if ( !voxIsSet(pos) ) {
 		chunk->set(pos, type);
 	}
@@ -564,14 +548,14 @@ void App::setVoxel(Point3int32 pos, int type) {
 
 // Unset the voxel at a given grid position in the world data structure.
 void App::unsetVoxel(Point3int32 pos) {
-    shared_ptr<Table<Point3int32, int>> chunk = getChunk(pos);
+    shared_ptr<Chunk> chunk = getChunk(pos);
 	if ( voxIsSet(pos) ) {
 		chunk->remove(pos);
 	}
 }
 
 // Clear the geometry for a given chunk.
-void App::clearChunk(Point2int32 chunkPos) {
+void App::clearChunkGeometry(Point2int32 chunkPos) {
     // Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; ++i) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
@@ -596,26 +580,23 @@ void App::clearChunk(Point2int32 chunkPos) {
         
             //hasValue doesn't work so I made this thing from the document:
             bool hasSomething = false;
-            for(Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin();it.isValid();++it){
+            for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.isValid(); ++it) {
                  if ((*it).value == i) {
                      hasSomething = true;
-                 }
-            
-            
+                 } 
             }
 
-
 			//A TERRIBLE WORK AROUND
-			if (!hasSomething){
+			if ( !hasSomething ) {
 			    for (int i = 0; i < 3; ++i) {
 			        CPUVertexArray::Vertex& dummy = vertexArray.next();
-			        dummy.position = Point3(0,0,0);
+			        dummy.position = Point3(0, 0, 0);
 			        dummy.texCoord0 = Point2(0, 0);
 			        dummy.normal  = Vector3::nan();
 			        dummy.tangent = Vector4::nan();
 			    }
-			    indexArray.append(0,1,2);
 			    
+				indexArray.append(0,1,2);
 			}
         }  
     }
@@ -642,7 +623,7 @@ void App::createChunkGeometry(Point2int32 chunkPos) {
 
 void App::updateChunks() {
     for (int i = 0; i < m_chunksToUpdate.size(); ++i) {        
-        clearChunk(m_chunksToUpdate[i]);
+        clearChunkGeometry(m_chunksToUpdate[i]);
         createChunkGeometry(m_chunksToUpdate[i]);
     }
 }
@@ -651,30 +632,29 @@ void App::updateChunks() {
 void App::redrawWorld() {
     Array<Point2int32> chunkArray = m_posToChunk.getKeys();
     for (int i = 0; i < chunkArray.size(); ++i) {
-        clearChunk(chunkArray[i]);
+        clearChunkGeometry(chunkArray[i]);
         createChunkGeometry(chunkArray[i]);
-
     }
 }
 
- 
 
 // Input = Center of vox
 void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
+
     createVoxelGeometry(input);
-    cleanChunkGeometry(getChunkCoords(input),type);
+    cleanChunkGeometry(Chunk::getChunkCoords(input), type);
+	
 	SoundIndex i = add;
 	m_sounds[i]->play();
 }
-
 
 void App::createVoxelGeometry(Point3int32 input) {
     int type = posToVox(input);
 	ArticulatedModel::Geometry* geometry;
 	ArticulatedModel::Mesh*     mesh;
 
-	Point2int32 chunkCoords = getChunkCoords(input);
+	Point2int32 chunkCoords = Chunk::getChunkCoords(input);
 	if ( isNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
 		geometry = m_model->addGeometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
 		mesh	 = m_model->addMesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type), m_model->part("root"), geometry);
@@ -795,8 +775,8 @@ void App::cleanChunkGeometry(Point2int32 chunkCoords, int type) {
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
 
-	Point2int32 chunkCoords = getChunkCoords(input);
-    if( !m_chunksToUpdate.contains(chunkCoords) ) {
+	Point2int32 chunkCoords = Chunk::getChunkCoords(input);
+    if ( !m_chunksToUpdate.contains(chunkCoords) ) {
         m_chunksToUpdate.push(chunkCoords);
     }
 
@@ -805,8 +785,6 @@ void App::removeVoxel(Point3int32 input) {
 	SoundIndex i = remove;
 	m_sounds[i]->play();
 }
-
-
 
 
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
@@ -921,7 +899,7 @@ void App::elevateSelection(int delta) {
         for(int i = 0; i < changeBuffer.size(); ++i) {
             Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(changeBuffer[i]));
-            Point2int32 chunkCoords = getChunkCoords(changeBuffer[i]);
+            Point2int32 chunkCoords = Chunk::getChunkCoords(changeBuffer[i]);
             if( !m_chunksToUpdate.contains(chunkCoords) ) {
                 m_chunksToUpdate.push(chunkCoords);
             }
@@ -1164,7 +1142,7 @@ void App::makeMountain(Point3int32 center, int height) {
 						if ( sqrt((pos.x - center.x) * (pos.x - center.x) + (pos.z - center.z) * (pos.z - center.z)) <= currentRadius && !voxIsSet(pos) ) {
 							setVoxel(pos, m_voxelType);
 							
-							Point2int32 chunkCoords = getChunkCoords(pos);
+							Point2int32 chunkCoords = Chunk::getChunkCoords(pos);
 							if( !m_chunksToUpdate.contains(chunkCoords) ) {
 							    m_chunksToUpdate.push(chunkCoords);
 							}
@@ -1254,6 +1232,11 @@ bool App::onEvent(const GEvent& event) {
           }
     }
 
+    // Change intersect distance
+    else if ( (event.type == GEventType::MOUSE_SCROLL_2D) ){ 
+		m_intersectMode += event.scroll2d.dy;
+    }
+
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
 		menuMode = !menuMode;
 		SoundIndex i;
@@ -1270,6 +1253,35 @@ bool App::onEvent(const GEvent& event) {
 		m_sounds[i]->play();
 		
 		m_menu[m_currentMenuPage]->setVisible(menuMode);
+    }
+
+    // Change voxel types
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('0')) ){ 
+		m_voxelType = 0;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('1')) ){ 
+		m_voxelType = 1;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('2')) ){ 
+		m_voxelType = 2;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('3')) ){ 
+		m_voxelType = 3;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('4')) ){ 
+		m_voxelType = 4;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('5')) ){ 
+		m_voxelType = 5;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('6')) ){ 
+		m_voxelType = 6;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('7')) ){ 
+		m_voxelType = 7;
+    }
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('8')) ){ 
+		m_voxelType = 8;
     }
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('t')) ){
@@ -1296,11 +1308,6 @@ bool App::onEvent(const GEvent& event) {
             makeShockWave(hitPos, direction);
         }
     }
-
-    // Change intersect distance
-    else if ( (event.type == GEventType::MOUSE_SCROLL_2D) ){ 
-		m_intersectMode += event.scroll2d.dy;
-    } 
 
     // Force intersect
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('f')) ){ 
