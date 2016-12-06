@@ -1,10 +1,11 @@
-#pragma once
-#include <G3D/G3DAll.h>
 /**
   \file Selection.h
 
   Class that handles manipulating the selection.
  */
+#pragma once
+#include <G3D/G3DAll.h>
+#include "Util.h"
 
 class Selection {
 
