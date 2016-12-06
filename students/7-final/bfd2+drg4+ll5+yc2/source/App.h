@@ -51,7 +51,7 @@ protected:
 
     const int chunkSize = 32;
 
-    const int voxTypeCount = 8;
+    int voxTypeCount = 8;
 
 	Array<String> m_typesList;
 
@@ -60,6 +60,9 @@ protected:
 	Array<shared_ptr<Sound>> m_sounds;
 
 	bool lastAnimFinished = false;
+
+    //how many naive colors would you like in the rainbows
+    const int rainbowSize = 100;
 
   
 public:
@@ -166,4 +169,7 @@ public:
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
     void pullVoxelOrbit(Point3int32 origin);
+
+    void addRainbowMaterial();
+    void addRainbowLine();
 };

@@ -58,7 +58,7 @@ void App::makeGUI() {
     // Initialize the developer HUD
     createDeveloperHUD();
 
-    debugWindow->setVisible(true);
+    debugWindow->setVisible(false);
     developerWindow->videoRecordDialog->setEnabled(true);
  
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -68,11 +68,11 @@ void App::makeGUI() {
 
 		containerPane->addLabel("Left click: Add voxel");
 		containerPane->addLabel("Middle click: Remove voxel");
+        containerPane->addLabel("mouse scroll: Change intersection distance");
 		containerPane->addLabel("j: Box select");
 		containerPane->addLabel("k: Cylinder select");
 		containerPane->addLabel("l: Sphere select");
 		containerPane->addLabel("u: Elevate selection");
-		containerPane->addLabel("r: Change intersection distance");
 		containerPane->addLabel("f: Toggle force intersect");
 
 		m_typesList.append("Grass", "Rock", "Brick", "Sand", "Rough Cedar", "Rusty Metal");
@@ -210,6 +210,8 @@ void App::initializeScene() {
         }
     }
 
+    addRainbowLine();
+
     getMenuPositions();
     makeMenuModel();
     m_menu = addEntity(m_menuModel, "menuEntity", false);
@@ -296,6 +298,39 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 
     return model;
 }
+void App::addRainbowMaterial(){
+    
+    float colorSize = std::pow(rainbowSize, 1/3.);
+    float stepSize = 1.0f/colorSize;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    for (int i = 0; i< rainbowSize ; i++){
+        float temporary;
+        temporary = float(i) / (colorSize*colorSize);
+        x = int(temporary);
+        temporary = (i - x*(colorSize*colorSize))/colorSize;
+        y = int(temporary);
+        z = (i - x*(colorSize*colorSize)-y*colorSize);
+        
+
+        TextOutput file1(format("data-files/texture/color%d.UniversalMaterial.Any",i+1));
+        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",x*stepSize,y*stepSize,z*stepSize);
+        file1.commit();
+        TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypeCount+1));
+        file2.commit();
+    }
+    voxTypeCount += rainbowSize;
+}
+
+void App::addRainbowLine(){
+ 
+    for (Point3int32 P(0, 25, 0); P.y < rainbowSize+25; ++P.y) {
+                setVoxel(P, P.y+voxTypeCount-rainbowSize-25);
+    }
+    
+    
+}
 
 void App::initializeMaterials() {
 
@@ -309,8 +344,12 @@ void App::initializeMaterials() {
     m_voxToMat.append(
         UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )),
         UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
-    
-    // using vox8.any, if you do add more materials, increase the number 8. This material is used for debug only, and stays at the end of voxToMat.
+    addRainbowMaterial();
+     for (int i = 0; i< rainbowSize ; i++){
+        
+        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/color%d.UniversalMaterial.Any",i+1))));
+    }
+    //This material is used for debug only, and stays at the end of voxToMat.
     m_voxToMat.append(UniversalMaterial::create( Any::fromFile("data-files/texture/glass/glass.UniversalMaterial.Any")));
 
 }
@@ -717,7 +756,7 @@ void App::removeVoxel(Point3int32 input) {
 void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     
 	// Intersect with empty space
-    const float maxDist = 2.0f + m_intersectMode * 10.0f;
+    const float maxDist = 2.0f + m_intersectMode * 2.0f;
     Vector3 direction = m_crosshair.lookDirection;
     
     Ray cameraRay(m_crosshair.position, m_crosshair.lookDirection);
@@ -828,7 +867,7 @@ void App::elevateSelection(int delta) {
             if( !m_chunksToUpdate.contains(chunkCoords) ) {
                 m_chunksToUpdate.push(chunkCoords);
             }
-            unsetVoxel(selectionArray[i]);
+            unsetVoxel(changeBuffer[i]);
         }
     }
     m_selection.clear();
@@ -1167,9 +1206,8 @@ bool App::onEvent(const GEvent& event) {
     }
 
     // Change intersect distance
-    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('r')) ){ 
-		m_intersectMode += 1;
-		m_intersectMode %= 3;
+    else if ( (event.type == GEventType::MOUSE_SCROLL_2D) ){ 
+		m_intersectMode += event.scroll2d.dy;
     } 
 
     // Force intersect
