@@ -5,6 +5,16 @@
                    Lylia Li (ll5@williams.edu)
                    Youle Chen (yc2@williams.edu)
 
+
+
+2016-12-06: debugging shockwave
+========================================================
+So for some reason, when I used the ray grid iterator with a ray with an origin anywhere but the center of our voxel world, it resulted in the shockwave going in two directions and occasionally halting the animation.
+
+To fix this I simply always iterate over a ray with an origin at the world origin. Then I just add a point3int32 offset to get to the real voxel that I want to test.
+
+
+
 2016-12-05 patch 6.23
 ====================================================
 changed the r button  into mouse scrolling so we can change the intersecting distance by scrolling.
@@ -47,6 +57,11 @@ An issue is that the final size of the mountains are being determined mostly by 
 
 Also, making mountains makes the program lag a lot since the number of faces drastically increases. Setting the voxels in the mountain itself also results in some lag.
 
+2016-12-05: Adding a shockwave
+========================================================
+Now that we had an animation infrastructure, I added a shockwave animation that pushed voxels up out of the ground in a line away from the player. I used a ray grid iterator to iterate over our voxels in the direction of the look ray.
+
+I had some issues with the ray grid iterator, but after staring at it and the way Youle used it, I was able to make the voxels move. There are still some bugs in this animation that I will fix at a later time.
 
 2016-12-04: Sound
 =====================================================

@@ -10,10 +10,6 @@
 #include "Selection.h"
 #include "AnimationControl.h"
 
-typedef 
-    //VRApp 
-    GApp
-    AppBase;
 
 class CrosshairObject{
 public:
@@ -135,7 +131,11 @@ public:
 
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     void updateSelect();
-    void drawCrosshair(); 
+    void updateMenuSelect();
+    Ray getVrCrosshairRay();
+    Ray getMouseCrosshairRay();
+    void setCrosshair(Ray crosshairRay);
+    void drawSelectionPreview(); 
 
 	// Voxel geometry
 	void addVoxel(Point3int32 input, int type);
