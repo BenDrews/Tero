@@ -47,6 +47,8 @@ protected:
 
     const int chunkSize = 32;
 
+	const int menuPageSize = 12;
+
     int voxTypeCount = 8;
 
 	Array<String> m_typesList;
@@ -59,29 +61,27 @@ protected:
 
     //how many naive colors would you like in the rainbows
     const int rainbowSize = 100;
-
-  
-public:
-
+	
     bool vrEnabled = false;
 
 	bool menuMode = false;
     CFrame menuFrame;
-    shared_ptr<VisibleEntity> m_menu;
-    const shared_ptr<ArticulatedModel>& m_menuModel = ArticulatedModel::createEmpty("menuModel");
-    Array<Point3> m_menuButtons;
+    Array<shared_ptr<VisibleEntity>> m_menu;
+    Array<shared_ptr<ArticulatedModel>> m_menuModels;
+    Array<Point3> m_menuButtonPositions;
 
     int m_intersectMode = 0;
 	int m_selectionMode = 1;
+	int m_currentMenuPage = 0;
     bool forceIntersect = false;
-
-
 
     /** Camera manipulator*/
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
 	/** Active voxel type */
     int m_voxelType = 0;
+
+public:
 
     /** Maps 3D chunk positions to the Tables representing each individual chunk */
     Table<Point2int32, shared_ptr<Table<Point3int32, int>>> m_posToChunk;
@@ -120,11 +120,15 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
 
+	// Menu functions
     void getMenuPositions();
+	void makeMenuPageModels();
+	void makeMenuPageEntities();
+	void changeMenuPage(int to);
+
 	void initializeMaterials();
 	void initializeSounds();
 	void initializeModel();
-	void makeMenuModel();
 	const shared_ptr<ArticulatedModel> makeVoxelModel(String modelName, int type, float size = 0.5f);
     shared_ptr<VisibleEntity> addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible=true);
     void removeEntity(shared_ptr<VisibleEntity> entity);
@@ -147,7 +151,6 @@ public:
     bool voxIsSet(Point3int32 pos);
     shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
     
-
 	//Main geometry update function
     void updateChunks();
 
@@ -159,7 +162,6 @@ public:
     void createChunkGeometry(Point2int32 chunkPos);
     void cleanChunkGeometry(Point2int32 chunkCoords, int type);
 
-
 	//Manipulating the voxel data structure
 	void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
@@ -169,8 +171,6 @@ public:
 	void createNaiveVoxelGeometry(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
 	void checkBoundaryAdd(Point3int32 pos);
 	void addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type);
-
-
 
 	// Applying transforms to voxels
     void debugDrawVoxel();
@@ -187,5 +187,4 @@ public:
 
 	//Generating colored voxels
     void addRainbowMaterial();
-    void addRainbowLine();
 };

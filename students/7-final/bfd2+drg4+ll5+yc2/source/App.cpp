@@ -160,6 +160,27 @@ void App::updateSelect(){
     Ray empty;
 
     if (menuMode) {
+        if (vrEnabled) {
+            //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
+            //    cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
+            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
+            //}
+            //
+            // m_crosshair.buttonSelected = false;
+            //for(int i = 0; i < m_menuButtonPositions.length() && ! m_crosshair.buttonSelected; ++i){
+            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3){
+            //         m_crosshair.buttonSelected = true;
+            //         m_crosshair.buttonIndex = i;
+            //    }    
+            //}
+            //
+            //if(cameraRay.origin() != empty.origin()){
+            //     m_crosshair.lookDirection = cameraRay.direction();
+            //     m_crosshair.position = cameraRay.origin();
+            //     m_crosshair.ray = cameraRay;
+            //    drawCrosshair();
+            //}
+        }
         updateMenuSelect();
     
     } else {
@@ -182,7 +203,7 @@ void App::drawSelectionPreview(){
 
     if (menuMode) {
         if (m_crosshair.buttonSelected) {
-            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtons[m_crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
+            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtonPositions[m_crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
         }
     } else {
 
@@ -232,26 +253,24 @@ void App::initializeScene() {
         }
     }
 
-    addRainbowLine();
-
     getMenuPositions();
-    makeMenuModel();
-    m_menu = addEntity(m_menuModel, "menuEntity", false);
+    makeMenuPageModels();
+	makeMenuPageEntities();
    
     redrawWorld();
 }
 
 
-void App::getMenuPositions(){
+void App::getMenuPositions() {
 
-    int rows = 4;
-    int totalVoxels = voxTypeCount;
+    int rows = 3;
+    int totalVoxels = menuPageSize;
     int blocksPerRow = totalVoxels / rows;
-    float rowSeparation = 0.5;
+    float rowSeparation = 0.25;
     float menuRadius = 0.75;
-    float menuWidth =  PI; //radians
+    float menuWidth =  0.75 * PI; //radians
     float x, y, z;
-    y = 0.25;
+    y = 0.75f;
     
     for (int i = 0; i < totalVoxels; ++i) {
     
@@ -267,39 +286,69 @@ void App::getMenuPositions(){
         x = menuRadius * cos(a);
         z = -1.0f * menuRadius * sin(a);
         
-        m_menuButtons.append(Point3(x,y,z));
+        m_menuButtonPositions.append(Point3(x,y,z));
     }
-    m_menuButtons.append(Point3(0.0f,0.25f,-menuRadius));
+    m_menuButtonPositions.append(Point3(0.0f, 0.75f, -menuRadius));
     
 }
 
-void App::makeMenuModel() {
-    ArticulatedModel::Part* part = m_menuModel->addPart("root");
-    int type;
-	for (int t = 0; t < voxTypeCount; ++t) {
-        type = t % voxTypeCount;
+void App::makeMenuPageModels() {
+	
+	int totalPages = voxTypeCount / menuPageSize; 
 
-		ArticulatedModel::Geometry* geometry = m_menuModel->addGeometry(format("geom %d", t));
-		ArticulatedModel::Mesh*		mesh	 = m_menuModel->addMesh(format("mesh %d", t), m_menuModel->part("root"), geometry);
-		mesh->material = m_voxToMat[type];
+	for (int pageNumber = 0; pageNumber < totalPages; ++pageNumber) {
+	
+		shared_ptr<ArticulatedModel> currentPageModel = ArticulatedModel::createEmpty(format("menuModel,%d", pageNumber));
+		m_menuModels.append(currentPageModel);
 
-		Point3 current = m_menuButtons[t];
-		createNaiveVoxelGeometry(geometry, mesh, current, 0.25f, t);
+		ArticulatedModel::Part* part = currentPageModel->addPart("root");
 
-        ArticulatedModel::CleanGeometrySettings geometrySettings;
-        geometrySettings.allowVertexMerging = false;
-        m_menuModel->cleanGeometry(geometrySettings);
+		int voxelsOnPage = min(menuPageSize, voxTypeCount - (menuPageSize * pageNumber));
 
-	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	    geometry->clearAttributeArrays();
+		for (int t = 0; t < voxelsOnPage; ++t) {
 
-	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-    	mesh->clearIndexStream();
+			int currentType = menuPageSize * pageNumber + t;
+
+			ArticulatedModel::Geometry* geometry = currentPageModel->addGeometry(format("geom %d", currentType));
+			ArticulatedModel::Mesh*		mesh	 = currentPageModel->addMesh(format("mesh %d", currentType), currentPageModel->part("root"), geometry);
+			mesh->material = m_voxToMat[currentType];
+
+			Point3 current = m_menuButtonPositions[t];
+			createNaiveVoxelGeometry(geometry, mesh, current, 0.25f, currentType);
+
+		    ArticulatedModel::CleanGeometrySettings geometrySettings;
+		    geometrySettings.allowVertexMerging = false;
+		    currentPageModel->cleanGeometry(geometrySettings);
+
+		    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+		    geometry->clearAttributeArrays();
+
+		    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+			mesh->clearIndexStream();
+		}
 	}
 }
 
+void App::makeMenuPageEntities() {
+	
+	int totalPages = voxTypeCount / menuPageSize; 
+
+	for (int pageNumber = 0; pageNumber < totalPages; ++pageNumber) {
+		m_menu.append(addEntity(m_menuModels[pageNumber], format("menuEntity,%d", pageNumber), false));
+	}
+
+}
+
+void App::changeMenuPage(int to) {
+	m_menu[m_currentMenuPage]->setVisible(false);
+	m_currentMenuPage = to;
+	m_menu[m_currentMenuPage]->setVisible(true);
+	menuFrame = activeCamera()->frame();
+    m_menu[m_currentMenuPage]->setFrame(menuFrame);
+}
+
 const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int type, float size) {
-     const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty(modelName);
+	const shared_ptr<ArticulatedModel>& model = ArticulatedModel::createEmpty(modelName);
 
     ArticulatedModel::Part*		part	 = model->addPart("root");
 	ArticulatedModel::Geometry* geometry = model->addGeometry("geom");
@@ -320,38 +369,31 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 
     return model;
 }
-void App::addRainbowMaterial(){
+
+
+void App::addRainbowMaterial() {
     
     float colorSize = std::pow(rainbowSize, 1/3.);
     float stepSize = 1.0f/colorSize;
     int x = 0;
     int y = 0;
     int z = 0;
-    for (int i = 0; i< rainbowSize ; i++){
+    for (int i = 0; i < rainbowSize ; ++i){
         float temporary;
-        temporary = float(i) / (colorSize*colorSize);
+        temporary = float(i) / (colorSize * colorSize);
         x = int(temporary);
-        temporary = (i - x*(colorSize*colorSize))/colorSize;
+        temporary = (i - x * (colorSize * colorSize)) / colorSize;
         y = int(temporary);
-        z = (i - x*(colorSize*colorSize)-y*colorSize);
+        z = (i - x * (colorSize * colorSize) - y * colorSize);
         
 
-        TextOutput file1(format("data-files/texture/color%d.UniversalMaterial.Any",i+1));
-        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",x*stepSize,y*stepSize,z*stepSize);
+        TextOutput file1(format("data-files/texture/color%d.UniversalMaterial.Any", i + 1));
+        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}", x * stepSize, y * stepSize, z * stepSize);
         file1.commit();
-        TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypeCount+1));
+        TextOutput file2(format("data-files/voxelTypes/vox%d.Any", i + voxTypeCount + 1));
         file2.commit();
     }
     voxTypeCount += rainbowSize;
-}
-
-void App::addRainbowLine(){
- 
-    for (Point3int32 P(0, 25, 0); P.y < rainbowSize+25; ++P.y) {
-                setVoxel(P, P.y+voxTypeCount-rainbowSize-25);
-    }
-    
-    
 }
 
 void App::initializeMaterials() {
@@ -449,13 +491,6 @@ shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, Str
 void App::removeEntity(shared_ptr<VisibleEntity> entity){
     scene()->removeEntity(entity->name());
 }
-
-
-//void App::changeSkymap(String filename){
-//    shared_ptr<Skybox> skybox = scene()->typedEntity<Skybox>("environmentMap");
-//    skybox = 
-//
-//}
 
 // Returns true if the positions given is occupied.
 bool App::voxIsSet(Point3int32 pos) {
@@ -1214,23 +1249,32 @@ bool App::onEvent(const GEvent& event) {
     }
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('m')) ){ 
-            menuMode = !menuMode;
-            SoundIndex i;
+		menuMode = !menuMode;
+		SoundIndex i;
+		
+		if (menuMode) {
+		    menuFrame = activeCamera()->frame();
+		    m_menu[m_currentMenuPage]->setFrame(menuFrame);
+		
+			i = menuOpen;
+		} else {
+			i = menuClose;
+		}
+		
+		m_sounds[i]->play();
+		
+		m_menu[m_currentMenuPage]->setVisible(menuMode);
+    }
 
-            if (menuMode) {
-                menuFrame = activeCamera()->frame();
-                m_menu->setFrame(menuFrame);
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('t')) ){ 
+		changeMenuPage(m_currentMenuPage - 1);
+    }
+
+    else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('y')) ){ 
+		changeMenuPage(m_currentMenuPage + 1);
+    }
 	
-				i = menuOpen;
-            } else {
-				i = menuClose;
-			}
-
-			m_sounds[i]->play();
-
-            m_menu->setVisible(menuMode);
-
-    }  else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ){ 
+	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ) { 
         Point3int32 hitPos;
         Point3int32 lastPos;
         m_crosshair.lookDirection = Vector3(0,-1,0);
@@ -1382,7 +1426,8 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
     updateChunks();
     if(menuMode){
         CFrame frame = menuFrame;
-        debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount]), Vector3(0,0,0), GuiText("Select Voxel Type"));
+		GuiText menuText = format("Select Voxel Type (Pg. %d/%d)", m_currentMenuPage + 1, (voxTypeCount / menuPageSize) + 1); //Fix this.
+        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[voxTypeCount]), Vector3(0,0,0), menuText);
     }
     if(vrEnabled){
       //  updateSelect();

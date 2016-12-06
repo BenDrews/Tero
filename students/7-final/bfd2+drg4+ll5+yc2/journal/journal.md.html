@@ -129,7 +129,7 @@ I also made a function that return positions in an arc to make the UI menu look 
 ==================================================
 Fixed the bug by adding a single mesh to the CPUVertexArray and indexArray. 
 	  
-Moved `cleanGeometry`, `clearAttributeArrays` and `clearIndexStream` into `updateGeometry`, so that it's only called in `redrawChunks` and `addVoxel` methods.
+Moved `cleanGeometry`, `clearAttributeArrays` and `clearIndexStream` into `cleanChunkGeometry`, so that it's only called in `redrawChunks` and `addVoxel` methods.
 
 debugDraw the selection voxels.
 
