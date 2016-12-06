@@ -140,23 +140,37 @@ public:
 	// Voxel geometry
 	void addVoxel(Point3int32 input, int type);
 	void removeVoxel(Point3int32 input);
-    void addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type);
-
+  
 	// Handling chunk data structures
     Point2int32 getChunkCoords(Point3int32 pos);
     int posToVox(Point3int32 pos);
     bool voxIsSet(Point3int32 pos);
     shared_ptr<Table<Point3int32, int>> getChunk(Point3int32 pos);
-    void setVoxel(Point3int32 pos, int type);
-    void unsetVoxel(Point3int32 pos);
-    void createVoxelGeometry(Point3int32 input);
-	void drawVoxelNaive(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
+    
+
+	//Main geometry update function
+    void updateChunks();
+
+	//Called for loading new worlds
+    void redrawWorld();
+	
+	//Called from update chunks
     void clearChunk(Point2int32 chunkPos);
     void createChunkGeometry(Point2int32 chunkPos);
-    void updateChunks();
-    void redrawWorld();
-    void checkBoundaryAdd(Point3int32 pos);
-    void updateGeometry(Point2int32 chunkCoords, int type);
+    void cleanChunkGeometry(Point2int32 chunkCoords, int type);
+
+
+	//Manipulating the voxel data structure
+	void setVoxel(Point3int32 pos, int type);
+    void unsetVoxel(Point3int32 pos);
+
+	//Creating geometry
+    void createVoxelGeometry(Point3int32 input);
+	void createNaiveVoxelGeometry(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
+	void checkBoundaryAdd(Point3int32 pos);
+	void addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type);
+
+
 
 	// Applying transforms to voxels
     void debugDrawVoxel();
@@ -165,11 +179,13 @@ public:
     void selectBox(Point3int32 center, int radius);
     void elevateSelection(int delta);
 
+	// Animations
 	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
     void pullVoxelOrbit(Point3int32 origin);
 
+	//Generating colored voxels
     void addRainbowMaterial();
     void addRainbowLine();
 };

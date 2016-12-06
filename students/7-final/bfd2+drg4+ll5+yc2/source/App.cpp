@@ -222,12 +222,12 @@ void App::initializeScene() {
 
 void App::getMenuPositions(){
 
-    int rows = 2;
+    int rows = 4;
     int totalVoxels = voxTypeCount;
     int blocksPerRow = totalVoxels / rows;
     float rowSeparation = 0.5;
     float menuRadius = 0.75;
-    float menuWidth = 0.75 * PI; //radians
+    float menuWidth =  PI; //radians
     float x, y, z;
     y = 0.25;
     
@@ -262,7 +262,7 @@ void App::makeMenuModel() {
 		mesh->material = m_voxToMat[type];
 
 		Point3 current = m_menuButtons[t];
-		drawVoxelNaive(geometry, mesh, current, 0.25f, t);
+		createNaiveVoxelGeometry(geometry, mesh, current, 0.25f, t);
 
         ArticulatedModel::CleanGeometrySettings geometrySettings;
         geometrySettings.allowVertexMerging = false;
@@ -284,7 +284,7 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 	ArticulatedModel::Mesh*		mesh	 = model->addMesh("mesh", model->part("root"), geometry);
 	mesh->material = m_voxToMat[type];
 	
-	drawVoxelNaive(geometry, mesh, Point3(0,0,0), size, type);
+	createNaiveVoxelGeometry(geometry, mesh, Point3(0,0,0), size, type);
 	
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
 	geometrySettings.allowVertexMerging = false;
@@ -499,11 +499,6 @@ void App::setVoxel(Point3int32 pos, int type) {
 	if ( !voxIsSet(pos) ) {
 		chunk->set(pos, type);
 	}
-
-	Point2int32 chunkCoords = getChunkCoords(pos);
-	if( !m_chunksToUpdate.contains(chunkCoords) ) {
-        m_chunksToUpdate.push(chunkCoords);
-    }
 }
 
 // Unset the voxel at a given grid position in the world data structure.
@@ -574,7 +569,7 @@ void App::createChunkGeometry(Point2int32 chunkPos) {
     
 	// Update the geometry for every type
     for (int i = 0; i < voxTypeCount; i++) { 
-        updateGeometry(chunkPos, i);
+        cleanChunkGeometry(chunkPos, i);
     }
 
     int index = m_chunksToUpdate.findIndex(chunkPos);
@@ -607,7 +602,7 @@ void App::redrawWorld() {
 void App::addVoxel(Point3int32 input, int type) {
     setVoxel(input, type);
     createVoxelGeometry(input);
-    updateGeometry(getChunkCoords(input),type);
+    cleanChunkGeometry(getChunkCoords(input),type);
 	SoundIndex i = add;
 	m_sounds[i]->play();
 }
@@ -652,7 +647,7 @@ void App::createVoxelGeometry(Point3int32 input) {
 }
 
 /** Used for making the voxels in the menu and hand models, doesn't cull */
-void App::drawVoxelNaive(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type) {
+void App::createNaiveVoxelGeometry(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type) {
 	addFace(geometry, mesh, pos, size, Vector3int32(1,0,0),  Vector3::X_AXIS, type);
 	addFace(geometry, mesh, pos, size, Vector3int32(-1,0,0), Vector3::X_AXIS, type);
 	addFace(geometry, mesh, pos, size, Vector3int32(0,1,0),  Vector3::Y_AXIS, type);
@@ -716,7 +711,7 @@ void App::addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* 
 }
 
 // Clean/update the geometry for our model.
-void App::updateGeometry(Point2int32 chunkCoords, int type) {
+void App::cleanChunkGeometry(Point2int32 chunkCoords, int type) {
     
     if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
 		ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
@@ -813,12 +808,12 @@ void App::debugDrawVoxel(){
 	for (int i = 0; i < selectionArray.length(); i++) {
 	    Point3int32 pos= selectionArray[i];
 	    Point3 selection = Util::voxelToWorldSpace(pos);
-	    drawVoxelNaive(geometry, mesh, selection, voxelRes * 1.1f, type);
+	    createNaiveVoxelGeometry(geometry, mesh, selection, voxelRes * 1.1f, type);
 	}
 	
 	//yet another bad workaround
 	if (selectionArray.length() == 0) {
-		drawVoxelNaive(geometry, mesh, Point3(0,0,0), 0, type);
+		createNaiveVoxelGeometry(geometry, mesh, Point3(0,0,0), 0, type);
 	}
 	
 	ArticulatedModel::CleanGeometrySettings geometrySettings;
@@ -1089,6 +1084,11 @@ void App::makeMountain(Point3int32 center, int height) {
 
 						if ( sqrt((pos.x - center.x) * (pos.x - center.x) + (pos.z - center.z) * (pos.z - center.z)) <= currentRadius && !voxIsSet(pos) ) {
 							setVoxel(pos, m_voxelType);
+							
+							Point2int32 chunkCoords = getChunkCoords(pos);
+							if( !m_chunksToUpdate.contains(chunkCoords) ) {
+							    m_chunksToUpdate.push(chunkCoords);
+							}
 						}
 					
 					}
