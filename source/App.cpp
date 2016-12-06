@@ -68,12 +68,16 @@ void App::makeGUI() {
 
 		containerPane->addLabel("Left click: Add voxel");
 		containerPane->addLabel("Middle click: Remove voxel");
-        containerPane->addLabel("mouse scroll: Change intersection distance");
+        containerPane->addLabel("Mouse scroll: Change intersection distance");
+		containerPane->addLabel("f: Toggle force intersect");
+		containerPane->addLabel("n: Change intersection mode (regular, union, minus, intersection)");
 		containerPane->addLabel("j: Box select");
 		containerPane->addLabel("k: Cylinder select");
 		containerPane->addLabel("l: Sphere select");
 		containerPane->addLabel("u: Elevate selection");
-		containerPane->addLabel("f: Toggle force intersect");
+		containerPane->addLabel("i: Mountain");
+		containerPane->addLabel("o: Shock wave");
+		containerPane->addLabel("p: Crater");
 
 		m_typesList.append("Grass", "Rock", "Brick", "Sand", "Rough Cedar", "Rusty Metal");
 		m_typesList.append("Chrome", "Black Rubber");
@@ -337,11 +341,13 @@ void App::makeMenuPageEntities() {
 }
 
 void App::changeMenuPage(int to) {
-	m_menu[m_currentMenuPage]->setVisible(false);
-	m_currentMenuPage = to;
-	m_menu[m_currentMenuPage]->setVisible(true);
-	menuFrame = activeCamera()->frame();
-    m_menu[m_currentMenuPage]->setFrame(menuFrame);
+	if (menuMode) {
+		m_menu[m_currentMenuPage]->setVisible(false);
+		m_currentMenuPage = to;
+		m_menu[m_currentMenuPage]->setVisible(true);
+		menuFrame = activeCamera()->frame();
+		m_menu[m_currentMenuPage]->setFrame(menuFrame);
+	}
 }
 
 const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int type, float size) {
@@ -474,13 +480,14 @@ shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, Str
             );
 
         anyFile["model"] = modelName;
-        entity = scene()->createEntity(entityName, anyFile);
+        entity = scene()->createEntity(entityName, anyFile); //TODO
 
     } else {
-        // Change the model on the existing  entity
+        // Change the model on the existing entity
         dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
 
+	//TODO
     shared_ptr<VisibleEntity> visibleEntity = scene()->typedEntity<VisibleEntity>(entityName);
     visibleEntity->setVisible(visible);
     return visibleEntity;
@@ -861,8 +868,10 @@ void App::debugDrawVoxel(){
 
 	for (int i = 0; i < selectionArray.length(); ++i) {
 	    Point3int32 pos = selectionArray[i];
-	    Point3 selection = Util::voxelToWorldSpace(pos);
-	    createNaiveVoxelGeometry(geometry, mesh, selection, voxelRes * 1.1f, type);
+		if (voxIsSet(pos)) {
+			Point3 selection = Util::voxelToWorldSpace(pos);
+			createNaiveVoxelGeometry(geometry, mesh, selection, voxelRes * 1.1f, type);
+		}
 	}
 	
 	//yet another bad workaround
@@ -1300,8 +1309,8 @@ bool App::onEvent(const GEvent& event) {
 
     // Change selection mode
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('n')) ){ 
-		m_selectionMode += 1;
-		m_selectionMode %= 5;
+		m_selectionMode %= 4;
+		m_selectionMode++;
 		debugPrintf("mode: %d\n", m_selectionMode);
     } 
 

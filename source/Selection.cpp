@@ -56,11 +56,11 @@ void Selection::doUnion(Array<Point3int32>& buffer) {
 
 void Selection::doMinus(Array<Point3int32>& buffer) {
 
-	for (int i = 0; i < buffer.size(); ++i) {
-		if ( m_selection.size() == 0 ) {
-			m_selection.append( buffer[i] );
-		}
-		else {
+	if ( m_selection.size() == 0 ) {
+		m_selection.append(buffer);
+	}
+	else {
+		for (int i = 0; i < buffer.size(); ++i) {
 			int current = m_selection.findIndex(buffer[i]);
 
 			if ( current != -1 ) {
@@ -71,15 +71,17 @@ void Selection::doMinus(Array<Point3int32>& buffer) {
 }
 
 void Selection::doIntersect(Array<Point3int32>& buffer) {
-	for (int i = 0; i < m_selection.size(); ++i) {
-		if ( m_selection.size() == 0 ) {
-			m_selection.append( buffer[i] );
-		}
-		else {		
+
+	if ( m_selection.size() == 0 ) {
+		m_selection.append(buffer);
+	}
+	else {
+		for (int i = 0; i < m_selection.size(); ++i) {
 			int current = buffer.findIndex(m_selection[i]);
 
 			if ( current == -1 ) {
 				m_selection.fastRemove(i);
+				--i;
 			}
 		}
 	}
