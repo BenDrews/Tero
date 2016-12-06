@@ -15,20 +15,20 @@ int main(int argc, const char* argv[]) {
     }
 
     // NON-VR CODE //////////////////////
-    GApp::Settings settings(argc, argv);
+    //GApp::Settings settings(argc, argv);
     //////////////////////////////
     
     // VR CODE////////////////
 
 
    // VR CODE////////////////
-   //VRApp::Settings settings(argc, argv);
-   //settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-   //VRApp::DebugMirrorMode::PRE_DISTORTION;
-   //
-   // settings.vr.disablePostEffectsIfTooSlow = true;
-   // settings.renderer.deferredShading   = true;
-   // settings.renderer.orderIndependentTransparency = true;
+   VRApp::Settings settings(argc, argv);
+   settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+   VRApp::DebugMirrorMode::PRE_DISTORTION;
+   
+    settings.vr.disablePostEffectsIfTooSlow = true;
+    settings.renderer.deferredShading   = true;
+    settings.renderer.orderIndependentTransparency = true;
    ///////////////////////////
 
 
@@ -104,59 +104,81 @@ void App::onInit() {
 
 }
 
-void App::updateSelect(){
+void App::updateMenuSelect(){
     Ray cameraRay;
+    Ray empty;
+    //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
+    //        cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
+    //        cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
+    //    }
+    //    
+    //     m_crosshair.buttonSelected = false;
+    //    for(int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i){
+    //        if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtons[i]) ).length() <= 0.3){
+    //             m_crosshair.buttonSelected = true;
+    //             m_crosshair.buttonIndex = i;
+    //        }    
+    //    }
+    //    
+    //    if(cameraRay.origin() != empty.origin()){
+    //         m_crosshair.lookDirection = cameraRay.direction();
+    //         m_crosshair.position = cameraRay.origin();
+    //         m_crosshair.ray = cameraRay;
+    //         drawSelectionPreview();
+    //    }
+
+}
+
+Ray App::getVrCrosshairRay(){
+    Ray crosshairRay;
+   // if(m_vrControllerArray.size() > 0){
+   //     crosshairRay = m_vrControllerArray[0]->frame().lookRay();
+   // }
+
+    return crosshairRay;
+}
+
+
+Ray App::getMouseCrosshairRay(){
+    Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
+    return activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
+           
+
+}
+
+void App::setCrosshair(Ray crosshairRay){
+
+  m_crosshair.lookDirection = crosshairRay.direction();
+  m_crosshair.position = crosshairRay.origin();
+  m_crosshair.ray = crosshairRay;
+  drawSelectionPreview();
+
+
+}
+void App::updateSelect(){
+    Ray crosshairRay;
     Ray empty;
 
     if (menuMode) {
-        if (vrEnabled) {
-            //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
-            //    cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
-            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
-            //}
-            //
-            // m_crosshair.buttonSelected = false;
-            //for(int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i){
-            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtons[i]) ).length() <= 0.3){
-            //         m_crosshair.buttonSelected = true;
-            //         m_crosshair.buttonIndex = i;
-            //    }    
-            //}
-            //
-            //if(cameraRay.origin() != empty.origin()){
-            //     m_crosshair.lookDirection = cameraRay.direction();
-            //     m_crosshair.position = cameraRay.origin();
-            //     m_crosshair.ray = cameraRay;
-            //    drawCrosshair();
-            //}
-        }
+        updateMenuSelect();
     
     } else {
         if (vrEnabled) {
-            //if(m_vrControllerArray.size() > 0){
-            //    cameraRay = m_vrControllerArray[0]->frame().lookRay();
-            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
-            //}
-            //
-            //
+            crosshairRay = getVrCrosshairRay();
+
         } else {
-            Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
-            cameraRay = activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
-           
+            crosshairRay = getMouseCrosshairRay();          
         }
 
-        if (cameraRay.origin() != empty.origin()) {
-            m_crosshair.lookDirection = cameraRay.direction();
-            m_crosshair.position = cameraRay.origin();
-            m_crosshair.ray = cameraRay;
-            drawCrosshair();
+        if (crosshairRay.origin() != empty.origin()) {
+            setCrosshair(crosshairRay);
         }
     
     }
 
 }
 
-void App::drawCrosshair(){
+void App::drawSelectionPreview(){
 
     if (menuMode) {
         if (m_crosshair.buttonSelected) {
@@ -968,81 +990,97 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
     debugPrintf("SHOCKWAVE START\n");
     std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table<Point3int32, SimTime>& timeAdded) {
 
-        float bounds = (st / 12.0f) * (float)(1 << 7);
+        float bounds = (st / 12.0f) * (float)(1 << 7); //Bounds should increase over time
 
         //the Boundary of the voxels that would intersect
 		Point3int32 voxelBound = Point3int32( (int)bounds, (int)bounds, (int)bounds );
 
-        Point3 origin = Point3(args->get("originX"), args->get("originY"), args->get("originZ"));
-		Vector3 direction = Vector3(args->get("directionX"), args->get("directionY"), args->get("directionZ"));
+        Point3int32 origin = Point3int32(args->get("originX"), args->get("originY"), args->get("originZ"));
+		Vector3 direction = Vector3(args->get("directionX"), 0, args->get("directionZ"));
 
-        origin = Point3(0, -1, 0);
+        Point3int32 rayOrigin(0, -1, 0);
+        debugPrintf("%d\n", rayOrigin.y);
+        Point3int32 diff = origin - rayOrigin;
 
-        //debugPrintf("ORIGIN> %f, %f, %f\n", origin.x, origin.y, origin.z);
-        //debugPrintf("DIRECTION> %f, %f, %f\n", direction.x, direction.y, direction.z);
-        Ray shockWaveRay(origin, direction);
+        Ray shockWaveRay(rayOrigin, direction);
 
         int i = 0;
-        int j = 0;
-        int numVoxels = 50;
+        int numVoxels = 1000;
+        int shockWaveSize = 4; //multiple of 2
 		for (RayGridIterator it(shockWaveRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid() && i < numVoxels; ++it) {
-            //debugPrintf("%d: %d %d %d\n", j, it.index().x, it.index().y, it.index().z);
-            j++;
-            if ( voxIsSet(it.index()) ) {
-                shared_ptr<VisibleEntity> ent;
-                SimTime timePassed;
-                String name = format("animatedvox%d,%d,%d", it.index().x, it.index().y, it.index().z);
 
-                if ( !entities.containsKey(it.index()) ) {
-                    shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( it.index() ) );    
-                    ent = addEntity(model, name, true);
-                    entities.set(it.index(), ent);
-                    timeAdded.set(it.index(), st);
-                    timePassed = 0.0f;
-                } else {
-                    //debugPrintf("EXISTING ENT\n");
-                    ent = entities[it.index()];
-                    timePassed = (st - timeAdded[it.index()]);
-                }
-            
-				float rise;
-                float totalTime = 1.0f;
-                float maxRise = 1.0f;
-                if (timePassed <= totalTime / 2.0f) {
-                    rise = (timePassed/(totalTime/2.0f))*maxRise;
-                } else if (timePassed <= totalTime) {
-                    rise = ( ( (totalTime/2.0f) - (timePassed - (totalTime/2.0f) ) ) / (totalTime/2.0f))*maxRise;
-                } else {
-                    ent->setVisible(false);
 
-                    if ( notNull(scene()->entity(ent->name())) ) {
-                        removeEntity(ent);
+            Point3int32 voxCoord = it.index() + diff;
+            Point3int32 centerCoord = voxCoord;
+            voxCoord.y += 1;
+            voxCoord.x -= shockWaveSize/2;
+            for(int j = 0; j <= shockWaveSize; ++j){
+                voxCoord.x += 1;
+                voxCoord.z = centerCoord.z - shockWaveSize/2;
+                for(int k = 0; k <= shockWaveSize; ++k){
+                    voxCoord.z += 1;
+                    if ( voxIsSet(voxCoord) ) {
+                        //debugPrintf("%d\n", voxCoord.y);
+                        shared_ptr<VisibleEntity> ent;
+                        SimTime timePassed;
+                        String name = format("animatedvox%d,%d,%d", voxCoord.x, voxCoord.y, voxCoord.z);
+
+                        if ( !entities.containsKey(voxCoord) ) {
+                            shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( voxCoord ) );    
+                            ent = addEntity(model, name, true);
+                            entities.set(voxCoord, ent);
+                            timeAdded.set(voxCoord, st);
+                            timePassed = 0.0f;
+                        } else {
+                            ent = entities[voxCoord];
+                            timePassed = (st - timeAdded[voxCoord]);
+
+                        }
+
+                    
+			        	float rise;
+                        float totalTime = 0.50f;
+                        float halfTime = totalTime/2.0f;
+                        float maxRise = 0.7f;
+                        float currentTime = st;
+                        currentTime;
+                        if (timePassed <= halfTime) {
+                            rise = (timePassed/(halfTime))*maxRise;
+                        } else if (timePassed <= totalTime) {
+                            rise = ( ( (halfTime) - (timePassed - halfTime ) ) / (halfTime) ) * maxRise;
+                        } else {
+                            ent->setVisible(false);
+
+                            if ( notNull(scene()->entity(ent->name())) ) {
+                                removeEntity(ent);
+                            }
+                        }
+
+                        Point3int32 voxPos = Point3int32(voxCoord.x, voxCoord.y, voxCoord.z);
+                        Point3 worldPos = Util::voxelToWorldSpace(voxPos);
+                        CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y + rise, worldPos.z);
+                        ent->setFrame(frame);
+                        ++i;
+
+			        } else {
+                        break;
                     }
                 }
-
-                Point3int32 voxPos = Point3int32(it.index().x, it.index().y, it.index().z);
-                Point3 worldPos = Util::voxelToWorldSpace(voxPos);
-                CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y + rise, worldPos.z);
-                ent->setFrame(frame);
-                ++i;
-
-			} else {
-                break;
             }
         }
 
-        lastAnimFinished = st > 30.0f;
+        lastAnimFinished = st > 10.0f;
         //printf("finishFrame\n");
 		
         if ( lastAnimFinished ) {
-            //Array<shared_ptr<VisibleEntity>> ents;
-            //entities.getValues(ents);
-            //for(int i = 0; i < ents.size(); ++i){
-            //
-            //    if(notNull(scene()->entity(ents[i]->name()))){
-            //        removeEntity(ents[i]);   
-            //    }
-            //}
+            Array<shared_ptr<VisibleEntity>> ents;
+            entities.getValues(ents);
+            for(int i = 0; i < ents.size(); ++i){
+            
+                if(notNull(scene()->entity(ents[i]->name()))){
+                    removeEntity(ents[i]);   
+                }
+            }
         
             entities.clear();
         }
@@ -1347,120 +1385,120 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         debugDrawLabel(frame.pointToWorldSpace(m_menuButtons[voxTypeCount]), Vector3(0,0,0), GuiText("Select Voxel Type"));
     }
     if(vrEnabled){
-        //updateSelect();
-        //Point3 head;
-        //Point3 hand1;
-        //Point3 hand2;
-        //if(m_vrControllerArray.size() > 0){
-        //    hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
-        //}
-        //if(m_vrControllerArray.size() > 1){
-        //    hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
-        //    debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
-        //}
-        //
-        //
-        //
-        //if(menuMode){
-        //   CFrame frame = menuFrame;
-        //   //m_menu->setVisible(true);
-        //}
-        //
-        //
-        //
-        ////VR CONTROLLER INPUT
-        ////BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
-        //
-        //vr::VREvent_t vrEvent;
-        //while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
-        //    debugPrintf("Device %d sent button %d press\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
-        //    switch (vrEvent.eventType) {
-        //    // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
-        //    // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
-        //    case vr::VREvent_ButtonPress:
-        //        if(!menuMode){
-        //            Point3int32 lastPos;
-        //            Point3int32 hitPos;
-        //            switch(vrEvent.data.controller.button){
-        //            
-        //            //trigger
-        //            case 33:
-        //               
-        //                cameraIntersectVoxel(lastPos, hitPos);
-        //                debugPrintf("AddVoxel %d %d %d\n", lastPos.x, lastPos.y, lastPos.z);
-        //
-        //                addVoxel(lastPos, m_voxelType);
-        //                break;
-        //            
-        //            //Grip
-        //            case 2:
-        //              
-        //                cameraIntersectVoxel(lastPos, hitPos);
-        //                removeVoxel(hitPos);
-        //                break;
-        //            
-        //            //Touchpad Click
-        //            case 32:
-        //              
-        //                cameraIntersectVoxel(lastPos, hitPos);
-        //                m_debugCamera->setFrame(CFrame(voxelToWorldSpace(lastPos)));
-        //                m_debugController->setFrame(m_debugCamera->frame());
-        //                updateSelect();
-        //                
-        //                break;
-        //            
-        //            default:
-        //                debugPrintf("INPUT NOT RECOGNIZED\n");
-        //                break;
-        //            }
-        //           
-        //  
-        //        }else{
-        //            switch(vrEvent.data.controller.button){
-        //            
-        //            //trigger
-        //            case 33:
-        //                if(m_crosshair.buttonSelected){
-        //                    m_voxelType = m_crosshair.buttonIndex;
-        //                
-        //                }
-        //                break;
-        //           
-        //            
-        //            default:
-        //                debugPrintf("INPUT NOT RECOGNIZED\n");
-        //                break;
-        //            }
-        //        }
-        //
-        //       if(vrEvent.data.controller.button == 1){
-        //            menuMode = !menuMode;
-        //            debugPrintf("MENU %d\n", menuMode);
-        //            if(menuMode){
-        //                float yaw, pitch, roll;
-        //                m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
-        //                Point3 translation = m_vrHead->frame().translation;
-        //                menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
-        //                m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
-        //                m_menu->setFrame(menuFrame);
-        //            }
-        //            m_menu->setVisible(menuMode);
-        //       }
-        //
-        //       break;
-        //
-        //    case vr::VREvent_ButtonUnpress:
-        //        debugPrintf("Device %d sent button %d unpress\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
-        //        break;
-        //
-        //    default:
-        //        // Ignore event
-        //        ;
-        //    }
-        //}
-        //
-        ////END_PROFILER_EVENT();
+      //  updateSelect();
+      //  Point3 head;
+      //  Point3 hand1;
+      //  Point3 hand2;
+      //  if(m_vrControllerArray.size() > 0){
+      //      hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
+      //      debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
+      //  }
+      //  if(m_vrControllerArray.size() > 1){
+      //      hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
+      //      debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
+      //  }
+      //  
+      //  
+      //  
+      //  if(menuMode){
+      //     CFrame frame = menuFrame;
+      //     //m_menu->setVisible(true);
+      //  }
+      //  
+      //  
+      //  
+      //  //VR CONTROLLER INPUT
+      //  //BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
+      //  
+      //  vr::VREvent_t vrEvent;
+      //  while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
+      //      debugPrintf("Device %d sent button %d press\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
+      //      switch (vrEvent.eventType) {
+      //      // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
+      //      // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
+      //      case vr::VREvent_ButtonPress:
+      //          if(!menuMode){
+      //              Point3int32 lastPos;
+      //              Point3int32 hitPos;
+      //              switch(vrEvent.data.controller.button){
+      //              
+      //              //trigger
+      //              case 33:
+      //                 
+      //                  cameraIntersectVoxel(lastPos, hitPos);
+      //                  debugPrintf("AddVoxel %d %d %d\n", lastPos.x, lastPos.y, lastPos.z);
+      //  
+      //                  addVoxel(lastPos, m_voxelType);
+      //                  break;
+      //              
+      //              //Grip
+      //              case 2:
+      //                
+      //                  cameraIntersectVoxel(lastPos, hitPos);
+      //                  removeVoxel(hitPos);
+      //                  break;
+      //              
+      //              //Touchpad Click
+      //              case 32:
+      //                
+      //                  cameraIntersectVoxel(lastPos, hitPos);
+      //                  m_debugCamera->setFrame(CFrame(Util::voxelToWorldSpace(lastPos)));
+      //                  m_debugController->setFrame(m_debugCamera->frame());
+      //                  updateSelect();
+      //                  
+      //                  break;
+      //              
+      //              default:
+      //                  debugPrintf("INPUT NOT RECOGNIZED\n");
+      //                  break;
+      //              }
+      //             
+      //    
+      //          }else{
+      //              switch(vrEvent.data.controller.button){
+      //              
+      //              //trigger
+      //              case 33:
+      //                  if(m_crosshair.buttonSelected){
+      //                      m_voxelType = m_crosshair.buttonIndex;
+      //                  
+      //                  }
+      //                  break;
+      //             
+      //              
+      //              default:
+      //                  debugPrintf("INPUT NOT RECOGNIZED\n");
+      //                  break;
+      //              }
+      //          }
+      //  
+      //         if(vrEvent.data.controller.button == 1){
+      //              menuMode = !menuMode;
+      //              debugPrintf("MENU %d\n", menuMode);
+      //              if(menuMode){
+      //                  float yaw, pitch, roll;
+      //                  m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
+      //                  Point3 translation = m_vrHead->frame().translation;
+      //                  menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
+      //                  m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
+      //                  m_menu->setFrame(menuFrame);
+      //              }
+      //              m_menu->setVisible(menuMode);
+      //         }
+      //  
+      //         break;
+      //  
+      //      case vr::VREvent_ButtonUnpress:
+      //          debugPrintf("Device %d sent button %d unpress\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
+      //          break;
+      //  
+      //      default:
+      //          // Ignore event
+      //          ;
+      //      }
+      //  }
+      //  
+      //  //END_PROFILER_EVENT();
         
         
         
