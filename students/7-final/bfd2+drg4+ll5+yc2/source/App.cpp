@@ -102,106 +102,104 @@ void App::onInit() {
 
 	initializeScene();
 
-    updateSelect();
+    updateCrosshair();
 
 }
 
-void App::updateMenuSelect(){
+void App::updateMenuCrosshair(){
     Ray cameraRay;
     Ray empty;
-    //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
+    //	  if (m_vrControllerArray.size() > m_crosshair.menuControllerIndex) {
     //        cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
     //        cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
     //    }
     //    
-    //     m_crosshair.buttonSelected = false;
-    //    for(int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i){
+    //    m_crosshair.buttonSelected = false;
+    //    for (int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i) {
     //        if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtons[i]) ).length() <= 0.3){
     //             m_crosshair.buttonSelected = true;
     //             m_crosshair.buttonIndex = i;
     //        }    
     //    }
     //    
-    //    if(cameraRay.origin() != empty.origin()){
+    //    if (cameraRay.origin() != empty.origin()) {
     //         m_crosshair.lookDirection = cameraRay.direction();
     //         m_crosshair.position = cameraRay.origin();
     //         m_crosshair.ray = cameraRay;
-    //         drawSelectionPreview();
+    //         drawCrosshair();
     //    }
 
 }
 
-Ray App::getVrCrosshairRay(){
+Ray App::getVrCrosshairRay() {
     Ray crosshairRay;
-   // if(m_vrControllerArray.size() > 0){
-   //     crosshairRay = m_vrControllerArray[0]->frame().lookRay();
-   // }
+
+	//if ( m_vrControllerArray.size() > 0 ) {
+	//    crosshairRay = m_vrControllerArray[0]->frame().lookRay();
+	//}
 
     return crosshairRay;
 }
 
 
-Ray App::getMouseCrosshairRay(){
+Ray App::getMouseCrosshairRay() {
+
     Point2 center = Point2( UserInput(this->window()).mouseXY().x / this->window()->width(), UserInput(this->window()).mouseXY().y / this->window()->height() );
     return activeCamera()->worldRay(center.x * renderDevice->viewport().width(), center.y * renderDevice->viewport().height(), renderDevice->viewport());
-           
 
 }
 
-void App::setCrosshair(Ray crosshairRay){
+void App::setCrosshair(Ray crosshairRay) {
 
-  m_crosshair.lookDirection = crosshairRay.direction();
-  m_crosshair.position = crosshairRay.origin();
-  m_crosshair.ray = crosshairRay;
-  drawSelectionPreview();
-
-
+	m_crosshair.lookDirection = crosshairRay.direction();
+	m_crosshair.position = crosshairRay.origin();
+	m_crosshair.ray = crosshairRay;
+	drawCrosshair();
 }
-void App::updateSelect(){
+
+void App::updateCrosshair() {
     Ray crosshairRay;
     Ray empty;
 
-    if (menuMode) {
-        if (vrEnabled) {
-            //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
+    if ( menuMode ) {
+        if ( vrEnabled ) {
+            //if (m_vrControllerArray.size() > m_crosshair.menuControllerIndex) {
             //    cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
             //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
             //}
             //
             // m_crosshair.buttonSelected = false;
-            //for(int i = 0; i < m_menuButtonPositions.length() && ! m_crosshair.buttonSelected; ++i){
-            //    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3){
+            //for (int i = 0; i < m_menuButtonPositions.length() && ! m_crosshair.buttonSelected; ++i) {
+            //    if (( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3) {
             //         m_crosshair.buttonSelected = true;
             //         m_crosshair.buttonIndex = i;
             //    }    
             //}
             //
-            //if(cameraRay.origin() != empty.origin()){
+            //if (cameraRay.origin() != empty.origin()) {
             //     m_crosshair.lookDirection = cameraRay.direction();
             //     m_crosshair.position = cameraRay.origin();
             //     m_crosshair.ray = cameraRay;
             //    drawCrosshair();
             //}
         }
-        updateMenuSelect();
+        updateMenuCrosshair();
     
     } else {
-        if (vrEnabled) {
+        if ( vrEnabled ) {
             crosshairRay = getVrCrosshairRay();
-
         } else {
-            crosshairRay = getMouseCrosshairRay();          
+            crosshairRay = getMouseCrosshairRay();
         }
 
-        if (crosshairRay.origin() != empty.origin()) {
+        if ( crosshairRay.origin() != empty.origin() ) {
             setCrosshair(crosshairRay);
         }
-    
     }
 
 }
 
-void App::drawSelectionPreview(){
+void App::drawCrosshair() {
 
     if (menuMode) {
         if (m_crosshair.buttonSelected) {
@@ -338,13 +336,12 @@ void App::makeMenuPageEntities() {
 
 }
 
-void App::changeMenuPage(int to) {
+void App::changeMenuPage(int to, CFrame frame) {
 	if (menuMode) {
 		m_menu[m_currentMenuPage]->setVisible(false);
 		m_currentMenuPage = to;
 		m_menu[m_currentMenuPage]->setVisible(true);
-		menuFrame = activeCamera()->frame();
-		m_menu[m_currentMenuPage]->setFrame(menuFrame);
+		m_menu[m_currentMenuPage]->setFrame(frame);
 	}
 }
 
@@ -372,7 +369,7 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 }
 
 
-void App::addRainbowMaterial() {
+void App::addColorMaterials() {
     
     float colorSize = std::pow(rainbowSize, 1.0f / 3.0f);
     float stepSize = 1.0f / colorSize;
@@ -410,7 +407,7 @@ void App::initializeMaterials() {
         UniversalMaterial::create( Any::fromFile(System::findDataFile("chrome/chrome.UniversalMaterial.Any") )),
         UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
     
-	addRainbowMaterial();
+	addColorMaterials();
 	for (int i = 0; i < rainbowSize; ++i) {    
         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/color%d.UniversalMaterial.Any",i+1))));
     }
@@ -524,7 +521,7 @@ void App::checkBoundaryAdd(Point3int32 pos){
     }
 }
 
-// Return the chunk a given voxel resides in.
+/** Return the chunk a given voxel resides in. */
 shared_ptr<Chunk> App::getChunk(Point3int32 pos) {
     Point2int32 key = Chunk::getChunkCoords(pos);
     if ( !m_posToChunk.containsKey(key) ) {
@@ -533,12 +530,12 @@ shared_ptr<Chunk> App::getChunk(Point3int32 pos) {
     return m_posToChunk[key];
 }
 
-// Return the voxel type at a given grid position.
+/** Return the voxel type at a given grid position. */
 int App::posToVox(Point3int32 pos) {
     return getChunk(pos)->get(pos);
 }
 
-//Set the voxel at a given grid position in the world data structure.
+/** Set the voxel at a given grid position in the world data structure. */
 void App::setVoxel(Point3int32 pos, int type) {
     shared_ptr<Chunk> chunk = getChunk(pos);
 	if ( !voxIsSet(pos) ) {
@@ -546,7 +543,7 @@ void App::setVoxel(Point3int32 pos, int type) {
 	}
 }
 
-// Unset the voxel at a given grid position in the world data structure.
+/** Unset the voxel at a given grid position in the world data structure. */
 void App::unsetVoxel(Point3int32 pos) {
     shared_ptr<Chunk> chunk = getChunk(pos);
 	if ( voxIsSet(pos) ) {
@@ -554,7 +551,7 @@ void App::unsetVoxel(Point3int32 pos) {
 	}
 }
 
-// Clear the geometry for a given chunk.
+
 void App::clearChunkGeometry(Point2int32 chunkPos) {
     // Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; ++i) {
@@ -602,7 +599,7 @@ void App::clearChunkGeometry(Point2int32 chunkPos) {
     }
 }
 
-// Redraw the geometry for a given chunk.
+/** Create geometry for a given chunk. */
 void App::createChunkGeometry(Point2int32 chunkPos) {
 	
     for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.hasMore(); ++it) {
@@ -818,7 +815,7 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     }
 }
 
-void App::debugDrawVoxel(){
+void App::drawSelectionPreview(){
 
 	addEntity(m_debugModel, "debugEntity");
 	ArticulatedModel::Part* part = m_debugModel->addPart("root");
@@ -871,19 +868,19 @@ void App::debugDrawVoxel(){
 void App::selectSphere(Point3 origin, Vector3 direction) {
 	m_selection.setMode(m_selectionMode);
     m_selection.commitSphere(origin, direction);
-    debugDrawVoxel();
+    drawSelectionPreview();
 }
 
 void App::selectCylinder(Point3int32 center, int radius) {
 	m_selection.setMode(m_selectionMode);
 	m_selection.commitCylinder(center, radius);
-    debugDrawVoxel();
+    drawSelectionPreview();
 }
 
 void App::selectBox(Point3int32 center, int radius) {
 	m_selection.setMode(m_selectionMode);
 	m_selection.commitBox(center, radius);
-    debugDrawVoxel();
+    drawSelectionPreview();
 }
 
 void App::elevateSelection(int delta) {
@@ -896,18 +893,18 @@ void App::elevateSelection(int delta) {
             }
         }
 
-        for(int i = 0; i < changeBuffer.size(); ++i) {
+        for (int i = 0; i < changeBuffer.size(); ++i) {
             Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(changeBuffer[i]));
             Point2int32 chunkCoords = Chunk::getChunkCoords(changeBuffer[i]);
-            if( !m_chunksToUpdate.contains(chunkCoords) ) {
+            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
                 m_chunksToUpdate.push(chunkCoords);
             }
             unsetVoxel(changeBuffer[i]);
         }
     }
     m_selection.clear();
-    debugDrawVoxel();
+    drawSelectionPreview();
 
 	SoundIndex i = elevate;
 	m_sounds[i]->play();
@@ -1286,14 +1283,14 @@ bool App::onEvent(const GEvent& event) {
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('t')) ){
 		if ( m_currentMenuPage == 0 ) {
-			changeMenuPage( numMenuPages - 1 );
+			changeMenuPage( numMenuPages - 1, m_menu[m_currentMenuPage]->frame() );
 		} else {
-			changeMenuPage( m_currentMenuPage - 1 );
+			changeMenuPage( m_currentMenuPage - 1, m_menu[m_currentMenuPage]->frame() );
 		}
     }
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('y')) ){ 
-		changeMenuPage((m_currentMenuPage + 1) % numMenuPages);
+		changeMenuPage((m_currentMenuPage + 1) % numMenuPages, m_menu[m_currentMenuPage]->frame() );
     }
 	
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ) { 
@@ -1301,7 +1298,7 @@ bool App::onEvent(const GEvent& event) {
         Point3int32 lastPos;
         m_crosshair.lookDirection = Vector3(0,-1,0);
         cameraIntersectVoxel(lastPos, hitPos);
-        updateSelect();
+        updateCrosshair();
         Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
 
         if(lastPos != hitPos){
@@ -1432,8 +1429,8 @@ void App::onUserInput(UserInput* ui) {
     
     super::onUserInput(ui);
 
-    if(!vrEnabled){
-        updateSelect();
+    if ( !vrEnabled ) {
+        updateCrosshair();
     }
     
 }
@@ -1447,7 +1444,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[voxTypeCount]), Vector3(0,0,0), menuText);
     }
     if(vrEnabled){
-      //  updateSelect();
+      //  updateCrosshair();
       //  Point3 head;
       //  Point3 hand1;
       //  Point3 hand2;
