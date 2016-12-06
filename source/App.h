@@ -151,6 +151,15 @@ protected:
 	/** Visualize the user's currently selected voxels. */
     void drawSelectionPreview();
 
+	// Intersecting scene and drawing crosshair
+    void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
+    Ray getVrCrosshairRay();
+    Ray getMouseCrosshairRay();
+    void updateCrosshair();
+    void updateMenuCrosshair();
+    void setCrosshair(Ray crosshairRay);
+    void drawCrosshair();
+
 public:
 
     App(const super::Settings& settings = super::Settings());
@@ -159,14 +168,6 @@ public:
     virtual void onUserInput(UserInput* ui) override;
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
-
-    void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
-    void updateCrosshair();
-    void updateMenuCrosshair();
-    Ray getVrCrosshairRay();
-    Ray getMouseCrosshairRay();
-    void setCrosshair(Ray crosshairRay);
-    void drawCrosshair();
     
 	// Main geometry update function
     void updateChunks();

@@ -47,8 +47,6 @@ int main(int argc, const char* argv[]) {
     return App(settings).run();
 }
 
-
-
 App::App(const AppBase::Settings& settings) : super(settings) {
 }
 
