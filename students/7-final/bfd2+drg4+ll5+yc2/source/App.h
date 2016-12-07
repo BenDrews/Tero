@@ -231,6 +231,5 @@ public:
 
 
     //added
-    void importMagicaVox(ParseVOX source);
     void importVoxFile();
 };

@@ -395,33 +395,27 @@ void App::importVoxFile(){
     BinaryInput voxInput(fileSource, G3D_LITTLE_ENDIAN);
     ParseVOX s;
     s.parse(voxInput);
-    importMagicaVox(s);
-}
-
-void App::importMagicaVox(ParseVOX source){
-
-    shared_ptr<UniversalMaterial> material(UniversalMaterial::create(Any::fromFile("data-files/texture/voxInput/voxInput.UniversalMaterial.Any")));
-	
     for (int i = 0; i< palSize ; i++){
       
         
        
-        TextOutput file1(format("data-files/texture/pal%d.UniversalMaterial.Any",i));
-        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",float(source.palette[i].r),float(source.palette[i].g),float(source.palette[i].b));
-        file1.commit();
-        TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypePointer+1));
-        file2.printf("{};");
-        file2.commit();
+       TextOutput file1(format("data-files/texture/pal%d.UniversalMaterial.Any",i));
+       file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",float(s.palette[i].r),float(s.palette[i].g),float(s.palette[i].b));
+       file1.commit();
+       TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypePointer+1));
+       file2.printf("{};");
+       file2.commit();
     }
 	
-    for (const ParseVOX::Voxel& voxel : source.voxel){
+    for (const ParseVOX::Voxel& voxel : s.voxel){
         Point3int32 pos = Point3int32(voxel.position.x,voxel.position.z,voxel.position.y);
         setVoxel(pos,voxel.index+voxTypePointer);
     }
 	
     voxTypeCount+=palSize;
-
 }
+
+
 
 void App::addColorMaterials() {
     
