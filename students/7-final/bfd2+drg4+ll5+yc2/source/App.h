@@ -18,13 +18,14 @@ public:
     Point3 position;
     Ray ray;
     bool buttonSelected = false;
+    int voxelIndex = 0;
     int buttonIndex = 0;
     int menuControllerIndex = 0;
 };
 
 typedef 
-    //VRApp
-    GApp
+    VRApp 
+    //GApp
     AppBase; 
 
 class App : public AppBase {
@@ -39,23 +40,34 @@ protected:
     const float voxelRes = 0.5f;
 	const int menuPageSize = 12;
 	int numMenuPages;
-    int voxTypeCount = 8;
     /** Number of naive colors in rainbow voxels */
     const int rainbowSize = 100;
-	
+
+    int voxTypeCount = 8;
+
+    int menuType = 0; // 0 is VoxelMenu 1 is TransformMenu
+
+
+    Array<String> m_transforms;
+
+    String currentTransform = "shockwave";
+
+
+	bool lastAnimFinished = false;
+
+    bool vrEnabled = true;
+
 	// Options
-	bool vrEnabled = false;
+
 	bool menuMode = false;
     bool forceIntersect = false;
 	/** Distance of intersection */
-    int m_intersectMode = 0;
+    int m_intersectMode = 1;
 	/** Active selection mode (0 = idle, 1 = regular, 2 = set union, 3 = set minus, 4 = set intersection */
 	int m_selectionMode = 1;
 	int m_currentMenuPage = 0;
 	/** Active voxel type */
     int m_voxelType = 0;
-
-	bool lastAnimFinished = false;
 
 	// Data structures
 	/** Maps type of voxel to Any files containing its specific properties */
@@ -82,6 +94,10 @@ protected:
     const shared_ptr<ArticulatedModel>& m_model = ArticulatedModel::createEmpty("voxelModel");
 
     const shared_ptr<ArticulatedModel>& m_handModel = ArticulatedModel::createEmpty("handModel");
+    shared_ptr<VisibleEntity> m_hand1;
+    shared_ptr<VisibleEntity> m_hand2;
+
+
 
 	/** Marks where the user is currently pointing */
     CrosshairObject m_crosshair;
@@ -103,6 +119,11 @@ protected:
     /** Camera manipulator */
     shared_ptr<FirstPersonManipulator> m_cameraManipulator;
 
+	// Menu functions
+	void makeMenuPageModels();
+	void makeMenuPageEntities();
+    void setMenuFrame();
+
 	// Initialization functions
     /** Called from onInit */
     void makeGUI();
@@ -110,6 +131,10 @@ protected:
 	void initializeMaterials();
 	void initializeSounds();
 	void initializeModel();
+
+    void initializeHands();
+    void updateHands(int index);
+
 	/** Generates voxel types that are solid colors. */
     void addColorMaterials();
 
@@ -119,9 +144,7 @@ protected:
 
 	// Menu functions
     void getMenuPositions();
-	void makeMenuPageModels();
-	void makeMenuPageEntities();
-	void changeMenuPage(int to, CFrame frame);
+	void changeMenuPage(int to);
 
 	// Manipulating the Chunk data structure
     int posToVox(Point3int32 pos);
@@ -182,6 +205,9 @@ public:
     void elevateSelection(int delta);
 
 	// Animations
+    void initializeTransforms();
+    void startCurrentTransform();
+	void endCurrentTransform();
 	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);

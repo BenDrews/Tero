@@ -13,20 +13,20 @@ int main(int argc, const char* argv[]) {
     }
 
     // NON-VR CODE //////////////////////
-    //GApp::Settings settings(argc, argv);
+    GApp::Settings settings(argc, argv);
     //////////////////////////////
     
     // VR CODE////////////////
 
 
    // VR CODE////////////////
-   VRApp::Settings settings(argc, argv);
-   settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-   VRApp::DebugMirrorMode::PRE_DISTORTION;
-   
-    settings.vr.disablePostEffectsIfTooSlow = true;
-    settings.renderer.deferredShading   = true;
-    settings.renderer.orderIndependentTransparency = true;
+	//VRApp::Settings settings(argc, argv);
+	//settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+	//VRApp::DebugMirrorMode::PRE_DISTORTION;
+	//
+	// settings.vr.disablePostEffectsIfTooSlow = true;
+	// settings.renderer.deferredShading   = true;
+	// settings.renderer.orderIndependentTransparency = true;
    ///////////////////////////
 
 
@@ -107,34 +107,41 @@ void App::onInit() {
 void App::updateMenuCrosshair(){
     Ray cameraRay;
     Ray empty;
-    //	  if (m_vrControllerArray.size() > m_crosshair.menuControllerIndex) {
+    //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
     //        cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
     //        cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
     //    }
     //    
     //    m_crosshair.buttonSelected = false;
-    //    for (int i = 0; i < m_menuButtons.length() && ! m_crosshair.buttonSelected; ++i) {
-    //        if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtons[i]) ).length() <= 0.3){
+    //    int numOptions = menuPageSize;
+	//	if(menuType == 1){
+	//		numOptions = m_transforms.size();
+	//	}
+    //    for(int i = 0; i < numOptions && ! m_crosshair.buttonSelected; ++i){
+    //        if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3){
     //             m_crosshair.buttonSelected = true;
+    //             m_crosshair.voxelIndex = i + menuPageSize*m_currentMenuPage;
     //             m_crosshair.buttonIndex = i;
     //        }    
     //    }
     //    
-    //    if (cameraRay.origin() != empty.origin()) {
+    //    if(cameraRay.origin() != empty.origin()){
     //         m_crosshair.lookDirection = cameraRay.direction();
     //         m_crosshair.position = cameraRay.origin();
     //         m_crosshair.ray = cameraRay;
     //         drawCrosshair();
     //    }
-
+	//
 }
+
 
 Ray App::getVrCrosshairRay() {
     Ray crosshairRay;
 
-	//if ( m_vrControllerArray.size() > 0 ) {
-	//    crosshairRay = m_vrControllerArray[0]->frame().lookRay();
-	//}
+   // if(m_vrControllerArray.size() > 0){
+   //     crosshairRay = m_vrControllerArray[0]->frame().lookRay();
+   // }
+   //
 
     return crosshairRay;
 }
@@ -156,31 +163,11 @@ void App::setCrosshair(Ray crosshairRay) {
 }
 
 void App::updateCrosshair() {
-    Ray crosshairRay;
     Ray empty;
+    Ray crosshairRay;
 
     if ( menuMode ) {
-        if ( vrEnabled ) {
-            //if (m_vrControllerArray.size() > m_crosshair.menuControllerIndex) {
-            //    cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
-            //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
-            //}
-            //
-            // m_crosshair.buttonSelected = false;
-            //for (int i = 0; i < m_menuButtonPositions.length() && ! m_crosshair.buttonSelected; ++i) {
-            //    if (( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3) {
-            //         m_crosshair.buttonSelected = true;
-            //         m_crosshair.buttonIndex = i;
-            //    }    
-            //}
-            //
-            //if (cameraRay.origin() != empty.origin()) {
-            //     m_crosshair.lookDirection = cameraRay.direction();
-            //     m_crosshair.position = cameraRay.origin();
-            //     m_crosshair.ray = cameraRay;
-            //    drawCrosshair();
-            //}
-        }
+
         updateMenuCrosshair();
     
     } else {
@@ -201,7 +188,7 @@ void App::drawCrosshair() {
 
     if (menuMode) {
         if (m_crosshair.buttonSelected) {
-            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtonPositions[m_crosshair.buttonIndex]), 0.3), 0.0f, Color3::white());
+            debugDraw(Sphere(menuFrame.pointToWorldSpace(m_menuButtonPositions[m_crosshair.buttonIndex]), 0.25), 0.0f, Color3::white());
         }
     } else {
 
@@ -255,8 +242,28 @@ void App::initializeScene() {
 	getMenuPositions();
     makeMenuPageModels();
 	makeMenuPageEntities();
+
+    //if(vrEnabled){
+    initializeHands();
+    initializeTransforms();
    
+  
     redrawWorld();
+}
+
+void App::initializeHands(){
+  updateHands(0);
+
+}
+
+void App::updateHands(int index){
+    m_hand1 = addEntity(makeVoxelModel("handModel1", index, 0.1f), "hand1", true);
+    m_hand2 = addEntity(makeVoxelModel("handModel2", index, 0.1f), "hand2", true);
+}
+
+void App::initializeTransforms(){
+    m_transforms.append("crater", "shockwave", "mountain", "Voxel Orbit", "elevate");
+
 }
 
 
@@ -334,13 +341,25 @@ void App::makeMenuPageEntities() {
 
 }
 
-void App::changeMenuPage(int to, CFrame frame) {
+void App::changeMenuPage(int to) {
 	if (menuMode) {
 		m_menu[m_currentMenuPage]->setVisible(false);
 		m_currentMenuPage = to;
 		m_menu[m_currentMenuPage]->setVisible(true);
-		m_menu[m_currentMenuPage]->setFrame(frame);
+        m_menu[m_currentMenuPage]->setFrame(menuFrame);
+		//setMenuFrame();
+
 	}
+}
+
+void App::setMenuFrame(){
+    //float yaw, pitch, roll;
+    //m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
+    //Point3 translation = m_vrHead->frame().translation;
+    //menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
+	//menuFrame = m_vrHead->frame();
+    //m_menu[m_currentMenuPage]->setFrame(menuFrame);
+
 }
 
 const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int type, float size) {
@@ -997,6 +1016,34 @@ void App::makeCrater(Point3int32 center, int radius) {
 
 }
 
+void App::startCurrentTransform(){
+    Point3int32 lastPos, hitPos;
+    cameraIntersectVoxel(lastPos, hitPos);
+    if(currentTransform == "shockwave"){
+        Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
+        makeShockWave(hitPos, direction);
+    }else if (currentTransform == "voxel orbit"){
+
+	}else{
+		m_currentMark = hitPos;
+    }
+
+}
+
+void App::endCurrentTransform(){
+    Point3int32 lastPos, hitPos;
+    cameraIntersectVoxel(lastPos, hitPos);
+    if(currentTransform == "mountain"){
+		makeMountain(m_currentMark, hitPos.y - m_currentMark.y);
+    }else if (currentTransform == "elevate"){
+		elevateSelection(hitPos.y - m_currentMark.y);
+	}else if (currentTransform == "crater"){
+		makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
+
+	}
+
+}
+
 void App::makeShockWave(Point3 origin, Vector3 direction) {
     debugPrintf("SHOCKWAVE START\n");
     std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& entities, Table<Point3int32, SimTime>& timeAdded) {
@@ -1017,7 +1064,7 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
 
         int i = 0;
         int numVoxels = 1000;
-        int shockWaveSize = 4; //multiple of 2
+        int shockWaveSize = 6; //multiple of 2
 		for (RayGridIterator it(shockWaveRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid() && i < numVoxels; ++it) {
 
 
@@ -1025,7 +1072,10 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
             Point3int32 centerCoord = voxCoord;
             voxCoord.y += 1;
             voxCoord.x -= shockWaveSize/2;
+
+            // These for loops will iterate over a radius around our voxel
             for(int j = 0; j <= shockWaveSize; ++j){
+
                 voxCoord.x += 1;
                 voxCoord.z = centerCoord.z - shockWaveSize/2;
                 for(int k = 0; k <= shockWaveSize; ++k){
@@ -1036,6 +1086,8 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
                         SimTime timePassed;
                         String name = format("animatedvox%d,%d,%d", voxCoord.x, voxCoord.y, voxCoord.z);
 
+                        //We will check to see if our voxels are already in our entity list, if not we add them and 
+                        //note the time they were added.
                         if ( !entities.containsKey(voxCoord) ) {
                             shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( voxCoord ) );    
                             ent = addEntity(model, name, true);
@@ -1049,8 +1101,10 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
                         }
 
                     
+                         // The rise that we are going to add to these entities is depenedent on the time added. They should
+                         // go up and down similar to a sine curve.
 			        	float rise;
-                        float totalTime = 0.50f;
+                        float totalTime = 0.25f;
                         float halfTime = totalTime/2.0f;
                         float maxRise = 0.7f;
                         float currentTime = st;
@@ -1278,14 +1332,14 @@ bool App::onEvent(const GEvent& event) {
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('t')) ){
 		if ( m_currentMenuPage == 0 ) {
-			changeMenuPage( numMenuPages - 1, m_menu[m_currentMenuPage]->frame() );
+			changeMenuPage( numMenuPages - 1);
 		} else {
-			changeMenuPage( m_currentMenuPage - 1, m_menu[m_currentMenuPage]->frame() );
+			changeMenuPage( m_currentMenuPage - 1);
 		}
     }
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('y')) ){ 
-		changeMenuPage((m_currentMenuPage + 1) % numMenuPages, m_menu[m_currentMenuPage]->frame() );
+		changeMenuPage((m_currentMenuPage + 1) % numMenuPages);
     }
 	
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ) { 
@@ -1400,20 +1454,6 @@ bool App::onEvent(const GEvent& event) {
         makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
 	}
 
-    //else if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
-    //    m_firstPersonMode = ! m_firstPersonMode;
-    //    const shared_ptr<Camera>& camera = m_firstPersonMode ? scene()->defaultCamera() : debugCamera();
-    //    setActiveCamera(camera);
-    //}
-    //
-    //else if (event.key.keysym.sym == GKey('w')){
-    //    if((event.type == GEventType::KEY_DOWN)){
-    //        player.desiredOS = Vector3(player.speed, 0, 0);
-    //    }else{
-    //        player.desiredOS = Vector3(0,0,0);
-    //    }
-    //}
-
     // Handle super-class events
 
     return false;
@@ -1435,124 +1475,173 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
     updateChunks();
     if(menuMode){
         CFrame frame = menuFrame;
+        if(menuType == 1){
+        GuiText menuText = format("Select Transform Type");
+        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
+        for(int i = 0; i < m_transforms.size(); ++i){
+            menuText = m_transforms[i];
+            debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[i]), Vector3(0,0,0), menuText);
+
+        }
+        
+        }else{
 		GuiText menuText = format("Select Voxel Type (Pg. %d/%d)", m_currentMenuPage + 1, numMenuPages); //TODO
-        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[voxTypeCount]), Vector3(0,0,0), menuText);
+        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
+        }
     }
     if(vrEnabled){
-      //  updateCrosshair();
-      //  Point3 head;
-      //  Point3 hand1;
-      //  Point3 hand2;
-      //  if(m_vrControllerArray.size() > 0){
-      //      hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
-      //      debugDraw(Sphere(hand1, 0.1), 0.0f, Color3::blue());
-      //  }
-      //  if(m_vrControllerArray.size() > 1){
-      //      hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
-      //      debugDraw(Sphere(hand2, 0.1), 0.0f, Color3::orange());
-      //  }
-      //  
-      //  
-      //  
-      //  if(menuMode){
-      //     CFrame frame = menuFrame;
-      //     //m_menu->setVisible(true);
-      //  }
-      //  
-      //  
-      //  
-      //  //VR CONTROLLER INPUT
-      //  //BEGIN_PROFILER_EVENT("VRApp::sampleTrackingData");
-      //  
-      //  vr::VREvent_t vrEvent;
-      //  while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
-      //      debugPrintf("Device %d sent button %d press\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
-      //      switch (vrEvent.eventType) {
-      //      // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
-      //      // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
-      //      case vr::VREvent_ButtonPress:
-      //          if(!menuMode){
-      //              Point3int32 lastPos;
-      //              Point3int32 hitPos;
-      //              switch(vrEvent.data.controller.button){
-      //              
-      //              //trigger
-      //              case 33:
-      //                 
-      //                  cameraIntersectVoxel(lastPos, hitPos);
-      //                  debugPrintf("AddVoxel %d %d %d\n", lastPos.x, lastPos.y, lastPos.z);
-      //  
-      //                  addVoxel(lastPos, m_voxelType);
-      //                  break;
-      //              
-      //              //Grip
-      //              case 2:
-      //                
-      //                  cameraIntersectVoxel(lastPos, hitPos);
-      //                  removeVoxel(hitPos);
-      //                  break;
-      //              
-      //              //Touchpad Click
-      //              case 32:
-      //                
-      //                  cameraIntersectVoxel(lastPos, hitPos);
-      //                  m_debugCamera->setFrame(CFrame(Util::voxelToWorldSpace(lastPos)));
-      //                  m_debugController->setFrame(m_debugCamera->frame());
-      //                  updateSelect();
-      //                  
-      //                  break;
-      //              
-      //              default:
-      //                  debugPrintf("INPUT NOT RECOGNIZED\n");
-      //                  break;
-      //              }
-      //             
-      //    
-      //          }else{
-      //              switch(vrEvent.data.controller.button){
-      //              
-      //              //trigger
-      //              case 33:
-      //                  if(m_crosshair.buttonSelected){
-      //                      m_voxelType = m_crosshair.buttonIndex;
-      //                  
-      //                  }
-      //                  break;
-      //             
-      //              
-      //              default:
-      //                  debugPrintf("INPUT NOT RECOGNIZED\n");
-      //                  break;
-      //              }
-      //          }
-      //  
-      //         if(vrEvent.data.controller.button == 1){
-      //              menuMode = !menuMode;
-      //              debugPrintf("MENU %d\n", menuMode);
-      //              if(menuMode){
-      //                  float yaw, pitch, roll;
-      //                  m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
-      //                  Point3 translation = m_vrHead->frame().translation;
-      //                  menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
-      //                  m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
-      //                  m_menu->setFrame(menuFrame);
-      //              }
-      //              m_menu->setVisible(menuMode);
-      //         }
-      //  
-      //         break;
-      //  
-      //      case vr::VREvent_ButtonUnpress:
-      //          debugPrintf("Device %d sent button %d unpress\n", vrEvent.trackedDeviceIndex, vrEvent.data.controller.button);
-      //          break;
-      //  
-      //      default:
-      //          // Ignore event
-      //          ;
-      //      }
-      //  }
-      //  
-      //  //END_PROFILER_EVENT();
+        updateCrosshair();
+        Point3 head;
+        Point3 hand1;
+        Point3 hand2;
+        //if(m_vrControllerArray.size() > 0 && notNull(m_hand1)){
+        //    //hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
+        //    m_hand1->setFrame(m_vrControllerArray[0]->frame());
+        //}
+        //if(m_vrControllerArray.size() > 1 && notNull(m_hand2)){
+        //   // hand2 = m_vrControllerArray[1]->frame().pointToWorldSpace(Point3(0,0,0));
+        //    m_hand2->setFrame(m_vrControllerArray[1]->frame());
+        //}
+		//
+		//
+		////CurrentTransform indicator
+		//CFrame player = CoordinateFrame(m_vrHead->frame().translation);
+		//GuiText text = currentTransform;
+		//debugDrawLabel(player.pointToWorldSpace(Point3(0,-1,0)), Vector3(0,0,0), text);
+        //
+        //
+        //
+        //if(menuMode){
+        //   CFrame frame = menuFrame;
+        //   //m_menu->setVisible(true);
+        //}
+        //
+        //
+        //
+        ////VR CONTROLLER INPUT
+        //
+        //vr::VREvent_t vrEvent;
+        //while (m_hmd->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
+		//	bool mainHand = (vrEvent.trackedDeviceIndex - 1) % 2 == 0;
+		//	switch (vrEvent.eventType) {
+        //    // Device 0 is the HMD (probably). Device 1 and 2 are the controllers (probably) on Vive.
+        //    // Button 32 = k_EButton_Axis0 is the large DPad/touch button on the Vive.
+        //    case vr::VREvent_ButtonPress:
+        //        if(!menuMode){
+        //            Point3int32 lastPos;
+        //            Point3int32 hitPos;
+        //            switch(vrEvent.data.controller.button){
+        //            
+        //            //trigger
+        //            case 33:
+        //                cameraIntersectVoxel(lastPos, hitPos);
+        //                if(mainHand){        
+        //                    addVoxel(lastPos, m_voxelType);
+        //                }else{
+        //                    removeVoxel(hitPos);
+        //                }
+        //                break;
+        //            
+        //            //Grip
+        //            case 2:
+        //                if(mainHand){
+		//					cameraIntersectVoxel(lastPos, hitPos);
+		//					m_selection.setMark(hitPos);               
+		//
+		//				}else{
+		//					startCurrentTransform();
+		//				}
+        //                break;
+        //            
+        //            //Touchpad Click
+        //            case 32:
+        //              
+        //                cameraIntersectVoxel(lastPos, hitPos);
+        //                m_debugCamera->setFrame(CFrame(Util::voxelToWorldSpace(lastPos)));
+        //                m_debugController->setFrame(m_debugCamera->frame());
+        //                updateCrosshair();
+        //                
+        //                break;
+        //            
+        //            default:
+        //                debugPrintf("INPUT NOT RECOGNIZED\n");
+        //                break;
+        //            }
+        //           
+        //  
+        //        }else{
+        //            switch(vrEvent.data.controller.button){
+        //            
+        //            //trigger
+        //            case 33:
+        //                if(m_crosshair.buttonSelected){
+        //                    if(menuType == 0){
+        //                        m_voxelType = m_crosshair.voxelIndex;
+        //                        updateHands(m_crosshair.voxelIndex);
+        //                    }else{
+        //                        currentTransform = m_transforms[m_crosshair.buttonIndex];
+        //                    }
+        //                  
+        //                
+        //                }
+        //                break;
+        //            case 2:
+        //                switch((vrEvent.trackedDeviceIndex - 1) % 2){
+        //                case 1:
+        //                    if ( m_currentMenuPage == 0 ) {
+		//                    	changeMenuPage( numMenuPages - 1 );
+		//                    } else {
+		//                    	changeMenuPage( m_currentMenuPage - 1 );
+		//                    }
+        //                    break;
+        //                default:
+        //                    changeMenuPage((m_currentMenuPage + 1) % numMenuPages);
+        //                    break;
+        //                
+        //                }
+        //            
+        //            default:
+        //                debugPrintf("INPUT NOT RECOGNIZED\n");
+        //                break;
+        //            }
+        //        }
+        //
+        //       if(vrEvent.data.controller.button == 1){
+        //            menuType = (vrEvent.trackedDeviceIndex - 1) % 2;
+        //            menuMode = !menuMode;
+        //            if(menuMode){
+        //                m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
+        //                setMenuFrame();
+		//
+        //            }
+        //           if(menuType == 0){ 
+        //                m_menu[m_currentMenuPage]->setVisible(menuMode);
+        //           }
+        //       }
+        //
+        //       break;
+        //
+        //    case vr::VREvent_ButtonUnpress:
+		//		if(!menuMode){
+		//			switch(vrEvent.data.controller.button){
+		//			//grip	
+		//			case 2:
+		//				if(mainHand){
+		//					selectSphere(m_crosshair.position, m_crosshair.lookDirection);
+		//				}else{
+		//					endCurrentTransform();
+		//				}
+		//			}
+		//		}
+		//		
+		//		break;
+        //
+        //    default:
+        //        // Ignore event
+        //        ;
+        //    }
+        //}
+        
         
         
         
