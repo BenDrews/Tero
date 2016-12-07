@@ -229,11 +229,12 @@ void App::initializeScene() {
     addEntity(m_model, "voxel");
 
     // Initialize ground
-    for (Point3int32 P(-25, -25, -50); P.x < 25; ++P.x) {
-        for (P.z = -25; P.z < 25; ++P.z) {
-            for (P.y = -50; P.y < 0; ++P.y) {
-				VoxelType t = grass;
-                setVoxel(P, t);
+    Noise& rng = Noise::common();
+    for(Point3int32 P(-100, 0, 0); P.x < 100; ++P.x) {
+        for(P.z = -100; P.z < 100; ++P.z) {
+            int height = (rng.sample(500 * P.x, 0, 500 * P.z) / 5000);
+            for(P.y = -10; P.y < height; ++P.y) {
+                setVoxel(P, grass);
             }
         }
     }
@@ -1233,15 +1234,32 @@ void App::makeMountain(Point3int32 center, int height) {
 
 void App::pullVoxelOrbit(Point3int32 origin) {
 
-    Array<Point3int32> queue;
+    //Build a buffer of voxels aroudn the origin
+    const int maxOrbitSize = 16;
+    Array<Point3int32> queue, buffer;
     queue.push(origin);
-    while(queue.size()) {
-        
+    while(buffer.size() < maxOrbitSize) {
+        Point3int32 current = queue.first();
+        queue.fastRemove(0);
+        for(Point3int32 P(-1, -1, -1); P.x <= 1; ++P.x) {
+            for(P.y = -1; P.y <= 1; ++P.y) {
+                for(P.z = -1; P.z <= 1; ++P.z) {
+                    if(voxIsSet(current + P) && buffer.findIndex(current + P) == -1) {
+                        buffer.push(current + P);
+                        queue.push(origin);
+                    }
+                }
+            }
+        }
     }
+
+
 
     std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
         
     };
+
+
 }
 
 
@@ -1458,7 +1476,6 @@ bool App::onEvent(const GEvent& event) {
 
     return false;
 }
-
 
 void App::onUserInput(UserInput* ui) {
     
