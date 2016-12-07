@@ -1234,7 +1234,7 @@ void App::makeMountain(Point3int32 center, int height) {
 
 void App::pullVoxelOrbit(Point3int32 origin) {
 
-    //Build a buffer of voxels aroudn the origin
+    //Build a buffer of voxels around the origin
     const int maxOrbitSize = 16;
     Array<Point3int32> queue, buffer;
     queue.push(origin);
@@ -1246,13 +1246,18 @@ void App::pullVoxelOrbit(Point3int32 origin) {
                 for(P.z = -1; P.z <= 1; ++P.z) {
                     if(voxIsSet(current + P) && buffer.findIndex(current + P) == -1) {
                         buffer.push(current + P);
+                        unsetVoxel(current + P);
+                        if(m_chunksToUpdate.findIndex(Chunk::getChunkCoords(current + P)) == -1) {
+                            m_chunksToUpdate.push(Chunk::getChunkCoords(current + P));
+                        }
                         queue.push(origin);
                     }
                 }
             }
         }
-    }
 
+
+    }
 
 
     std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
