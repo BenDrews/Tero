@@ -43,7 +43,12 @@ protected:
     /** Number of naive colors in rainbow voxels */
     const int rainbowSize = 100;
 
-    int voxTypeCount = 8;
+    const int palSize = 256;
+
+    int voxTypeCount = voxTypePointer;
+
+    //use this one for the number of voxTypes
+    const int voxTypePointer = 8;
 
     int menuType = 0; // 0 is VoxelMenu 1 is TransformMenu
 
@@ -223,4 +228,9 @@ public:
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
     void pullVoxelOrbit(Point3int32 origin);
+
+
+    //added
+    void importMagicaVox(ParseVOX source);
+    void importVoxFile();
 };

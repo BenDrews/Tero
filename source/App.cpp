@@ -215,10 +215,13 @@ void App::drawCrosshair() {
 }
 
 void App::initializeScene() {
-	
+	 //this is to set the number of types of voxels to only the manually added ones
+	voxTypeCount = voxTypePointer;
     for (int i = 0; i < voxTypeCount; ++i) {
         m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
+
+    importVoxFile();
 
 	initializeMaterials();
 
@@ -386,6 +389,39 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
     return model;
 }
 
+void App::importVoxFile(){
+    //filesource seriously needs some help
+    String fileSource = "data-files/voxelImport/monument/monu1.vox";
+    BinaryInput voxInput(fileSource, G3D_LITTLE_ENDIAN);
+    ParseVOX s;
+    s.parse(voxInput);
+    importMagicaVox(s);
+}
+
+void App::importMagicaVox(ParseVOX source){
+
+    shared_ptr<UniversalMaterial> material(UniversalMaterial::create(Any::fromFile("data-files/texture/voxInput/voxInput.UniversalMaterial.Any")));
+	
+    for (int i = 0; i< palSize ; i++){
+      
+        
+       
+        TextOutput file1(format("data-files/texture/pal%d.UniversalMaterial.Any",i));
+        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",float(source.palette[i].r),float(source.palette[i].g),float(source.palette[i].b));
+        file1.commit();
+        TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypePointer+1));
+        file2.printf("{};");
+        file2.commit();
+    }
+	
+    for (const ParseVOX::Voxel& voxel : source.voxel){
+        Point3int32 pos = Point3int32(voxel.position.x,voxel.position.z,voxel.position.y);
+        setVoxel(pos,voxel.index+voxTypePointer);
+    }
+	
+    voxTypeCount+=palSize;
+
+}
 
 void App::addColorMaterials() {
     
@@ -426,6 +462,10 @@ void App::initializeMaterials() {
         UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
     
 	addColorMaterials();
+    for (int i = 0; i< palSize ; i++){
+        
+        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/pal%d.UniversalMaterial.Any",i))));
+    }
 	for (int i = 0; i < rainbowSize; ++i) {    
         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/color%d.UniversalMaterial.Any",i+1))));
     }
