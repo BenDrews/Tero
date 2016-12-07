@@ -2,7 +2,7 @@
 // Load this with the Material::Specification(const Any&) constructor or
 // #include() inside another Any file.
 UniversalMaterial::Specification {
-    lambertian = Color3(0.15, 0.15, 0.15);
+    lambertian = Color3(0.15);
     transmissive = Color3(0.9, 0.9, 0.9);
     glossy = Color4(Color3(0.01),0.0);
     etaReflect = 1;
