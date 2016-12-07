@@ -40,23 +40,27 @@ Specification
     - Set intersection: Mode that allows users to select voxels by performing a set intersection with two previous selections.
     - Set minus: Mode that allows users to remove from their current selection.
 
-5. Virtual Reality User Interface
+5. Intersection: User can freely choose the voxel to intersect.
+    - Pressing 'f' can switch mode between intersecting the first block from user's view and intersecting based on the intersect distance.
+    - Mouse scrolling changes the intersect distance, it affects the intersection method when it does not encounter a block or when it is in the other mode. 
+
+6. Virtual Reality User Interface
     - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
 
-6. Non-VR User Interface
+7. Non-VR User Interface
     - Use G3D debug camera for head position
     - User navigates the world by moving the mouse (the camera movements are controlled by the mouse)
     - User places or destroys voxels by left clicking the mouse
     - When you press 'm', a menu with all of the voxel types pops up in the scene that the user can interact with using the mouse
 
-7. Rendering
+8. Rendering
     - Use G3D built-in renderer: There will be shadows but no indirect lighting
 
-8. Audio
+9. Audio
     - Sound effects for placing voxels, removing voxels, transforms, and animations
 
-9. User can import MagicaVoxel objects as templates
-
+10. User can import MagicaVoxel objects as templates
+    - One model at a time.
 
 **Program evaluation metric:**
 
@@ -87,6 +91,8 @@ Design
  setVoxel             | Finds the given voxel's chunk and sets the voxel type given at the position given
  addVoxelModelToScene | Adds a VisualEntity to the scene with the voxel ArticulatedModel
  addFace              | Adds one face of a voxel given the center of the voxel and a normal
+createVoxelGeometry|
+createNaiveVoxelGeometry|
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates relevant data structures
  unsetVoxel           | Finds the given voxel's chunk and removes the voxel from that chunk
  voxelToWorldSpace / worldToVoxelSpace | Translates between voxel positions and world space positions
@@ -95,6 +101,8 @@ Design
  redrawChunks         | Redraws all chunks that have been modified, which are stored in `m_chunksToRedraw`
  redrawWorld          | Redraws all chunks in the scene
  checkBoundaryAdd     | When removing a voxel, checks whether the voxel is in the boundary between two chunks. If it is, pushes neighboring chunks to `m_chunksToRedraw`
+importVoxFile         | Given a file source, imports a MagicaVox file into the scene, adds 256 voxel type at the end of the current voxel types.
+addColorMaterials     | Given a number, create that number of different colors that are spread out evenly.
 
 
 **Major functions of App: Applying transforms to voxels**
@@ -109,7 +117,7 @@ Design
  ---------------------|------------------------------------------------------------
  cameraIntersectVoxel | Finds the voxel intersection by ray marching with the ray given by the crosshair object. Returns the voxel and adjacent voxel intersected.
  updateSelect         | Updates the ray of the crosshair object. This is different depending on whether or not vr is enabled
- drawSelection        | Draws debugSquares in the selected voxel, or a debug sphere over the selected menu item
+ drawSelectionPreview        | Draws debugSquares in the selected voxel, or a debug sphere over the selected menu item
 
 We use one ArticulatedModel, `m_model`, in the scene to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into regions called chunks so that when a voxel is deleted in one chunk, only the voxels in that chunk have to be redrawn instead of all of the voxels in the scene. `m_model` has separate geometries and meshes per chunk and material. So even if a grass voxel and a stone voxel are in the same chunk, their vertex and index arrays are stored in different geometries and meshes because they have different materials.
 
@@ -208,7 +216,7 @@ Schedule
 
 - Add importing worlds feature from midterm project (Youle)
 
-- Add option to save model (Youle)
+- Add option to save model (Youle) (NAH)
 
 - Orbital
 
