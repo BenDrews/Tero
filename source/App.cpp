@@ -559,17 +559,17 @@ void App::checkBoundaryAdd(Point3int32 pos){
     Point2int32 zPlus   = Chunk::getChunkCoords(pos + Point3int32(0,0,1));
     Point2int32 zMinus  = Chunk::getChunkCoords(pos + Point3int32(0,0,-1));
 
-    if ( (xPlus != current) && (!m_chunksToUpdate.contains(xPlus)) ) {
-        m_chunksToUpdate.push(xPlus);
+    if ( (xPlus != current) ) {
+        markChunkDirty(pos + Point3int32(1,0,0));
     } 
-    if ( (xMinus != current) && (!m_chunksToUpdate.contains(xMinus)) ) {
-        m_chunksToUpdate.push(xMinus);
+    if ( (xMinus != current) ) {
+        markChunkDirty(pos+ Point3int32(-1,0,0));
     }
-    if ( (zPlus != current) && (!m_chunksToUpdate.contains(zPlus)) ) {
-        m_chunksToUpdate.push(zPlus);
+    if ( (zPlus != current) ) {
+        markChunkDirty(pos + Point3int32(0,0,1));
     } 
-    if ( (zMinus != current) && (!m_chunksToUpdate.contains(zMinus)) ) {
-        m_chunksToUpdate.push(zMinus);
+    if ( (zMinus != current) ) {
+        markChunkDirty(pos+ Point3int32(0,0,-1));
     }
 }
 
@@ -601,6 +601,16 @@ void App::unsetVoxel(Point3int32 pos) {
 	if ( voxIsSet(pos) ) {
 		chunk->remove(pos);
 	}
+    markChunkDirty(pos);
+    checkBoundaryAdd(pos);
+}
+
+/** Marks a chunk for updating */
+void App::markChunkDirty(Point3int32 pos) {
+    Point2int32 chunkPos = Chunk::getChunkCoords(pos);
+    if(m_chunksToUpdate.findIndex(chunkPos) == -1) {
+        m_chunksToUpdate.push(chunkPos);
+    }
 }
 
 
@@ -660,11 +670,6 @@ void App::createChunkGeometry(Point2int32 chunkPos) {
     for (int i = 0; i < voxTypeCount; ++i) { 
         cleanChunkGeometry(chunkPos, i);
     }
-
-    int index = m_chunksToUpdate.findIndex(chunkPos);
-    if (index > -1) {
-        m_chunksToUpdate.remove(index);
-    }
     scene()->entity("voxel")->markChanged();
 }
 
@@ -673,6 +678,7 @@ void App::updateChunks() {
         clearChunkGeometry(m_chunksToUpdate[i]);
         createChunkGeometry(m_chunksToUpdate[i]);
     }
+    m_chunksToUpdate.fastClear();
 }
 
 //Redraw the geometry for the entire voxel world.
@@ -822,13 +828,6 @@ void App::cleanChunkGeometry(Point2int32 chunkCoords, int type) {
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
 
-	Point2int32 chunkCoords = Chunk::getChunkCoords(input);
-    if ( !m_chunksToUpdate.contains(chunkCoords) ) {
-        m_chunksToUpdate.push(chunkCoords);
-    }
-
-    checkBoundaryAdd(input);
-
 	SoundIndex i = remove;
 	m_sounds[i]->play();
 }
@@ -945,10 +944,7 @@ void App::elevateSelection(int delta) {
         for (int i = 0; i < changeBuffer.size(); ++i) {
             Point3int32 targetPos = changeBuffer[i] + Point3int32(0, delta, 0);
             setVoxel(targetPos, posToVox(changeBuffer[i]));
-            Point2int32 chunkCoords = Chunk::getChunkCoords(changeBuffer[i]);
-            if ( !m_chunksToUpdate.contains(chunkCoords) ) {
-                m_chunksToUpdate.push(chunkCoords);
-            }
+         
             unsetVoxel(changeBuffer[i]);
         }
     }
@@ -1223,10 +1219,7 @@ void App::makeMountain(Point3int32 center, int height) {
 						if ( sqrt((pos.x - center.x) * (pos.x - center.x) + (pos.z - center.z) * (pos.z - center.z)) <= currentRadius && !voxIsSet(pos) ) {
 							setVoxel(pos, m_voxelType);
 							
-							Point2int32 chunkCoords = Chunk::getChunkCoords(pos);
-							if( !m_chunksToUpdate.contains(chunkCoords) ) {
-							    m_chunksToUpdate.push(chunkCoords);
-							}
+							markChunkDirty(pos);
 						}
 					
 					}
@@ -1266,39 +1259,171 @@ void App::makeMountain(Point3int32 center, int height) {
 
 }
 
+/** Method to pull voxels away from the world and make them orbit the player */
 void App::pullVoxelOrbit(Point3int32 origin) {
 
+    m_hasOrbit = true;
+
+    Table<Point3int32, shared_ptr<VisibleEntity>> entities;
+    
     //Build a buffer of voxels around the origin
-    const int maxOrbitSize = 16;
+    const int maxOrbitSize = 12;
     Array<Point3int32> queue, buffer;
     queue.push(origin);
-    while(buffer.size() < maxOrbitSize) {
+    while(buffer.size() < maxOrbitSize && queue.size() > 0) {
         Point3int32 current = queue.first();
         queue.fastRemove(0);
         for(Point3int32 P(-1, -1, -1); P.x <= 1; ++P.x) {
             for(P.y = -1; P.y <= 1; ++P.y) {
                 for(P.z = -1; P.z <= 1; ++P.z) {
                     if(voxIsSet(current + P) && buffer.findIndex(current + P) == -1) {
+
+                        //Add the animated entity to the scene
+                        String name = format("orbitingVox%d", buffer.size());
+                        shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( current + P ) );    
+                        shared_ptr<VisibleEntity> ent = addEntity(model, name, true);
+                        entities.set(Point3int32(buffer.size(), 0, 0), ent);
+
+                        //Put the entity at the correct position
+                        Point3 worldPos = Util::voxelToWorldSpace(current + P);
+                        CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y, worldPos.z);
+                        ent->setFrame(frame);
+
+                        //Remove the voxel from the world
                         buffer.push(current + P);
                         unsetVoxel(current + P);
-                        if(m_chunksToUpdate.findIndex(Chunk::getChunkCoords(current + P)) == -1) {
-                            m_chunksToUpdate.push(Chunk::getChunkCoords(current + P));
-                        }
                         queue.push(origin);
                     }
                 }
             }
         }
-
-
     }
 
 
-    std::function<void (SimTime, SimTime, Table<String, float>)> lambda = [&](SimTime sdt, SimTime st, Table<String, float> args) {
-        
+    std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>& activeVoxels, Table<Point3int32, SimTime>& timeAdded) {
+
+        //Constant to vary how fast the entities are picked up.
+        const float startDelay = 0.5f;
+
+        //Constant to vary how fast the entities should travel.
+        const float speed = 8.0f;
+
+        //Constant to vary how large the initial offset is.
+        const float offsetSize = 5.0f;
+
+        //Constant to vary the orbit radius.
+        const float orbitRadius = 2.0f;
+
+        //Get arguments.
+        Vector3 normal(args->get("normalX"), args->get("normalY"), args->get("normalZ"));
+        int numSatellites = args->get("numSatellites");
+        if(args->containsKey("fling")) {
+            Vector3 flingDir(args->get("flingX"), args->get("flingY"), args->get("flingZ"));
+            Point3 flingTarget = flingDir + activeCamera()->frame().translation;
+            int satToFling = -1;
+            Point3 closestSatPos;
+
+            //Choose which satellite to fling
+            for(Table<Point3int32, shared_ptr<VisibleEntity>>::Iterator it = activeVoxels.begin(); it.hasMore(); ++it) {
+                if(satToFling == -1) {
+                    satToFling = it->key.x;
+                    closestSatPos = it->value->frame().translation;
+                } else {
+                    Point3 challengerPos = it->value->frame().translation;
+                    if((challengerPos - flingTarget).magnitude() < (closestSatPos - flingTarget).magnitude()) {
+                        satToFling = it->key.x;
+                        closestSatPos = challengerPos;
+                    }
+                }
+            }
+
+            args->remove("fling");
+            args->remove("flingX");
+            args->remove("flingY");
+            args->remove("flingZ");
+
+            args->set(format("fling%dX", satToFling), flingDir.x);
+            args->set(format("fling%dY", satToFling), flingDir.y);
+            args->set(format("fling%dZ", satToFling), flingDir.z);
+            numSatellites--;
+            args->set("numSatellites", numSatellites);
+        }
+
+        //Loop over all satellites.
+        for(Table<Point3int32, shared_ptr<VisibleEntity>>::Iterator it = activeVoxels.begin(); it.hasMore(); ++it) {
+            int satNum = it->key.x;
+
+            if(args->containsKey(format("fling%dX", satNum))) {
+                
+                Vector3 flingDir(args->get(format("fling%dX", satNum)), args->get(format("fling%dY", satNum)), args->get(format("fling%dZ", satNum)));
+                Point3 start = it->value->frame().translation;
+                if((start - activeCamera()->frame().translation).magnitude() > 200.0f) {
+                    removeEntity(it->value);
+                    activeVoxels.remove(it->key);
+                } else {
+                    it->value->setFrame(CoordinateFrame(start + flingDir));
+                }
+            } else {
+
+                //Check to make sure the entity has started moving.
+                if(st > sqrt(satNum) * startDelay ) {
+
+                    //Setup the coordinate frame to get the offset vector.
+                    CoordinateFrame normalFrame;
+                    normalFrame.lookAt(normal);
+                    Vector3 offset(offsetSize * cos(2 * PI / numSatellites * satNum), 0.0f, offsetSize * sin(2 * PI / numSatellites * satNum));
+                    offset = normalFrame.pointToWorldSpace(offset);
+
+                    //Setup the target point for the given satellite.
+                    Vector3 target(orbitRadius * cos( speed * st / orbitRadius + 2 * PI / numSatellites * satNum), 0.0f, orbitRadius * sin(speed * st / orbitRadius + 2 * PI / numSatellites * satNum));
+                    target = CoordinateFrame(this->activeCamera()->frame().translation).pointToWorldSpace(target);
+                    
+                    //Set the new frame for the entity.
+                    Point3 start = it->value->frame().translation;
+                    Point3 end = start + (speed * (target - start + (offset / (st - sqrt(satNum) * startDelay))).direction() * sdt);
+                    
+                    CoordinateFrame endFrame = CoordinateFrame(end);
+                    it->value->setFrame(endFrame);
+                }
+            }
+        }
+    
+        if(numSatellites == 0) {
+            for(Table<Point3int32, shared_ptr<VisibleEntity>>::Iterator it = activeVoxels.begin(); it.hasMore(); ++it) {
+                removeEntity(it->value);
+            }
+            lastAnimFinished = true;
+            m_hasOrbit = false;
+        } else {
+            lastAnimFinished = false;
+        }
     };
 
+    AnimationControl a(lambda);
+    a.activeVoxels = entities;
+    Vector3 normal = activeCamera()->frame().translation - origin;
+    a.args->set("orbit", 1.0f);
+    a.args->set("normalX", normal.x);
+    a.args->set("normalY", normal.y);
+    a.args->set("normalZ", normal.z);
+    a.args->set("numSatellites", buffer.size());
 
+    m_animControls.push(a);
+
+}
+
+void App::flingSatellite(Vector3 dir, float speed) {
+    dir = dir.direction();
+    dir *= speed;
+    for(int i = 0; i < m_animControls.size(); ++i) {
+        shared_ptr<Table<String, float>> args = m_animControls[i].args;
+        if(args->containsKey("orbit")) {
+            args->set("fling", 1.0f);
+            args->set("flingX", dir.x);
+            args->set("flingY", dir.y);
+            args->set("flingZ", dir.z);
+        }
+    }
 }
 
 
@@ -1495,7 +1620,17 @@ bool App::onEvent(const GEvent& event) {
         cameraIntersectVoxel(lastPos, hitPos);
 		makeMountain(m_currentMark, hitPos.y - m_currentMark.y);
     }
-
+    //Orbit
+    else if ( (event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey('b')) ) {
+        Point3int32 hitPos;
+        Point3int32 lastPos;
+        cameraIntersectVoxel(lastPos, hitPos);
+        if(!m_hasOrbit) {
+		    pullVoxelOrbit(hitPos);
+        } else {
+            flingSatellite(m_crosshair.lookDirection, 5.0f);
+        }
+    }
 	// Crater
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('p')) ){ 
         Point3int32 hitPos;
