@@ -24,8 +24,8 @@ public:
 };
 
 typedef 
-    VRApp 
-    //GApp
+    //VRApp 
+    GApp
     AppBase; 
 
 class App : public AppBase {
@@ -55,7 +55,7 @@ protected:
 
 	bool lastAnimFinished = false;
 
-    bool vrEnabled = true;
+    bool vrEnabled = false;
 
 	// Options
 
