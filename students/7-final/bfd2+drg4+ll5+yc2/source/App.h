@@ -148,16 +148,26 @@ protected:
 
 	// Manipulating the Chunk data structure
     int posToVox(Point3int32 pos);
+
+    /** Main functions for manipulating the data of the world */
 	void setVoxel(Point3int32 pos, int type);
     void unsetVoxel(Point3int32 pos);
     bool voxIsSet(Point3int32 pos);
     shared_ptr<Chunk> getChunk(Point3int32 pos);
 
-	// Creating geometry
+	/** Create geometry for a single voxel */
     void createVoxelGeometry(Point3int32 input);
+
+    /** Create every face for a voxel */
 	void createNaiveVoxelGeometry(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, int type);
+
+    /** Create the geometry for a single face */
 	void addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* mesh, Point3 pos, float size, Vector3 normal, Vector3::Axis axis, int type);
-	void addVoxel(Point3int32 input, int type);
+	
+    /** Calls setVoxel and createVoxelGeometry */
+    void addVoxel(Point3int32 input, int type);
+
+    /** Calls unsetVoxel and marks the chunk as needing an update */
 	void removeVoxel(Point3int32 input);
 
 	/** Called from updateChunks() */
@@ -166,6 +176,7 @@ protected:
     void createChunkGeometry(Point2int32 chunkPos);
 	/** Called from updateChunks() */
     void cleanChunkGeometry(Point2int32 chunkCoords, int type);
+
 	/** Used explicitly for removing voxels, check whether the voxel is the boundary of a chunk.
 		If it is, push the neighboring chunk to the m_chunksToRedraw for later update. 
 		Can add up to 2 more chunks for update. */
