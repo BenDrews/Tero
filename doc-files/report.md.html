@@ -80,6 +80,7 @@ Specification
 
 10. User can import MagicaVoxel objects as templates
     - One model at a time.
+    - No user interface functionality, imports must be hard-coded in.
 
 **Program evaluation metric:**
 
@@ -210,42 +211,53 @@ When we remove a voxel, we first remove it from the Chunk it is stored in. Next,
 To create animations (shock wave and orbital) and transforms that appear gradually (crater and mountain) we created a new class called `AnimationControl`. `AnimationControl`s store a callback function that actually affects the voxel world and a `SimTime` member variable that keeps track of the time since the animation started. The animation functions in App create a lambda function for their corresponding animation, initialize an `AnimationControl` with that lambda function, and add the `AnimationControl` to `m_animControls`, an array of currently executing `AnimationControl`s in App. In `onInit()`, we call `invoke()` for each of the `AnimationControls` in `m_animControls`. At the end of the callback function for each `AnimationControl`, we check if the animation is finished, and if it is, we set `lastAnimFinished`, a global variable in App, to true. At the end of each iteration of the for loop in `onInit()`, if `lastAnimFinished` is true, we remove the current `AnimationControl` from `m_animControls`.
 
 
-Correctness Results
+Correctness Images
 =====================================================
 
-![Scene with each of the different voxel types](voxelTypes.png)
+![Scene with each of the textured voxel types](voxelTypes.png)
 
-![Scene with non-VR user interface](nonVrMenu.png)
+![](nonVrMenu2.png width=500px) ![](nonVrMenu3.png width=500px)
 
-![Scene with VR user interface](vrMenu.jpg)
+![Non-VR user interface](nonvrmenu.png)
+
+![Virtual reality menu](vrMenu.jpg)
+
+![Sphere selection visualizations](sphereselect.png width=500px) ![](sphereselect2.png width=500px)
+
+![Cylinder selection visualizations](cylinderselect.png width=500px) ![](cylinderselect2.png width=500px)
+
+![Box selection visualizations](boxselect.png width=500px) ![](boxselect2.png width=500px)
+
+![Crosshair visualization in non-VR, forceIntersect false](crosshairnonvr.png)
+
+![](crosshairnonvr3.png width=500px) ![](crosshairnonvr2.png width=500px)
+*Crosshair visualization in non-VR, forceIntersect true. The face adjacent to the last open position intersected is blue.*
+
+![Crater created using crater transform](crater.png)
+
+![Mountain added using mountain transform](mountain.png)
+
+![](T-rex.jpg width=500px) ![](monu10.jpg width=500px)
+
+![Imported MagicaVoxel models](monu5.jpg)
 
 
 Placeholder Quality Images
 =====================================================
-**Aesthetic goals**
-![](1.png width=500px) ![](2.png width=500px)
+![Imported MagicaVoxel model]()
 
-![](3.png width=500px) ![](4.png width=500px)
+- Video of mountain
 
-**Implementation goals**
+- Video of crater
 
-[Chunks](http://store.steampowered.com/app/402800/)
+- Video of shockwave
 
-[SculptrVR](http://store.steampowered.com/app/418520/)
-
-![](https://www.youtube.com/watch?v=wiz92cCL0m8)
-
-![0:00-0:003: UI goals for VR](https://www.youtube.com/watch?v=qoJzrnNoD5I)
-
-![Template for UI for different colored/textured blocks](5.png)
-
-**Stretch goals**
-
-![Implementing Cube Marching would allow us to render smooth surfaces](6.png)
-
+- Video of orbital
 
 Evocative Result
 ==================================
+- Video of orbital
+
 ![Evocative result.](evocativescene.jpg)
 
 
@@ -278,23 +290,13 @@ Schedule
  Fix selection options (Lylia) | User can switch between selection union, intersection, difference | 12/6 |
  Add VR inputs (Diego) | Make sure all operations can be performed with Vive controllers | 12/6 |
 		  
-**TO DO:**
-
-- Fix how selection works (Ben) (sphere select is very conservative estimate)
-
-- diego look at where there are TODO comments in the code, please .. thank you
-
-- topic overview, design prose, check spec, quality and evocative images, performance metric
-
-- powerpoint
-
-
 Change Log
 ==================================
 1. Removed **painting voxels** from specification - Ben, 11/20.
 2. Removed changing **world scale** from specification - Ben, 12/4.
 3. Greatly increased target **number of voxel materials** - Youle, 12/5.
 4. Removed **saving created models** from specification - Youle, 12/6.
+5. User can import MagicaVoxel models, but there is no UI for doing this and it has to be hard-coded in - Youle, 12/7.
 		  
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace;}</style><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
