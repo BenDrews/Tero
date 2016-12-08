@@ -18,46 +18,54 @@ Specification
 
 1. User is able to place and destroy a variety of different voxel types in real time
     - Voxels are 0.5 x 0.5 x 0.5 m
-    - Voxels can be added to an unlimited space, but the number of voxels that can be added is capped at 10,000.
+    - Voxels can be added to an unlimited space, but the number of voxels that can be added is capped at 10,000. **todo**
     - Models are edited without writing to disk
     - Option to save your model is available
 
-2. Program is compatible with virtual reality headsets and controllers, and the user can move around in 3D space
+2. Program is compatible with Vive virtual reality headsets and controllers, and the user can move around in 3D space
 
 3. User is able to apply interesting transforms/animations to the voxels in the scene, for example:
-    - Making a crater: The user can specify a center and radius and create a crater of depth _____.
-    - Raising mountains: The user can specify a center and a height and create a mountain.
+    - Making a crater: The user can specify a center and radius and create a crater of depth ?????????.
+    - Raising mountains: The user can specify a center and a height and create mountains with some amounts of noise.
     - Creating a shockwave: When a button is pressed, the first hundred voxels in front of the user move up and down in a noisy wave pattern
-    - Orbital: Voxels can be removed from the world and start orbiting the user
+    - Orbital: Voxels are torn away from their positions in the world and start orbiting the user. The user can then fling them in different directions.
     - Transforms are animated and do not happen instantaneously (we want to see the mountain being raised)
-    - Button user interface (on game controls) that determine what operation we are performing on the scene
+    - Transformation menu in Virtual Reality that determines which operation we are performing on the scene when ????? is pressed.
 
-4. Selection: User can select groups of voxels
-    - Cylinder: The user can specify a center and a radius to select a cylinder of voxels of height ____.
-    - Sphere: The user can specify a center and a radius to select a sphere.
-    - Box: The user can specify a center and a radius (half an edge length) to select a sphere.
-    - Set union: Mode that allows users to add to their current selection.
-    - Set intersection: Mode that allows users to select voxels by performing a set intersection with two previous selections.
-    - Set minus: Mode that allows users to remove from their current selection.
+4. Selection: User can select groups of voxels.
+    - Cylinder: The user can specify a center and a radius to select a cylinder of voxels of height eqaul to the diameter.
+    - Sphere: The user can specify a center and a radius to select a sphere of voxels.
+    - Box: The user can specify a center and a radius (half an edge length) to select a box of voxels.
+    - Set union: Selection mode that allows users to add to their current selection.
+    - Set intersection: Selection mode that allows users to select voxels by performing a set intersection with two previous selections.
+    - Set minus: Selection mode that allows users to remove from their current selection.
 
-5. Intersection: User can freely choose the voxel to intersect.
-    - Pressing 'f' can switch mode between intersecting the first block from user's view and intersecting based on the intersect distance.
-    - Mouse scrolling changes the intersect distance, it affects the intersection method when it does not encounter a block or when it is in the other mode. 
+ 5. Intersection: A crosshair visualizes the where in the scene the user is pointing.
+    - User can switch between intersection modes. The first returns the first voxel position in the direction the user is pointing. The second attempts to intersect an existing voxel in the scene. Intersection modes are toggled with the 'f' key outside of VR. This feature is not implemented in VR.
+    - The intersection distance can be changed, so far away empty voxel positions and close empty voxel positions can both be intersected. The intersection distance is controlled with the mouse scroll wheel outside of VR. This feature is not implemented in VR.
 
 6. Virtual Reality User Interface
+    - The user teleports through the world by ....
     - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
+    - **TODO: other controls**
+
 
 7. Non-VR User Interface
     - Use G3D debug camera for head position
     - User navigates the world by moving the mouse (the camera movements are controlled by the mouse)
-    - User places or destroys voxels by left clicking the mouse
-    - When you press 'm', a menu with all of the voxel types pops up in the scene that the user can interact with using the mouse
+    - User places voxels by left clicking the mouse
+    - User destroys voxels by clicking the mouse scroll wheel
+    - Although the colored voxel types exist, the user can only access the first eight textured voxel types to add to the world through a **todo** GUI pane drop down menu.
+    - Transforms are performed by holding and releasing various keys on the keyboard ('p' for crater, 'o' for shock wave, 'i' for mountain, and 'b' for orbital).
+    - 'n' toggles intersection modes.
+    - 'm' causes a graphic voxel type menu to appear in the world, but it is used for debugging purposes only and has functionality only in virtual reality.
+
 
 8. Rendering
-    - Use G3D built-in renderer: There will be shadows but no indirect lighting
+    - Use G3D built-in renderer. There will be shadows but no indirect lighting.
 
 9. Audio
-    - Sound effects for placing voxels, removing voxels, transforms, and animations
+    - Sound effects for placing voxels, removing voxels, and opening and closing the menu.
 
 10. User can import MagicaVoxel objects as templates
     - One model at a time.
@@ -84,60 +92,105 @@ Design
 **Major functions of App: Voxel geometry**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- initializeModel      | Initializes an `ArticulatedModel` that will be edited at runtime when user input is received
- initializeMaterials  | Initializes all of the materials that will be used for each voxel type
- addVoxelModelToScene | Adds a `VisualEntity` to the scene with the voxel ArticulatedModel
- addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by modifying the main `ArticulatedModel`, and updates relevant data structures
- setVoxel             | Finds the given voxel's chunk and sets the voxel type given at the position given
- addVoxelModelToScene | Adds a VisualEntity to the scene with the voxel ArticulatedModel
- addFace              | Adds one face of a voxel given the center of the voxel and a normal
-createVoxelGeometry|
-createNaiveVoxelGeometry|
- removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by modifying the main ArticulatedModel, and updates relevant data structures
- unsetVoxel           | Finds the given voxel's chunk and removes the voxel from that chunk
- voxelToWorldSpace / worldToVoxelSpace | Translates between voxel positions and world space positions
- getChunkCoords       | Given a voxel space position, returns the chunk the voxel is located in.
- redrawChunk          | For one chunk, clears the geometries and meshes for each voxel type, and uses the chunk table to repopulate appropriate geomteries and meshes.
- redrawChunks         | Redraws all chunks that have been modified, which are stored in `m_chunksToRedraw`
- redrawWorld          | Redraws all chunks in the scene
- checkBoundaryAdd     | When removing a voxel, checks whether the voxel is in the boundary between two chunks. If it is, pushes neighboring chunks to `m_chunksToRedraw`
-importVoxFile         | Given a file source, imports a MagicaVox file into the scene, adds 256 voxel type at the end of the current voxel types.
-addColorMaterials     | Given a number, create that number of different colors that are spread out evenly.
+ createVoxelGeometry  | Creates geometry for one voxel by updating the CPU vertex and index arrays. Does not add faces if there is an adjacent voxel already in the scene.
+ createNaiveVoxelGeometry| Creates geometry for one voxel by updating the CPU vertex and index arrays. Does not check for adjacent voxels.
+ addFace              | Adds one face of a voxel given the center of the voxel and a normal.
+ addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by calling `setVoxel` and `createVoxelGeometry`.
+ removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by calling unsetVoxel, and marks the Chunk containing input voxel for update.
+ initializeModel      | Initializes an `ArticulatedModel` that will be edited at runtime when user input is received.
+ addVoxelModelToScene | Adds a `VisualEntity` to the scene with the main `ArticulatedModel` with the voxels the user adds to the world.
+ importVoxFile        | Given a file source, imports a MagicaVox file into the scene. Adds 256 to the `voxTypeCount`, which stores the total number of voxel types.
+ addColorMaterials    | Creates a given number of different materials with colors that are spread out evenly over the rainbow.
 
+**Major functions of App: Handling Chunk data structures**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ setVoxel             | Finds the given voxel's Chunk and sets the voxel type given at the position given.
+ unsetVoxel           | Finds the given voxel's Chunk and removes the voxel from that Chunk.
+ clearChunkGeometry   | Clears CPU vertex and CPU index arrays for every Chunk type.
+ createChunkGeometry  | Creates voxel geometry for all of the voxels in a given Chunk.
+ cleanChunkGeometry   | Cleans the geometry for a given Chunk by calling `clearAttributeArrays` and `clearIndexStream` on the associated geometry and mesh. Called from `createChunkGeometry` and `addVoxel`.
+ updateChunks         | Calls `clearChunkGeometry` and `createChunkGeometry` for all the Chunks that have been marked for update.
+ redrawWorld          | Redraws the geometry for the entire voxel world by calling `clearChunkGeometry` and `createChunkGeometry` for all the Chunks in the scene.
+ checkBoundaryAdd     | When removing a voxel, checks whether the voxel is in the boundary between two Chunks. If it is, pushes neighboring Chunks to `m_chunksToRedraw`.
 
 **Major functions of App: Applying transforms to voxels**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- selectCircle         | Fills the m_selection array with voxels within a given radius of a given point
- elevateSelection     | Moves voxels in the m_selection array up by a given height
+ selectSphere, selectCylinder, selectBox | Calls commitSphere, commitCylinder, or commitBox for `m_selection` (`Selection` member variable of App)
+ elevateSelection     | Translates selected voxels by given height
 
+**Major functions of App: Animations**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ setUpCurrentTransform | Gets the first input to the transform that is selected from the Virtual Reality menu.
+ commitCurrentTransform | Gets the second input to the transform that is selected from the Virtual Reality menu and starts executing it.
+ makeCrater           | Creates an `AnimationControl` for making a crater with center and radius determined by user input. Voxels are removed gradually starting at the center and ending at the outer ring.
+ makeShockWave        | Creates an `AnimationControl` for making a shock wave that causes voxels in the scene to move up and down in a wave-like motion.
+ makeMountain         | Creates an `AnimationControl` for making a mountain with center and height determined by user input. Voxels are added gradually from the bottom to the top.
+ pullVoxelOrbit       | Creates an `AnimationControl` that tears voxels away from the world and makes them orbit the user. The user can then fling them in different directions.
 
 **Major functions of App: User interface**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- cameraIntersectVoxel | Finds the voxel intersection by ray marching with the ray given by the crosshair object. Returns the voxel and adjacent voxel intersected.
- updateSelect         | Updates the ray of the crosshair object. This is different depending on whether or not vr is enabled
- drawSelectionPreview        | Draws debugSquares in the selected voxel, or a debug sphere over the selected menu item
+ getMouseCrosshairRay | Finds approrpiate ray to store in `m_crosshair` based on mouse position.
+ getVRCrosshairRay    | Finds appropriate ray to store in `m_crosshair` based on the position of the first controller in the VR controller array.
+ updateCrosshairRay   | Updates `m_crosshair` object with the given ray.
+ cameraIntersectVoxel | Finds where the user is pointing by ray marching with the ray stored in `m_crosshair`. Returns the voxel and previous voxel intersected.
+ updateMenuCrosshair  | **TODO**
+ drawCrosshair        | Visualizes the crosshair by drawing a debug box where the crosshair intersects the scene. The face adjacent to the previous voxel intersected is colored blue.
 
-We use one ArticulatedModel, `m_model`, in the scene to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into regions called chunks so that when a voxel is deleted in one chunk, only the voxels in that chunk have to be redrawn instead of all of the voxels in the scene. `m_model` has separate geometries and meshes per chunk and material. So even if a grass voxel and a stone voxel are in the same chunk, their vertex and index arrays are stored in different geometries and meshes because they have different materials.
+**Major functions of Chunk**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ getChunkCoords       | Given a voxel space position, returns the Chunk the voxel is located in.
+
+**Major functions of Selection**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ update               | Updates `m_selection` by calling `doUnion`, `doMinus`, or `doIntersect` depending on the selection mode
+ doUnion              | Performs a set union with `m_selection` and a `Point3int32` buffer
+ doMinus              | Performs a set minus with `m_selection` and a `Point3int32` buffer
+ doIntersect          | Performs a set intersection with `m_selection` and a `Point3int32` buffer
+ commitSphere         | Updates `m_selection` with a buffer of voxels contained in a sphere determined by the given center and radius **todo: ben explain this more maybe?**
+ commitCylinder       | Updates `m_selection` with a buffer of voxels contained in a cylinder determined by the given center and radius
+ commitBox            | Updates `m_selection` with a buffer of voxels contained in a box determined by the given center and radius (half an edge length)
+
+**Major functions of AnimationControl**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ invoke               | Calls the `AnimationControl`'s callback function
+
+**Major functions of Util**
+ Function             | Description                                                
+ ---------------------|------------------------------------------------------------
+ intersectPlane       | Analytic ray-plane intersection
+ voxelToWorldSpace    | Returns a world space position given a voxel space position
+ worldToVoxelSpace    | Returns a voxel space position given a world space position
+
+We use one ArticulatedModel, `m_model`, to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into Chunks based on their x and z coordinates. Each Chunk spans a 32 x 32 voxel space region. `m_model` has separate geometries and meshes per Chunk and material. For example, the vertex and index arrays for a grass voxel and a stone voxel in the same Chunk region are still stored in different geometries and meshes because they have different materials. The Chunk system is a huge optimization because when a voxel is deleted in one Chunk, only the voxels in that Chunk have to be redrawn instead of all of the voxels in the scene.
+
+We have two reference frames for the position of each voxel in the world, voxel coordinates and world space coordinates. Voxel coordinates are integer coordinates of the center of each voxel in the scene. They make it much easier to determine whether a voxel is already occupying space in the world and ensure that voxels do not overlap each other. Voxel space coordinates are also used to map voxels to corresponding Chunks. World space coordinates store the actual position of the center of the voxel in the scene.
 
 We maintain several data structures to keep track of the voxels in the scene:
 
-- `m_voxToProp` is a Table that maps `int`s that represent each voxel type to `Any` files that contain a list of their properties: material, whether the corners are rounded. *Not yet implemented: transparency, emissivity, if it should have a hit box (tangibility)*.
+- Each `Chunk` stores its coordinates and a Table that maps voxel positions of voxels in the Chunk to their types.
 
-- `m_voxToMat` is a Table that maps `int`s that represent each voxel type to different materials.
+- `m_voxToMat` is an Array that stores the `UniversalMaterial`s used for each voxel type.
 
-- `m_posToChunk` is a Table that maps voxel positions of voxels in the scene to the chunks they are contained in.
+- `m_posToChunk` is a Table that maps voxel positions of voxels in the scene to the `Chunk`s they are stored in.
 
-- The chunks are implemented as Tables that map voxel positions of voxels in the scene to voxel  types.
+- `m_chunksToUpdate` is an Array that stores Chunk positions of Chunks that have been changed and need to be redrawn. **TODO: check the name**
 
-- `m_chunksToRedraw` is an Array that stores chunk positions of chunks that have been changed and need to be redrawn. **TO DO: should we change the name of this?**
+- `m_voxToProp` is a Table that maps `int`s that represent each voxel type to `Any` files that contain a list of its properties. Currently the list contains its material and whether or not it is rounded, but this feature has not yet been implemented. We maintain this data structure as a placeholder for future extensions that will add more properties to the voxel types, such as transparency, emissivity, and if the voxel should have a hit box (tangibility).
 
-- Finally, `m_selection` stores voxel positions of voxels that have been selected in the event of a transform.
+- Finally, `m_selection` stores the current `Selection`. The `Selection` contains an Array of voxel positions and can perform set operations on it.
 
-When we add a voxel to the scene, first we get the chunk it should be stored in and add it to the chunk. Next, we fetch the geometry and mesh that correspond to the voxel's chunk and type, and add to the CPU vertex and index arrays of the geometry and mesh. We are careful not to add new faces if the pending voxel is adjacent to an existing voxel in the scene. This drastically reduces the number of faces in the scene and ensures that the program does not waste time drawing faces that aren't visible.
+To add a voxel to the scene, we first add it to the appropriate Chunk. Next, we fetch the geometry and mesh that corresponds to the voxel's Chunk and type and modify the CPU vertex and index arrays. We are careful not to add new faces if the pending voxel is adjacent to an existing voxel in the scene. This drastically reduces the number of faces in the scene and ensures that the program does not waste time drawing faces that aren't visible.
 
-When we remove a voxel to the scene, first we get the chunk it is stored in and remove it from the chunk. Next, we fetch the geometry and mesh that correspond to the voxel's chunk and type, and clear the CPU vertex and index arrays of the geometry and mesh. Then, for each type in a chunk, we use the chunk tables to redraw the geometry in that chunk. This is the simplest way to remove voxels because if we just tried to remove one voxel by manually removing that voxel's vertices from the CPU vertex array, then the indexing for all of the other models would be messed up.
+When we remove a voxel, we first remove it from the Chunk it is stored in. Next, we fetch the geometry and mesh that correspond to the voxel's Chunk and type, and clear the CPU vertex and index arrays of the geometry and mesh. Then, for each type in a Chunk, we use the Chunk tables to redraw the geometry in that Chunk. This is the simplest way to remove voxels because if we tried to remove a voxel by manually removing that voxel's vertices from the CPU vertex array, then the indexing for the geometry of the other voxels in the Chunk would be messed up.
+
+To create animations (shock wave and orbital) and transforms that appear gradually (crater and mountain) we created a new class called `AnimationControl`. `AnimationControl`s store a callback function that actually affects the voxel world and a `SimTime` member variable that keeps track of the time since the animation started. The animation functions in App create a lambda function for their corresponding animation, initialize an `AnimationControl` with that lambda function, and add the `AnimationControl` to **TODO: NAME OF MEMBER VARIABLE**, an array of currently executing `AnimationControl`s in App. In `onInit()`, we call `invoke()` for each of the `AnimationControls` in _________________. At the end of the callback function for each `AnimationControl`, we check if the animation is finished, and if it is, we set `lastAnimFinished`, a global variable in App, to true. At the end of each iteration of the for loop in `onInit()`, if `lastAnimFinished` is true, we remove the current `AnimationControl` from ___________________.
 
 
 Correctness Results
@@ -148,8 +201,6 @@ Correctness Results
 ![Scene with non-VR user interface](nonVrMenu.png)
 
 ![Scene with VR user interface](vrMenu.png)
-
-
 
 
 Placeholder Quality Images
@@ -186,56 +237,48 @@ Schedule
 
  Task                 | Description                                                | Date          | 
 ----------------------|------------------------------------------------------------|--------------:|
- ArticulatedModel     | Get an ArticulatedModel to show up in the scene, be able to add geometry to it at runtime | 11/14 |
- VR Controls          | Learn about how VR controls work and how to get inputs from VR controllers | 11/15 |
- Intersection         | Be able to intersect the scene where the user's mouse is, or where the Virtual Reality controller is | 11/16 |
- Add user input       | Voxels are added on user input (clicking/pressing controller button) | 11/16 |
- Implement removeVoxel | Voxels can be removed from the ArticulatedModel in the scene | 11/16 |
- Basic selection and transform | A cylinder of voxels with set radius can be selected and elevated based on a height determined by user input | 11/17 |
- Materials            | Be able to add voxels of more than one material            |     11/17     |
- Rudimentary GUI      | Debug sphere to show where voxels will be added/removed    |     11/18     |
- Virtual Reality functionality | User input from VR controllers and being able to move around the scene VR | 11/19 |
- Chunking optimization | Divide groups of voxels into different geometries and meshes to speed up program | 11/20 |
- Dynamic selection    | Radius of circle selection is determined by user input     |     11/28     |
- Better VR GUI        | Make Virtual Reality menu look more professional           |     11/30     |
- Selection visualization | Current selection is highlighted                        |     12/1      |
- More materials       | Users can add up to 8 different types of voxels            |     12/1      |
- Add animation interface| Add AnimationControl class, set up data structures       |     12/3      |
- Debug animation interface| Get working animations (crater, shockwave)             |     12/4      |
- Add sound effects    | Different sounds are heard when voxels are placed, removed, or transforms applied | 12/4 |
- Finish up animations |                                                            |     12/5      |
- More materials       | Users can add up to 16 different types of voxels.          |     12/5      |
- Save option          | Add option to save created voxel model to a file           |     12/5      |
- Import worlds        | Add importing worlds feature from Youle's midterm project  |     12/5      |
- Make new scene file  | Have program start in a different scene, not G3D Whiteroom |     12/6      |
- Fix selection options | Union, intersection, difference                           |     12/6      |
-
+ ArticulatedModel (Ben, Lylia) | Get an ArticulatedModel to show up in the scene, be able to add geometry to it at runtime | 11/14 |
+ VR Controls (Diego, Youle) | Learn about how VR controls work and how to get inputs from VR controllers | 11/15 |
+ Intersection (Diego) | Be able to intersect the scene where the user's mouse is, or where the Virtual Reality controller is | 11/16 |
+ Add user input (Diego) | Voxels are added on user input (clicking/pressing controller button) | 11/16 |
+ Implement removeVoxel (Ben, Lylia) | Voxels can be removed from the ArticulatedModel in the scene | 11/16 |
+ Basic selection and transform (Ben) | A cylinder of voxels with set radius can be selected and elevated based on a height determined by user input | 11/17 |
+ Materials (Lylia)    | Be able to add voxels of more than one material            |     11/17     |
+ Rudimentary GUI (Diego) | Debug sphere to show where voxels will be added/removed |     11/18     |
+ Virtual Reality functionality (Diego) | User input from VR controllers and being able to move around the scene VR | 11/19 |
+ Chunking optimization (Ben) | Divide groups of voxels into different geometries and meshes to speed up program | 11/20 |
+ Dynamic selection (Lylia) | Radius of circle selection is determined by user input |     11/28    |
+ Better VR GUI (Diego) | Make Virtual Reality menu look more professional          |     11/30     |
+ Selection visualization (Youle) | Current selection is highlighted                |     12/1      |
+ More materials (Diego) | Users can add up to 8 different types of voxels          |     12/1      |
+ Add animation interface (Lylia, Ben)| Add AnimationControl class, set up data structures | 12/3   |
+ Debug animation interface (Lylia, Ben, Diego)| Get working animations (crater, shockwave) | 12/4  |
+ Add sound effects (Lylia) | Different sounds are heard when voxels are placed, removed, or transforms applied | 12/4 |
+ Finish up animations (Lylia, Ben, Diego) | Working versions of crater, shock wave, and mountain | 12/5 |
+ More materials (Youle) | Users can add up to 100 voxels of different colors.      |     12/5      |
+ Save option (Youle)  | Add option to save created voxel model to a file **TODO has this been implemented? | 12/5 |
+ Import worlds (Youle) | Add importing worlds feature from Youle's midterm project |     12/5      |
+ Make new scene file (Ben) | Have program start in a different scene, not G3D Whiteroom | 12/6     |
+ Fix selection options (Lylia) | User can switch between selection union, intersection, difference | 12/6 |
+ Add VR inputs (Diego) | Make sure all operations can be performed with Vive controllers | 12/6 |
+		  
 **TO DO:**
-
-12/6
-
-- Add importing worlds feature from midterm project (Youle)
-
-- Add option to save model (Youle) (NAH)
-
-- Orbital
 
 - Fix how selection works (Ben) (sphere select is very conservative estimate)
 
 - diego look at where there are TODO comments in the code, please .. thank you
 
-12/7
+- topic overview, design prose, check spec, quality and evocative images, performance metric
 
-- Finish report: performance metric, topic overview, screenshots
-- Make powerpoint
-- Make video (Diego)
+- powerpoint
+
 
 Change Log
 ==================================
-1. May have to reconsider max number of voxels in the scene depending on how much optimization we can do
-2. May also have to reduce number of materials to choose from depending again on how much faster we can get our program to run
-3. Removed "painting voxels" from specification
-4. Removed specification bullet where user is able to change how the world is scaled
-
+1. Removed **painting voxels** from specification - Ben, 11/20.
+2. Removed changing **world scale** from specification - Ben, 12/4.
+3. Greatly increased target **number of voxel materials** - Youle, 12/5.
+4. Removed **saving created models** from specification - Youle, 12/6.
+		  
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace;}</style><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
