@@ -257,7 +257,7 @@ void App::initializeScene() {
     addEntity(m_model, "voxel");
 
     // Initialize ground
-    Noise& rng = Noise::common();
+  /*  Noise& rng = Noise::common();
     for(Point3int32 P(-100, 0, 0); P.x < 100; ++P.x) {
         for(P.z = -100; P.z < 100; ++P.z) {
             int height = (rng.sample(500 * P.x, 0, 500 * P.z) / 5000);
@@ -266,7 +266,7 @@ void App::initializeScene() {
             }
         }
     }
-
+*/
 	numMenuPages = voxTypeCount / menuPageSize;
 	getMenuPositions();
     makeMenuPageModels();
@@ -414,7 +414,7 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 
 void App::importVoxFile(){
     //filesource seriously needs some help
-    String fileSource = "data-files/voxelImport/monument/monu1.vox";
+    String fileSource = "data-files/voxelImport/scene_aliens.vox";
     BinaryInput voxInput(fileSource, G3D_LITTLE_ENDIAN);
     ParseVOX source;
     source.parse(voxInput);
