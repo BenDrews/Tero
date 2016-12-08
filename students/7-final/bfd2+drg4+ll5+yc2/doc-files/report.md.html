@@ -46,9 +46,18 @@ Specification
     - The intersection distance can be changed, so far away empty voxel positions and close empty voxel positions can both be intersected. The intersection distance is controlled with the mouse scroll wheel outside of VR. This feature is not implemented in VR.
 
 6. Virtual Reality User Interface
-    - The user teleports through the world by ....
-    - When you grip the left controller, a control panel with all of the voxel types pops up in the scene in the user's left hand that the user can interact with by pointing at it with the right controller and pulling the trigger
-    - **TODO: other controls**
+    - The user teleports through the world by pressing the circle pad down. The center of the room will move to the voxel that the user had selected.
+    - When the user presses the top button on their main controller, a control panel with all of the voxel types pops up in front of the user. They can select the voxels by pulling the trigger while touching that voxel with either hand. They flip through the different menu pages by squeezing the left and right grips. The users hands will be the current selected voxel type.
+    - When the user presses the top button on their off hand controller, a control panel with all the transform types pops up in front of the user. They can select a transform by pulling the trigger while touching a specific transform. The current transform is displayed as text below the user at all times.
+    - When the user pulls the trigger on their main hand, they will place a voxel at the location selected.
+    - When the user pulls the trigger on their off hand, they will remove a voxel at the location selected.
+    - The user can select a group of voxels by gripping their main hand, moving the selection to define the selection radius, and releasing the grip.
+    - The user can perfom the current selected transform by pressing the grip on their off hand.
+        - Shockwave: The user simply needs to press their offhand grip button to perform this shockwave.
+        - Crater: The user defines the crater size by first pressing the grip with the center of the crater selected, then releasing with the selection some distance away in the XZ plane. This horizontal distance will be the crater radius.
+        - Mountain: The user defines the mountain size by first pressing the grip with the center of the moutain selected, then releasing with the selection some distance away in the y axis. This vertical distance will be the mountain size. The mountain will be made out of the current voxel type selected.
+        - Elevate: The user can elevate the current selected voxels by first pressing the grip on some voxel then releasing some vertical distance away. This vertical distance will be added to the selected voxels.
+        - Voxel Orbit: The user first pressing the grip while selecting some voxel. The user then needs to pull back their off hand as if they are drawing a bow. Once voxels are orbiting the user, the user can shoot these by first pressing their offhand grip and then moving their offhand in some direction then releasing the grip.
 
 7. Non-VR User Interface
     - Use G3D debug camera for head position
@@ -77,8 +86,7 @@ Specification
 1. What is the maximum amount of voxels in the scene before noticeable performance decay?
 
 2. Are the controls intuitive?
-    - Survey of other people (Juchan, Tony, other classmates)
-
+    - Survey of other people
 
 Topic Overview 
 ==================================
