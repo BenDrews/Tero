@@ -22,8 +22,6 @@ So for some reason, when I used the ray grid iterator with a ray with an origin 
 
 To fix this I simply always iterate over a ray with an origin at the world origin. Then I just add a point3int32 offset to get to the real voxel that I want to test.
 
-
-
 2016-12-05 patch 6.23
 ====================================================
 changed the r button  into mouse scrolling so we can change the intersecting distance by scrolling.
@@ -157,6 +155,7 @@ After placing and deleting countless voxels, in a stroke of genius, Ben determin
 
 Finally, we resolved the bug by realizing that after we cleared the CPU vertex and index arrays in the redrawChunk method, we 
 
+
 2016-11-28: After break tweaks
 ===================================================
 fixed a small bug in intersection method. changed the debugdraw shape to a cube. 
@@ -177,6 +176,8 @@ But be aware, if you make it too big, the program will be very slow if you are n
 There is still a problem with world ray, the farther we are from the point (0,0,0), the more skewed it is.
 
 I also changed the getChunkCoords method by adding -1 to any negative x or z values, I'm not sure if that affects the rest of the code (I don't think it does).
+
+![Picture that justifies adding -1 to negative x or z values with general chunk size of 8. If we do not, the chunks around (0,0) are too big.](chunkdiagram.jpg)
 
 Added `checkBoundaryAdd`, which fixes the previous bug by checking whether the voxel is next to another chunk and updating the neighboring chunks if that's the case. I also removed `runConcurrently` in `updateChunks` method, because it didn't work with the new code, and I'm not exactly sure why.
 

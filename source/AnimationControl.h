@@ -9,7 +9,7 @@ class AnimationControl {
 
 protected:
 
-	SimTime m_currentTime;//Should be Any;
+	SimTime m_currentTime;
 
 	std::function<void(SimTime, SimTime, shared_ptr<Table<String, float>>, Table< Point3int32 ,shared_ptr<VisibleEntity>>&, Table< Point3int32, SimTime>& )> m_callback;
 

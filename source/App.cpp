@@ -60,24 +60,34 @@ void App::makeGUI() {
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 
     debugPane->beginRow(); {
-        GuiPane* containerPane = debugPane->addPane();
+        GuiTabPane* containerPane = debugPane->addTabPane();
 
-		containerPane->addLabel("Left click: Add voxel");
-		containerPane->addLabel("Middle click: Remove voxel");
-        containerPane->addLabel("Mouse scroll: Change intersection distance");
-		containerPane->addLabel("f: Toggle force intersect");
-		containerPane->addLabel("n: Change intersection mode (regular, union, minus, intersection)");
-		containerPane->addLabel("j: Box select");
-		containerPane->addLabel("k: Cylinder select");
-		containerPane->addLabel("l: Sphere select");
-		containerPane->addLabel("u: Elevate selection");
-		containerPane->addLabel("i: Mountain");
-		containerPane->addLabel("o: Shock wave");
-		containerPane->addLabel("p: Crater");
-
+        GuiPane* pane1 = containerPane->addTab("Basic controls");
+		pane1->addLabel("Left click: Add voxel");
+		pane1->addLabel("Middle click: Remove voxel");
+        pane1->addLabel("Mouse scroll: Change intersection distance");
+		pane1->addLabel("f: Toggle force intersect");
+		pane1->addLabel("Change voxel types by using the number keys 0 - 7.");
 		m_typesList.append("Grass", "Rock", "Brick", "Sand", "Rough Cedar", "Rusty Metal");
 		m_typesList.append("Chrome", "Black Rubber");
-        containerPane->addDropDownList("Voxel Type", m_typesList, &m_voxelType);
+        pane1->addDropDownList("Voxel Type", m_typesList, &m_voxelType);
+		pane1->pack();
+
+        GuiPane* pane2 = containerPane->addTab("Selection controls");
+		pane2->addLabel("Hold and release keys. Center of selection is determined on key press. Radius is determined on release.");
+		pane2->addLabel("n: Change intersection mode (regular, union, minus, intersection)");
+		pane2->addLabel("j: Box select");
+		pane2->addLabel("k: Cylinder select");
+		pane2->addLabel("l: Sphere select");
+		pane2->addLabel("u: Elevate selection. Hold, drag up to determine height, and release.");
+		pane2->pack();
+
+        GuiPane* pane3 = containerPane->addTab("Animation controls");
+		pane3->addLabel("i: Mountain. Hold, drag up to determine height, and release.");
+		pane3->addLabel("o: Shock wave");
+		pane3->addLabel("p: Crater. Center of crater is determined on key press. Radius is determined on release.");
+		pane3->addLabel("b: Orbit");
+		pane3->pack();
 
 		containerPane->pack();
 	}
@@ -106,7 +116,7 @@ void App::onInit() {
 
 }
 
-void App::updateMenuCrosshair(){
+void App::getMenuCrosshairRay(){
     Ray cameraRay;
     Ray empty;
 	int controllerIndex = 0;
@@ -170,7 +180,7 @@ Ray App::getMouseCrosshairRay() {
 
 }
 
-void App::setCrosshair(Ray crosshairRay) {
+void App::updateCrosshairRay(Ray crosshairRay) {
 
 	m_crosshair.lookDirection = crosshairRay.direction();
 	m_crosshair.position = crosshairRay.origin();
@@ -184,7 +194,7 @@ void App::updateCrosshair() {
 
     if ( menuMode ) {
 
-        updateMenuCrosshair();
+        getMenuCrosshairRay();
     
     } else {
         if ( vrEnabled ) {
@@ -194,7 +204,7 @@ void App::updateCrosshair() {
         }
 
         if ( crosshairRay.origin() != empty.origin() ) {
-            setCrosshair(crosshairRay);
+            updateCrosshairRay(crosshairRay);
         }
     }
 
@@ -231,9 +241,8 @@ void App::drawCrosshair() {
 }
 
 void App::initializeScene() {
-	 //this is to set the number of types of voxels to only the manually added ones
-	voxTypeCount = voxTypePointer;
-    for (int i = 0; i < voxTypeCount; ++i) {
+	// this is to set the number of types of voxels to only the manually added ones
+    for (int i = 0; i < numTexturedVoxels; ++i) {
         m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
@@ -266,24 +275,22 @@ void App::initializeScene() {
     //if(vrEnabled){
     initializeHands();
     initializeTransforms();
-   
-  
+
     redrawWorld();
 }
 
-void App::initializeHands(){
-  updateHands(0);
-
+void App::initializeHands() {
+	updateHands(0);
 }
 
-void App::updateHands(int index){
+void App::updateHands(int index) {
     m_hand1 = addEntity(makeVoxelModel("handModel1", index, 0.1f), "hand1", true);
     m_hand2 = addEntity(makeVoxelModel("handModel2", index, 0.1f), "hand2", true);
 }
 
-void App::initializeTransforms(){
-    m_transforms.append("crater", "shockwave", "mountain", "voxel orbit", "elevate");
 
+void App::initializeTransforms() {
+	m_transforms.append("crater", "shockwave", "mountain", "orbit", "elevate");
 }
 
 
@@ -409,29 +416,26 @@ void App::importVoxFile(){
     //filesource seriously needs some help
     String fileSource = "data-files/voxelImport/monument/monu1.vox";
     BinaryInput voxInput(fileSource, G3D_LITTLE_ENDIAN);
-    ParseVOX s;
-    s.parse(voxInput);
-    for (int i = 0; i< palSize ; i++){
-      
-        
-       
-       TextOutput file1(format("data-files/texture/pal%d.UniversalMaterial.Any",i));
-       file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}",float(s.palette[i].r),float(s.palette[i].g),float(s.palette[i].b));
-       file1.commit();
-       TextOutput file2(format("data-files/voxelTypes/vox%d.Any",i+voxTypePointer+1));
-       file2.printf("{};");
-       file2.commit();
+    ParseVOX source;
+    source.parse(voxInput);
+
+	for (int i = 0; i < palSize; ++i) {
+        TextOutput file1( format("data-files/texture/pal%d.UniversalMaterial.Any", i) );
+        file1.printf("UniversalMaterial::Specification {lambertian = Color3(%f, %f, %f);}", float(source.palette[i].r), float(source.palette[i].g), float(source.palette[i].b));
+        file1.commit();
+        TextOutput file2( format("data-files/voxelTypes/vox%d.Any", i + numTexturedVoxels + 1) );
+        file2.printf("{};");
+		file2.commit();
     }
 	
-    for (const ParseVOX::Voxel& voxel : s.voxel){
-        Point3int32 pos = Point3int32(voxel.position.x,voxel.position.z,voxel.position.y);
-        setVoxel(pos,voxel.index+voxTypePointer);
+    for (const ParseVOX::Voxel& voxel : source.voxel){
+        Point3int32 pos = Point3int32(voxel.position.x, voxel.position.z, voxel.position.y);
+        setVoxel(pos, voxel.index + numTexturedVoxels);
     }
 	
-    voxTypeCount+=palSize;
+    voxTypeCount += palSize;
+
 }
-
-
 
 void App::addColorMaterials() {
     
@@ -440,7 +444,7 @@ void App::addColorMaterials() {
     int x = 0;
     int y = 0;
     int z = 0;
-    for (int i = 0; i < rainbowSize ; ++i){
+    for (int i = 0; i < rainbowSize; ++i){
         float temporary;
         temporary = float(i) / (colorSize * colorSize);
         x = int(temporary);
@@ -472,16 +476,15 @@ void App::initializeMaterials() {
         UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
     
 	addColorMaterials();
-     for (int i = 1; i < 33;i++){
-    
-         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/colorglass%d.UniversalMaterial.Any",i))));
+    for (int i = 1; i < 33; ++i) {
+         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/colorglass%d.UniversalMaterial.Any", i)) ));
     }
-    for (int i = 0; i< palSize ; i++){
-        
-        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/pal%d.UniversalMaterial.Any",i))));
+
+    for (int i = 0; i < palSize; ++i) {    
+        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/pal%d.UniversalMaterial.Any", i)) ));
     }
 	for (int i = 0; i < rainbowSize; ++i) {    
-        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/color%d.UniversalMaterial.Any",i+1))));
+        m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/color%d.UniversalMaterial.Any", i + 1)) ));
     }
 
     //This material is used for debug only, and stays at the end of voxToMat.
@@ -635,7 +638,6 @@ void App::markChunkDirty(Point3int32 pos) {
 
 
 void App::clearChunkGeometry(Point2int32 chunkPos) {
-    // Clear CPU vertex and CPU index arrays for every chunk type
     for (int i = 0; i < voxTypeCount; ++i) {
 	    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i))) ) {
             ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkPos.x, chunkPos.y, i ));
@@ -647,15 +649,12 @@ void App::clearChunkGeometry(Point2int32 chunkPos) {
             vertexArray.fastClear();
 	        indexArray.fastClear();
 
+			// Clean geometry
             ArticulatedModel::CleanGeometrySettings geometrySettings;
             geometrySettings.allowVertexMerging = false;
             m_model->cleanGeometry(geometrySettings);
-
             geometry->clearAttributeArrays();
             mesh->clearIndexStream();
-       
-	        vertexArray.fastClear();
-	        indexArray.fastClear();
         
             bool hasSomething = false;
             for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.isValid(); ++it) {
@@ -679,7 +678,6 @@ void App::clearChunkGeometry(Point2int32 chunkPos) {
     }
 }
 
-/** Create geometry for a given chunk. */
 void App::createChunkGeometry(Point2int32 chunkPos) {
 	
     for (Table<Point3int32, int>::Iterator it = m_posToChunk[chunkPos]->begin(); it.hasMore(); ++it) {
@@ -691,6 +689,27 @@ void App::createChunkGeometry(Point2int32 chunkPos) {
         cleanChunkGeometry(chunkPos, i);
     }
     scene()->entity("voxel")->markChanged();
+}
+
+// Clean/update the geometry for our model.
+void App::cleanChunkGeometry(Point2int32 chunkCoords, int type) {
+    
+    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
+		ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+        ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
+
+	    ArticulatedModel::CleanGeometrySettings geometrySettings;
+        geometrySettings.allowVertexMerging = false;
+        m_model->cleanGeometry(geometrySettings);
+
+	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
+	    geometry->clearAttributeArrays();
+
+	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
+    	mesh->clearIndexStream();
+
+	}
+
 }
 
 void App::updateChunks() {
@@ -824,27 +843,6 @@ void App::addFace(ArticulatedModel::Geometry* geometry, ArticulatedModel::Mesh* 
 
 }
 
-// Clean/update the geometry for our model.
-void App::cleanChunkGeometry(Point2int32 chunkCoords, int type) {
-    
-    if ( notNull(m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type))) ) {
-		ArticulatedModel::Geometry* geometry = m_model->geometry(format("geom %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
-        ArticulatedModel::Mesh*     mesh	 = m_model->mesh(format("mesh %d,%d,%d", chunkCoords.x, chunkCoords.y, type));
-        // Automatically compute normals. get rid of this when figure out how to modify gpuNormalArray   ????
-	    ArticulatedModel::CleanGeometrySettings geometrySettings;
-        geometrySettings.allowVertexMerging = false;
-        m_model->cleanGeometry(geometrySettings);
-
-	    // If you modify cpuVertexArray, invoke this method to force the GPU arrays to update
-	    geometry->clearAttributeArrays();
-
-	    // If you modify cpuIndexArray, invoke this method to force the GPU arrays to update on the next ArticulatedMode::pose()
-    	mesh->clearIndexStream();
-
-	}
-
-}
-
 void App::removeVoxel(Point3int32 input) {
 	unsetVoxel(input);
 
@@ -869,8 +867,8 @@ void App::cameraIntersectVoxel(Point3int32& lastPos, Point3int32& hitPos){
     lastPos = hitPos;
 
 	// Intersect with voxel
-    if(!forceIntersect){
-		//the Boundary of the voxels that would intersect
+    if (!forceIntersect) {
+		// the boundary of the voxels that would intersect
 		Point3int32 voxelBound = Point3int32(1<<15, 1<<15, 1<<15);
 		
 		for (RayGridIterator it(cameraRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid(); ++it) {
@@ -981,7 +979,6 @@ void App::makeCrater(Point3int32 center, int radius) {
 	// Lambda function for AnimationControl.
 	// sdt = differential (time since last call of this function)
 	// st = absolute (time since animation began)
-	
 	std::function<void (SimTime, SimTime, shared_ptr<Table<String, float>>, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&)> lambda = [&](SimTime sdt, SimTime st, shared_ptr<Table<String, float>> args, Table<Point3int32, shared_ptr<VisibleEntity>>&, Table<Point3int32, SimTime>&) {
 
 		int currentRadius = (int)(args->get("currentRadius"));
@@ -1067,33 +1064,32 @@ void App::makeCrater(Point3int32 center, int radius) {
 
 }
 
-void App::startCurrentTransform(){
+void App::setUpCurrentTransform(){
     Point3int32 lastPos, hitPos;
     cameraIntersectVoxel(lastPos, hitPos);
-    if(currentTransform == "shockwave"){
+    if (currentTransform == "shockwave") {
         Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
         makeShockWaveArc(hitPos, direction);
-    }else if (currentTransform == "voxel orbit"){
+    } else if (currentTransform == "orbit") {
 		if(m_hasOrbit){
 			m_throwStartPos = m_hand2->frame().translation;
 		}
-	}else{
+	} else {
 		m_currentMark = hitPos;
     }
 
 }
 
-void App::endCurrentTransform(){
+void App::commitCurrentTransform(){
     Point3int32 lastPos, hitPos;
     cameraIntersectVoxel(lastPos, hitPos);
-    if(currentTransform == "mountain"){
+    if (currentTransform == "mountain") {
 		makeMountain(m_currentMark, hitPos.y - m_currentMark.y);
-    }else if (currentTransform == "elevate"){
+    } else if (currentTransform == "elevate") {
 		elevateSelection(hitPos.y - m_currentMark.y);
-	}else if (currentTransform == "crater"){
+	} else if (currentTransform == "crater") {
 		makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
-
-	}else if(currentTransform == "voxel orbit"){
+	}else if(currentTransform == "orbit"){
 		if(m_hasOrbit){
 			Vector3 throwDirection = m_hand2->frame().translation - m_throwStartPos;
 			flingSatellite(throwDirection, 2);
@@ -1150,73 +1146,63 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
         Ray shockWaveRay(rayOrigin, direction);
 
         int i = 0;
-        int numVoxels = 1000;
-        float shockWaveProb = 0.3; //multiple of 2
+        int numVoxels = 500;
 		Random rand;
 		for (RayGridIterator it(shockWaveRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid() && i < numVoxels; ++it) {
-
 
             Point3int32 voxCoord = it.index() + diff;
             Point3int32 centerCoord = voxCoord;
             voxCoord.y += 1;
 
-                    if ( voxIsSet(voxCoord) ) {
-						if( rand.uniform() <= shockWaveProb){
-							//makeShockWaveLine(voxCoord, direction);
-						}
-						
+			if ( voxIsSet(voxCoord) ) {						
+				//debugPrintf("%d\n", voxCoord.y);
+				shared_ptr<VisibleEntity> ent;
+				SimTime timePassed;
+				String name = format("animatedvox%d,%d,%d", voxCoord.x, voxCoord.y, voxCoord.z);
+				
+				//We will check to see if our voxels are already in our entity list, if not we add them and 
+				//note the time they were added.
+				if ( !entities.containsKey(voxCoord) ) {
+				    shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( voxCoord ) );    
+				    ent = addEntity(model, name, true);
+				    entities.set(voxCoord, ent);
+				    timeAdded.set(voxCoord, st);
+				    timePassed = 0.0f;
+				} else {
+				    ent = entities[voxCoord];
+				    timePassed = (st - timeAdded[voxCoord]);
+				
+				}
 
-                        //debugPrintf("%d\n", voxCoord.y);
-                        shared_ptr<VisibleEntity> ent;
-                        SimTime timePassed;
-                        String name = format("animatedvox%d,%d,%d", voxCoord.x, voxCoord.y, voxCoord.z);
+				// The rise that we are going to add to these entities is depenedent on the time added. They should
+				// go up and down similar to a sine curve.
+				float rise;
+				float totalTime = 0.25f;
+				float halfTime = totalTime/2.0f;
+				float maxRise = 0.7f;
+				float currentTime = st;
+				currentTime;
+				if (timePassed <= halfTime) {
+				    rise = (timePassed/(halfTime))*maxRise;
+				} else if (timePassed <= totalTime) {
+				    rise = ( ( (halfTime) - (timePassed - halfTime ) ) / (halfTime) ) * maxRise;
+				} else {
+				    ent->setVisible(false);
+				
+				    if ( notNull(scene()->entity(ent->name())) ) {
+				        removeEntity(ent);
+				    }
+				}
 
-                        //We will check to see if our voxels are already in our entity list, if not we add them and 
-                        //note the time they were added.
-                        if ( !entities.containsKey(voxCoord) ) {
-                            shared_ptr<ArticulatedModel> model = makeVoxelModel( name, posToVox( voxCoord ) );    
-                            ent = addEntity(model, name, true);
-                            entities.set(voxCoord, ent);
-                            timeAdded.set(voxCoord, st);
-                            timePassed = 0.0f;
-                        } else {
-                            ent = entities[voxCoord];
-                            timePassed = (st - timeAdded[voxCoord]);
+				Point3int32 voxPos = Point3int32(voxCoord.x, voxCoord.y, voxCoord.z);
+				Point3 worldPos = Util::voxelToWorldSpace(voxPos);
+				CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y + rise, worldPos.z);
+				ent->setFrame(frame);
+				++i;
 
-                        }
-
-                    
-                         // The rise that we are going to add to these entities is depenedent on the time added. They should
-                         // go up and down similar to a sine curve.
-			        	float rise;
-                        float totalTime = 0.25f;
-                        float halfTime = totalTime/2.0f;
-                        float maxRise = 0.7f;
-                        float currentTime = st;
-                        currentTime;
-                        if (timePassed <= halfTime) {
-                            rise = (timePassed/(halfTime))*maxRise;
-                        } else if (timePassed <= totalTime) {
-                            rise = ( ( (halfTime) - (timePassed - halfTime ) ) / (halfTime) ) * maxRise;
-                        } else {
-                            ent->setVisible(false);
-
-                            if ( notNull(scene()->entity(ent->name())) ) {
-                                removeEntity(ent);
-                            }
-                        }
-
-                        Point3int32 voxPos = Point3int32(voxCoord.x, voxCoord.y, voxCoord.z);
-                        Point3 worldPos = Util::voxelToWorldSpace(voxPos);
-                        CoordinateFrame frame = CFrame::fromXYZYPRRadians(worldPos.x, worldPos.y + rise, worldPos.z);
-                        ent->setFrame(frame);
-                        ++i;
-
-			        } else {
-                        break;
-                    }
-                
-            
+	        } else {
+				break;
+            }
         }
 
         lastAnimFinished = st > 10.0f;
@@ -1226,13 +1212,11 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
             Array<shared_ptr<VisibleEntity>> ents;
             entities.getValues(ents);
             for(int i = 0; i < ents.size(); ++i){
-            
-                if(notNull(scene()->entity(ents[i]->name()))){
+                if (notNull(scene()->entity(ents[i]->name()))) {
                     removeEntity(ents[i]);   
                 }
             }
-        
-            entities.clear();
+			entities.clear();
         }
     };
 
@@ -1568,7 +1552,7 @@ bool App::onEvent(const GEvent& event) {
 
     else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('t')) ){
 		if ( m_currentMenuPage == 0 ) {
-			changeMenuPage( numMenuPages - 1);
+			changeMenuPage( numMenuPages - 1 );
 		} else {
 			changeMenuPage( m_currentMenuPage - 1);
 		}
@@ -1578,6 +1562,7 @@ bool App::onEvent(const GEvent& event) {
 		changeMenuPage((m_currentMenuPage + 1) % numMenuPages);
     }
 	
+	// Shock wave
 	else if ( (event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey('o')) ) { 
         Point3int32 hitPos;
         Point3int32 lastPos;
@@ -1718,23 +1703,21 @@ void App::onUserInput(UserInput* ui) {
 void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) {
 
     updateChunks();
-    if(menuMode){
+    if (menuMode) {
         CFrame frame = menuFrame;
-        if(menuType == 1){
-        GuiText menuText = format("Select Transform Type");
-        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
-        for(int i = 0; i < m_transforms.size(); ++i){
-            menuText = m_transforms[i];
-            debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[i]), Vector3(0,0,0), menuText);
-
-        }
-        
-        }else{
-		GuiText menuText = format("Select Voxel Type (Pg. %d/%d)", m_currentMenuPage + 1, numMenuPages); //TODO
-        debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
+        if (menuType == 1 ) {
+			GuiText menuText = format("Select Transform Type");
+			debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
+			for (int i = 0; i < m_transforms.size(); ++i) {
+			    menuText = m_transforms[i];
+			    debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[i]), Vector3(0,0,0), menuText);
+			}
+        } else {
+			GuiText menuText = format("Select Voxel Type (Pg. %d/%d)", m_currentMenuPage + 1, numMenuPages); //TODO
+			debugDrawLabel(frame.pointToWorldSpace(m_menuButtonPositions[menuPageSize]), Vector3(0,0,0), menuText);
         }
     }
-    if(vrEnabled){
+    if (vrEnabled) {
         //updateCrosshair();
         //Point3 head;
         //Point3 hand1;
@@ -1794,7 +1777,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
 		//					m_selection.setMark(hitPos);               
 		//
 		//				}else{
-		//					startCurrentTransform();
+		//					setUpCurrentTransform();
 		//				}
         //                break;
         //            
@@ -1874,7 +1857,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
 		//				if(mainHand){
 		//					selectSphere(m_crosshair.position, m_crosshair.lookDirection);
 		//				}else{
-		//					endCurrentTransform();
+		//					commitCurrentTransform();
 		//				}
 		//			}
 		//		}
@@ -1886,16 +1869,7 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //        ;
         //    }
         //}
-        //
-        //
-        //
-        //
-		//
-
-    }
-
-
-		super::onGraphics(rd, surface, surface2D);
-
-
+	}
+	
+	super::onGraphics(rd, surface, surface2D);
 }
