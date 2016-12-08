@@ -246,6 +246,7 @@ void App::initializeScene() {
         m_voxToProp.append(Any::fromFile(format("data-files/voxelTypes/vox%d.Any", i)));
     }
 
+	// Uncomment to initialize scene with a MagicaVoxel file.
     importVoxFile();
 
 	initializeMaterials();
@@ -413,8 +414,8 @@ const shared_ptr<ArticulatedModel> App::makeVoxelModel(String modelName, int typ
 }
 
 void App::importVoxFile(){
-    //filesource seriously needs some help
-    String fileSource = "data-files/voxelImport/scene_aliens.vox";
+    //TODO: add user functionality so they can directly change the fileSource
+    String fileSource = "data-files/voxelImport/monument/monu1.vox";
     BinaryInput voxInput(fileSource, G3D_LITTLE_ENDIAN);
     ParseVOX source;
     source.parse(voxInput);

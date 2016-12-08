@@ -6,7 +6,7 @@
             Youle Chen (yc2@williams.edu)
 
 
-![Image that sells our project](evocativescene.jpg)
+![Image that sells our project](quality1.png)
 
 Introduction 
 ==================================
@@ -19,9 +19,8 @@ Specification
 1. User is able to place and destroy a variety of different voxel types in real time
     - Voxels are 0.5 x 0.5 x 0.5 m
     - Voxels can be added to an unlimited space.
-    - User can add unlimited numbers of voxels, but at a large number of voxels we do not guarantee performance.
+    - User can add unlimited numbers of voxels, but at a large number of faces we do not guarantee performance.
     - Models are edited without writing to disk
-    - Option to save your model is available
 
 2. Program is compatible with Vive virtual reality headsets and controllers, and the user can move around in 3D space
 
@@ -31,33 +30,33 @@ Specification
     - Creating a shockwave: The voxels in front of the user move up and down in a wave pattern until there are no more voxels to raise.
     - Orbital: Voxels are torn away from their positions in the world and start orbiting the user. The user can then fling them in different directions.
     - Transforms are animated and do not happen instantaneously.
-    - Transformation menu in Virtual Reality that determines which operation we are performing on the scene when non-dominant grip is pressed.
+    - Graphic transformation menu in virtual reality is used to select which operation is performed on the scene when non-dominant grip is pressed
 
 4. Selection: User can select groups of voxels.
-    - Cylinder: The user can specify a center and a radius to select a cylinder of voxels of height eqaul to the diameter.
+    - Cylinder: The user can specify a center and a radius to select a cylinder of voxels of height equal to the diameter.
     - Sphere: The user can specify a center and a radius to select a sphere of voxels.
     - Box: The user can specify a center and a radius (half an edge length) to select a box of voxels.
     - Set union: Selection mode that allows users to add to their current selection.
     - Set intersection: Selection mode that allows users to select voxels by performing a set intersection with two previous selections.
     - Set minus: Selection mode that allows users to remove from their current selection.
 
- 5. Intersection: A crosshair visualizes the where in the scene the user is pointing.
-    - User can switch between intersection modes. The first returns the first voxel position in the direction the user is pointing. The second attempts to intersect an existing voxel in the scene. Intersection modes are toggled with the 'f' key outside of VR. This feature is not implemented in VR.
+ 5. Intersection: A crosshair visualizes where in the scene the user is pointing.
+    - User can switch between intersection modes. The first returns the first voxel position intersected in the direction the user is pointing. The second attempts to intersect an existing voxel in the scene. Intersection modes are toggled with the 'f' key outside of VR. This feature is not implemented in VR.
     - The intersection distance can be changed, so far away empty voxel positions and close empty voxel positions can both be intersected. The intersection distance is controlled with the mouse scroll wheel outside of VR. This feature is not implemented in VR.
 
 6. Virtual Reality User Interface
     - The user teleports through the world by pressing the circle pad down. The center of the room will move to the voxel that the user had selected.
-    - When the user presses the top button on their main controller, a control panel with all of the voxel types pops up in front of the user. They can select the voxels by pulling the trigger while touching that voxel with either hand. They flip through the different menu pages by squeezing the left and right grips. The users hands will be the current selected voxel type.
-    - When the user presses the top button on their off hand controller, a control panel with all the transform types pops up in front of the user. They can select a transform by pulling the trigger while touching a specific transform. The current transform is displayed as text below the user at all times.
-    - When the user pulls the trigger on their main hand, they will place a voxel at the location selected.
-    - When the user pulls the trigger on their off hand, they will remove a voxel at the location selected.
-    - The user can select a group of voxels by gripping their main hand, moving the selection to define the selection radius, and releasing the grip.
-    - The user can perfom the current selected transform by pressing the grip on their off hand.
+    - When the user presses the top button on their main controller, a control panel with all of the voxel types pops up in front of the user. They can select the voxels by pulling the trigger while touching that voxel with either hand. They flip through the different menu pages by squeezing the left and right grips. The user's hands will be the current selected voxel type.
+    - When the user presses the top button on their non dominant controller, a control panel with all the transform types pops up in front of the user. They can select a transform by pulling the trigger while touching a specific transform. The current transform is displayed as text below the user at all times.
+    - When the user pulls the trigger on their dominant controller, they will place a voxel at the location selected.
+    - When the user pulls the trigger on their non dominant controller, they will remove a voxel at the location selected.
+    - The user can select a group of voxels by gripping their dominant controller, moving the crosshair to define the selection radius, and releasing the grip.
+    - The user can perfom the current selected transform by pressing the grip on their non dominant controller.
+        - Elevate: The user can elevate the current selected voxels by first pressing the grip on some voxel then releasing some vertical distance away. The selected voxels will be translated by this vertical distance.
         - Shockwave: The user simply needs to press their offhand grip button to perform this shockwave.
         - Crater: The user defines the crater size by first pressing the grip with the center of the crater selected, then releasing with the selection some distance away in the XZ plane. This horizontal distance will be the crater radius.
         - Mountain: The user defines the mountain size by first pressing the grip with the center of the moutain selected, then releasing with the selection some distance away in the y axis. This vertical distance will be the mountain size. The mountain will be made out of the current voxel type selected.
-        - Elevate: The user can elevate the current selected voxels by first pressing the grip on some voxel then releasing some vertical distance away. This vertical distance will be added to the selected voxels.
-        - Voxel Orbit: The user first pressing the grip while selecting some voxel. The user then needs to pull back their off hand as if they are drawing a bow. Once voxels are orbiting the user, the user can shoot these by first pressing their offhand grip and then moving their offhand in some direction then releasing the grip.
+        - Voxel Orbit: The user first presses the grip while selecting some voxel. The user then pulls back their non dominant controller as if they are drawing a bow. Once voxels are orbiting the user, the user can fling them by first pressing the grip on the non-dominant controller, moving the non-dominant controller in some direction, and then releasing the grip.
 
 7. Non-VR User Interface
     - Use G3D debug camera for head position
@@ -78,13 +77,13 @@ Specification
 9. Audio
     - Sound effects for placing voxels, removing voxels, and opening and closing the menu.
 
-10. User can import MagicaVoxel objects as templates
-    - One model at a time.
-    - No user interface functionality, imports must be hard-coded in.
+10. User can import MagicaVoxel models to initialize the world with
+    - One model at a time
+    - No user interface functionality, imports must be hard-coded in
 
 **Program evaluation metric:**
 
-1. What is the maximum amount of voxels in the scene before noticeable performance decay?
+What is the maximum amount of voxels in the scene before noticeable performance decay?
 
 Total Voxels | XZ Dimensions | Time to create world 
 -------------|---------------|---------------------
@@ -93,8 +92,9 @@ Total Voxels | XZ Dimensions | Time to create world
 800,000      | 400x400       | 15s
 1,600,000    | 800x800       | 104s
 
-2. Are the controls intuitive?
-    - Survey of other people
+Are the controls intuitive?
+
+![User experiences](https://youtu.be/yzOwACEQyWQ)
 
 Topic Overview 
 ==================================
@@ -118,9 +118,9 @@ Design
 **Major functions of App: Voxel geometry**
  Function             | Description                                                
  ---------------------|------------------------------------------------------------
- createVoxelGeometry  | Creates geometry for one voxel by updating the CPU vertex and index arrays. Does not add faces if there is an adjacent voxel already in the scene.
+ createVoxelGeometry  | Creates geometry for one voxel by updating the CPU vertex and index arrays. Does not add faces that are adjacent to voxels already in the scene.
  createNaiveVoxelGeometry| Creates geometry for one voxel by updating the CPU vertex and index arrays. Does not check for adjacent voxels.
- addFace              | Adds one face of a voxel given the center of the voxel and a normal.
+ addFace              | Adds one face of a voxel given the center of the voxel and the face normal.
  addVoxel             | Based on position and type of voxel received from user input, adds a voxel to the scene by calling `setVoxel` and `createVoxelGeometry`.
  removeVoxel          | Based on position received from user input, removes the voxel at that position from the scene by calling unsetVoxel, and marks the Chunk containing input voxel for update.
  initializeModel      | Initializes an `ArticulatedModel` that will be edited at runtime when user input is received.
@@ -197,11 +197,11 @@ Design
 
 We use one ArticulatedModel, `m_model`, to store the geometries and meshes for all of the voxels in the scene. The voxels in the scene are divided into Chunks based on their x and z coordinates. Each Chunk spans a 32 x 32 voxel space region. `m_model` has separate geometries and meshes per Chunk and material. For example, the vertex and index arrays for a grass voxel and a stone voxel in the same Chunk region are still stored in different geometries and meshes because they have different materials. The Chunk system is a huge optimization because when a voxel is deleted in one Chunk, only the voxels in that Chunk have to be redrawn instead of all of the voxels in the scene.
 
-We have two reference frames for the position of each voxel in the world, voxel coordinates and world space coordinates. Voxel coordinates are integer coordinates of the center of each voxel in the scene. They make it much easier to determine whether a voxel is already occupying space in the world and ensure that voxels do not overlap each other. Voxel space coordinates are also used to map voxels to corresponding Chunks. World space coordinates store the actual position of the center of the voxel in the scene.
+We have two reference frames for the position of each voxel in the world, voxel space coordinates and world space coordinates. Voxel space coordinates are integer coordinates for each voxel in the scene. They make it much easier to determine whether a voxel is already occupying space in the world and perform neighborhood operations on voxels. They are also used to map voxels to Chunks. World space coordinates map the geometry of each voxel into the rendered world.
 
 We maintain several data structures to keep track of the voxels in the scene:
 
-- Each `Chunk` stores its coordinates and a Table that maps voxel positions of voxels in the Chunk to their types.
+- Each `Chunk` stores its coordinates and a Table that maps voxel space positions of voxels in the Chunk to their types.
 
 - `m_voxToMat` is an Array that stores the `UniversalMaterial`s used for each voxel type.
 
@@ -225,11 +225,15 @@ Correctness Images
 
 ![Scene with each of the textured voxel types](voxelTypes.png)
 
+![Visualization of "culling," or not adding voxel faces adjacent to existing voxels in the scene.](culling.png)
+
 ![](nonVrMenu2.png width=500px) ![](nonVrMenu3.png width=500px)
 
 ![Non-VR user interface](nonvrmenu.png)
 
 ![Virtual reality menu](vrMenu.jpg)
+
+![Working menu pagination](https://youtu.be/VLzQNpQjzxU)
 
 ![Sphere selection visualizations](sphereselect.png width=500px) ![](sphereselect2.png width=500px)
 
@@ -246,28 +250,39 @@ Correctness Images
 
 ![Mountain added using mountain transform](mountain.png)
 
-![](T-rex.jpg width=500px) ![](monu10.jpg width=500px)
+![](t-rex.jpg width=500px) ![](dragon1.jpg width=500px)
 
-![Imported MagicaVoxel models](monu5.jpg)
+![](park.jpg width=500px) ![](monu10.jpg width=500px)
 
+![](monu5.jpg width=500px) ![](quality3.png width=500px)
+*Imported MagicaVoxel models*
 
-Placeholder Quality Images
+Quality Images and Videos
 =====================================================
-![Imported MagicaVoxel model]()
 
-- Video of mountain
+![Imported MagicaVoxel model](quality2.png)
 
-- Video of crater
+![](https://youtu.be/yJIW75tZrTs)
 
-- Video of shockwave
+![Elevate](https://youtu.be/GnndBVVkM9I)
 
-- Video of orbital
+![Crater](https://youtu.be/rr1n7bXJtng)
 
-Evocative Result
+![Mountain](https://youtu.be/aVQP8XPdLTo)
+
+![Shock wave](https://youtu.be/eq7flfSP3wQ)
+
+![Orbit and fling](https://youtu.be/hDb0eJG5Kk8)
+
+
+Evocative Results
 ==================================
-- Video of orbital
 
-![Evocative result.](evocativescene.jpg)
+![Tero demonstration video](https://youtu.be/yzOwACEQyWQ)
+
+![Orbit and fling](https://youtu.be/hDb0eJG5Kk8)
+
+![](quality1.png)
 
 
 Schedule
