@@ -74,6 +74,9 @@ protected:
 	/** Active voxel type */
     int m_voxelType = 0;
 
+    /** Is there currently a voxel orbit */
+    bool m_hasOrbit = false;
+
 	// Data structures
 	/** Maps type of voxel to Any files containing its specific properties */
 	Array<Any> m_voxToProp;
@@ -175,6 +178,9 @@ protected:
     /** Calls unsetVoxel and marks the chunk as needing an update */
 	void removeVoxel(Point3int32 input);
 
+    /** Marks a chunk for updating */
+    void markChunkDirty(Point3int32 pos);
+
 	/** Called from updateChunks() */
     void clearChunkGeometry(Point2int32 chunkPos);
 	/** Called from updateChunks() */
@@ -190,7 +196,7 @@ protected:
 	/** Visualize the user's currently selected voxels. */
     void drawSelectionPreview();
 
-	// Intersecting scene and drawing crosshair
+	/** Intersecting scene and drawing crosshair */
     void cameraIntersectVoxel(Point3int32& lastOpen, Point3int32& voxelTest);
     Ray getVrCrosshairRay();
     Ray getMouseCrosshairRay();
@@ -208,7 +214,7 @@ public:
     virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
     virtual void onGraphics(RenderDevice * 	rd, Array< shared_ptr< Surface > > & surface, Array< shared_ptr< Surface2D > > & surface2D ) override;
     
-	// Main geometry update function
+	/** Main geometry update function */
     void updateChunks();
 
 	/** Called for loading new worlds */
@@ -228,6 +234,7 @@ public:
     void makeShockWave(Point3 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
     void pullVoxelOrbit(Point3int32 origin);
+    void flingSatellite(Vector3 dir, float speed);
 
 
     //added
