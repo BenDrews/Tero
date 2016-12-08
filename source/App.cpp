@@ -258,8 +258,8 @@ void App::initializeScene() {
 
     // Initialize ground
   /*  Noise& rng = Noise::common();
-    for(Point3int32 P(-100, 0, 0); P.x < 100; ++P.x) {
-        for(P.z = -100; P.z < 100; ++P.z) {
+    for(Point3int32 P(-400, 0, 0); P.x < 400; ++P.x) {
+        for(P.z = -400; P.z < 400; ++P.z) {
             int height = (rng.sample(500 * P.x, 0, 500 * P.z) / 5000);
             for(P.y = -10; P.y < height; ++P.y) {
                 setVoxel(P, grass);
