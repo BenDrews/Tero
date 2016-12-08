@@ -91,7 +91,13 @@ Specification
 Topic Overview 
 ==================================
 
-Voxel world editors have become quite common since the advent of Minecraft. For our project, we want to use this archetype and combine it with the VR experience. Our goal is to give users the impression that they are shaping the world with their motions. 
+Voxel world editors have become quite common since the advent of Minecraft. For our project, we want to use this archetype and combine it with the VR experience. Our goal is to give users the impression that they are shaping the world with their motions. By using an approximation that is both easy to manipulate and store, we can enable users to make vast sweeping edits.
+
+A major challenge presented by this project was optimizing the rendering and geometry updating calls to make the VR experience as smooth as possible. To accomplish this we attempted to imitate Minecraft's chunk system, where the world is split up into sections that have independent geometry. This increases the number of draw calls required, but makes regenerating geometry much faster since only the single chunk has to be recreated.
+
+We also have added the ability to import [magicavoxel](https://ephtracy.github.io/) files to initialize the world with. Other voxel world file formats that exist include: [stb_voxel](https://github.com/nothings/stb/blob/master/stb_voxel_render.h), [Anvil (Minecraft)](http://minecraft.gamepedia.com/Anvil_file_format)
+
+Popular Voxel World Editors: [Minecraft](https://minecraft.net/en/), [Blockscape](http://www.blockscape.com/v2/), [Chunks](http://www.facepunchstudios.com/2016/04/10/chunks/)
 
 
 Design
