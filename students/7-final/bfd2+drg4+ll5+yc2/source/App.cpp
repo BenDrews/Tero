@@ -13,20 +13,20 @@ int main(int argc, const char* argv[]) {
     }
 
     // NON-VR CODE //////////////////////
-    GApp::Settings settings(argc, argv);
+    //GApp::Settings settings(argc, argv);
     //////////////////////////////
     
     // VR CODE////////////////
 
 
    // VR CODE////////////////
-	//VRApp::Settings settings(argc, argv);
-	//settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
-	//VRApp::DebugMirrorMode::PRE_DISTORTION;
-	//
-	// settings.vr.disablePostEffectsIfTooSlow = true;
-	// settings.renderer.deferredShading   = true;
-	// settings.renderer.orderIndependentTransparency = true;
+	VRApp::Settings settings(argc, argv);
+	settings.vr.debugMirrorMode = //VRApp::DebugMirrorMode::NONE;//
+	VRApp::DebugMirrorMode::PRE_DISTORTION;
+	
+	 settings.vr.disablePostEffectsIfTooSlow = true;
+	 settings.renderer.deferredShading   = true;
+	 settings.renderer.orderIndependentTransparency = true;
    ///////////////////////////
 
 
@@ -96,54 +96,70 @@ void App::onInit() {
     makeGUI();
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
-    loadScene("Empty Scene");
+    loadScene("Tero");
 
 	initializeScene();
 
     updateCrosshair();
+
+	setActiveCamera(m_debugCamera);
 
 }
 
 void App::updateMenuCrosshair(){
     Ray cameraRay;
     Ray empty;
-    //if(m_vrControllerArray.size() > m_crosshair.menuControllerIndex){
-    //        cameraRay = m_vrControllerArray[ m_crosshair.menuControllerIndex]->frame().lookRay();
-    //        cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
-    //    }
-    //    
-    //    m_crosshair.buttonSelected = false;
-    //    int numOptions = menuPageSize;
-	//	if(menuType == 1){
-	//		numOptions = m_transforms.size();
-	//	}
-    //    for(int i = 0; i < numOptions && ! m_crosshair.buttonSelected; ++i){
-    //        if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3){
-    //             m_crosshair.buttonSelected = true;
-    //             m_crosshair.voxelIndex = i + menuPageSize*m_currentMenuPage;
-    //             m_crosshair.buttonIndex = i;
-    //        }    
-    //    }
-    //    
-    //    if(cameraRay.origin() != empty.origin()){
-    //         m_crosshair.lookDirection = cameraRay.direction();
-    //         m_crosshair.position = cameraRay.origin();
-    //         m_crosshair.ray = cameraRay;
-    //         drawCrosshair();
-    //    }
-	//
+	int controllerIndex = 0;
+	m_crosshair.buttonSelected = false;
+    while(controllerIndex < 2 && !m_crosshair.buttonSelected){
+		//if(m_vrControllerArray.size() > controllerIndex){
+        //    cameraRay = m_vrControllerArray[ controllerIndex ]->frame().lookRay();
+        //    cameraRay = Ray(cameraRay.origin(), cameraRay.direction());
+        //}
+		//
+		//int numOptions = menuPageSize;
+		//if(menuType == 1){
+		//	numOptions = m_transforms.size();
+		//}
+		//for(int i = 0; i < numOptions && ! m_crosshair.buttonSelected; ++i){
+		//    if(( cameraRay.origin() - menuFrame.pointToWorldSpace(m_menuButtonPositions[i]) ).length() <= 0.3){
+		//         m_crosshair.buttonSelected = true;
+		//         m_crosshair.voxelIndex = i + menuPageSize*m_currentMenuPage;
+		//         m_crosshair.buttonIndex = i;
+		//    }    
+		//}
+		//
+		//if(cameraRay.origin() != empty.origin()){
+		//     m_crosshair.lookDirection = cameraRay.direction();
+		//     m_crosshair.position = cameraRay.origin();
+		//     m_crosshair.ray = cameraRay;
+		//     drawCrosshair();
+		//}
+	
+		++controllerIndex;
+	 }
+	
 }
 
 
 Ray App::getVrCrosshairRay() {
     Ray crosshairRay;
-
-   // if(m_vrControllerArray.size() > 0){
-   //     crosshairRay = m_vrControllerArray[0]->frame().lookRay();
-   // }
-   //
-
+   
+	// vrEnabled
+    //if(m_vrControllerArray.size() > 0){
+    //    crosshairRay = m_vrControllerArray[0]->frame().lookRay();
+    //}
+   
+   
     return crosshairRay;
+}
+
+CFrame App::getPlayerFrame(){
+	if(vrEnabled){
+	//	return m_vrHead->frame();
+	}
+	return activeCamera()->frame();
+
 }
 
 
@@ -266,7 +282,7 @@ void App::updateHands(int index){
 }
 
 void App::initializeTransforms(){
-    m_transforms.append("crater", "shockwave", "mountain", "Voxel Orbit", "elevate");
+    m_transforms.append("crater", "shockwave", "mountain", "voxel orbit", "elevate");
 
 }
 
@@ -357,12 +373,12 @@ void App::changeMenuPage(int to) {
 }
 
 void App::setMenuFrame(){
-    //float yaw, pitch, roll;
-    //m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
-    //Point3 translation = m_vrHead->frame().translation;
-    //menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
+	//float yaw, pitch, roll;
+	//m_vrHead->frame().rotation.toEulerAnglesXYZ(yaw, pitch, roll);
+	//Point3 translation = m_vrHead->frame().translation;
+	//menuFrame = CoordinateFrame::fromXYZYPRDegrees(translation.x, translation.y, translation.z, yaw);
 	//menuFrame = m_vrHead->frame();
-    //m_menu[m_currentMenuPage]->setFrame(menuFrame);
+	//m_menu[m_currentMenuPage]->setFrame(menuFrame);
 
 }
 
@@ -1056,9 +1072,11 @@ void App::startCurrentTransform(){
     cameraIntersectVoxel(lastPos, hitPos);
     if(currentTransform == "shockwave"){
         Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
-        makeShockWave(hitPos, direction);
+        makeShockWaveArc(hitPos, direction);
     }else if (currentTransform == "voxel orbit"){
-
+		if(m_hasOrbit){
+			m_throwStartPos = m_hand2->frame().translation;
+		}
 	}else{
 		m_currentMark = hitPos;
     }
@@ -1075,6 +1093,40 @@ void App::endCurrentTransform(){
 	}else if (currentTransform == "crater"){
 		makeCrater(m_currentMark, Vector3(hitPos.x - m_currentMark.x, hitPos.y - m_currentMark.y, hitPos.z - m_currentMark.z).magnitude());
 
+	}else if(currentTransform == "voxel orbit"){
+		if(m_hasOrbit){
+			Vector3 throwDirection = m_hand2->frame().translation - m_throwStartPos;
+			flingSatellite(throwDirection, 2);
+		}else if( (m_hand1->frame().translation - m_hand2->frame().translation).length() > 0.25){
+			pullVoxelOrbit(hitPos);
+		}
+	
+	}
+
+}
+void App::makeShockWaveArc(Point3int32 origin, Vector3 direction){
+	debugPrintf("ARC ON!!!\n");
+	Point3int32 testPos;
+	Vector3 testDirection;
+	for (int i = -4; i < 4; ++i){
+		int x = origin.x + i;
+		for(int j = -4; j < 4; ++j){
+			int z = origin.z + j;
+			testPos.x = x;
+			testPos.y = origin.y;
+			testPos.z = z;
+
+			testDirection = origin - testPos;
+
+			if(abs((float)aCos(testDirection.dot(direction))) < PI/4.0f &&
+				(testDirection.length() > 5 && testDirection.length() < 10)){
+
+				makeShockWave(origin, direction);
+			}
+			 
+		}
+	
+	
 	}
 
 }
@@ -1099,23 +1151,21 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
 
         int i = 0;
         int numVoxels = 1000;
-        int shockWaveSize = 6; //multiple of 2
+        float shockWaveProb = 0.3; //multiple of 2
+		Random rand;
 		for (RayGridIterator it(shockWaveRay, voxelBound, Vector3(voxelRes,voxelRes,voxelRes), Point3(-voxelBound / 2) * voxelRes, -voxelBound / 2); it.insideGrid() && i < numVoxels; ++it) {
 
 
             Point3int32 voxCoord = it.index() + diff;
             Point3int32 centerCoord = voxCoord;
             voxCoord.y += 1;
-            voxCoord.x -= shockWaveSize/2;
 
-            // These for loops will iterate over a radius around our voxel
-            for(int j = 0; j <= shockWaveSize; ++j){
-
-                voxCoord.x += 1;
-                voxCoord.z = centerCoord.z - shockWaveSize/2;
-                for(int k = 0; k <= shockWaveSize; ++k){
-                    voxCoord.z += 1;
                     if ( voxIsSet(voxCoord) ) {
+						if( rand.uniform() <= shockWaveProb){
+							//makeShockWaveLine(voxCoord, direction);
+						}
+						
+
                         //debugPrintf("%d\n", voxCoord.y);
                         shared_ptr<VisibleEntity> ent;
                         SimTime timePassed;
@@ -1165,8 +1215,8 @@ void App::makeShockWave(Point3 origin, Vector3 direction) {
 			        } else {
                         break;
                     }
-                }
-            }
+                
+            
         }
 
         lastAnimFinished = st > 10.0f;
@@ -1537,7 +1587,7 @@ bool App::onEvent(const GEvent& event) {
         Vector3 direction = Vector3(m_crosshair.lookDirection.x, 0.0f, m_crosshair.lookDirection.z);
 
         if(lastPos != hitPos){
-            makeShockWave(hitPos, direction);
+            makeShockWaveArc(hitPos, direction);
         }
     }
 
@@ -1685,10 +1735,10 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         }
     }
     if(vrEnabled){
-        updateCrosshair();
-        Point3 head;
-        Point3 hand1;
-        Point3 hand2;
+        //updateCrosshair();
+        //Point3 head;
+        //Point3 hand1;
+        //Point3 hand2;
         //if(m_vrControllerArray.size() > 0 && notNull(m_hand1)){
         //    //hand1 = m_vrControllerArray[0]->frame().pointToWorldSpace(Point3(0,0,0));
         //    m_hand1->setFrame(m_vrControllerArray[0]->frame());
@@ -1808,15 +1858,15 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //                m_crosshair.menuControllerIndex = (vrEvent.trackedDeviceIndex - 1) % 2;
         //                setMenuFrame();
 		//
-        //            }
-        //           if(menuType == 0){ 
-        //                m_menu[m_currentMenuPage]->setVisible(menuMode);
-        //           }
-        //       }
+        //          }
+        //         if(menuType == 0){ 
+        //              m_menu[m_currentMenuPage]->setVisible(menuMode);
+        //         }
+        //     }
         //
-        //       break;
+        //     break;
         //
-        //    case vr::VREvent_ButtonUnpress:
+        //  case vr::VREvent_ButtonUnpress:
 		//		if(!menuMode){
 		//			switch(vrEvent.data.controller.button){
 		//			//grip	
@@ -1836,15 +1886,16 @@ void App::onGraphics(RenderDevice * rd, Array< shared_ptr< Surface > > & surface
         //        ;
         //    }
         //}
-        
-        
-        
-        
-
+        //
+        //
+        //
+        //
+		//
 
     }
 
-    super::onGraphics(rd, surface, surface2D);
+
+		super::onGraphics(rd, surface, surface2D);
 
 
 }

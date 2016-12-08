@@ -77,6 +77,9 @@ protected:
     /** Is there currently a voxel orbit */
     bool m_hasOrbit = false;
 
+	/** Initial position for the voxel throw in voxel orbit */
+	Point3  m_throwStartPos;
+
 	// Data structures
 	/** Maps type of voxel to Any files containing its specific properties */
 	Array<Any> m_voxToProp;
@@ -105,7 +108,8 @@ protected:
     shared_ptr<VisibleEntity> m_hand1;
     shared_ptr<VisibleEntity> m_hand2;
 
-
+	/* Returns Player frame regardless of whether or not vr is enabled*/
+	CFrame getPlayerFrame();
 
 	/** Marks where the user is currently pointing */
     CrosshairObject m_crosshair;
@@ -232,6 +236,7 @@ public:
 	void endCurrentTransform();
 	void makeCrater(Point3int32 center, int radius);
     void makeShockWave(Point3 origin, Vector3 direction);
+	void makeShockWaveArc(Point3int32 origin, Vector3 direction);
 	void makeMountain(Point3int32 center, int height);
     void pullVoxelOrbit(Point3int32 origin);
     void flingSatellite(Vector3 dir, float speed);
