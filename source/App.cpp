@@ -456,6 +456,10 @@ void App::initializeMaterials() {
         UniversalMaterial::create( Any::fromFile(System::findDataFile("blackrubber/blackrubber.UniversalMaterial.Any") )));
     
 	addColorMaterials();
+     for (int i = 1; i < 33;i++){
+    
+         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/colorglass%d.UniversalMaterial.Any",i))));
+    }
     for (int i = 0; i< palSize ; i++){
         
         m_voxToMat.append(UniversalMaterial::create( Any::fromFile(format("data-files/texture/pal%d.UniversalMaterial.Any",i))));
