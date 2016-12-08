@@ -512,7 +512,6 @@ void App::initializeModel() {
 
 // Adds given model to scene and returns a visible entity. Entity is not visible by default
 shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, String entityName, bool visible) {
-    //TODO understand and fix this method.
 
     // Replace any existing voxel model. Models don't 
     // have to be added to the model table to use them 
@@ -550,14 +549,13 @@ shared_ptr<VisibleEntity> App::addEntity(shared_ptr<ArticulatedModel> model, Str
             );
 
         anyFile["model"] = modelName;
-        entity = scene()->createEntity(entityName, anyFile); //TODO
+        entity = scene()->createEntity(entityName, anyFile);
 
     } else {
         // Change the model on the existing entity
         dynamic_pointer_cast<VisibleEntity>(entity)->setModel(model);
     }
 
-	//TODO
     shared_ptr<VisibleEntity> visibleEntity = scene()->typedEntity<VisibleEntity>(entityName);
     visibleEntity->setVisible(visible);
     return visibleEntity;
