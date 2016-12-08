@@ -48,7 +48,7 @@ protected:
     int voxTypeCount = voxTypePointer;
 
     //use this one for the number of voxTypes
-    const int voxTypePointer = 8;
+    const int voxTypePointer = 8+32;
 
     int menuType = 0; // 0 is VoxelMenu 1 is TransformMenu
 
