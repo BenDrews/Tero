@@ -86,6 +86,13 @@ Specification
 
 1. What is the maximum amount of voxels in the scene before noticeable performance decay?
 
+Total Voxels | XZ Dimensions | Time to create world 
+-------------|---------------|---------------------
+100,000      | 100x100       | 3s
+400,000      | 200x200       | 7s
+800,000      | 400x400       | 15s
+1,600,000    | 800x800       | 104s
+
 2. Are the controls intuitive?
     - Survey of other people
 
@@ -99,6 +106,8 @@ A major challenge presented by this project was optimizing the rendering and geo
 We also have added the ability to import [magicavoxel](https://ephtracy.github.io/) files to initialize the world with. Other voxel world file formats that exist include: [stb_voxel](https://github.com/nothings/stb/blob/master/stb_voxel_render.h), [Anvil (Minecraft)](http://minecraft.gamepedia.com/Anvil_file_format)
 
 Popular Voxel World Editors: [Minecraft](https://minecraft.net/en/), [Blockscape](http://www.blockscape.com/v2/), [Chunks](http://www.facepunchstudios.com/2016/04/10/chunks/)
+
+Explaination of standard data structures used for voxel worlds: [0 FPS](https://0fps.net/2012/01/14/an-analysis-of-minecraft-like-engines/)
 
 
 Design
